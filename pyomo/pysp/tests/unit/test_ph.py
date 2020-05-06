@@ -38,7 +38,7 @@ baseline_dir = this_test_file_directory+"baselines"+os.sep
 #
 import pyutilib.misc
 import pyutilib.th as unittest
-import pyutilib.services
+# import pyutilib.services
 from pyutilib.pyro import using_pyro3, using_pyro4
 
 from pyomo.pysp.util.misc import (_get_test_nameserver,

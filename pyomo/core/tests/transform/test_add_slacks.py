@@ -6,7 +6,7 @@ from six import StringIO
 from pyomo.common.log import LoggingIntercept
 
 import pyutilib.th as unittest
-import pyutilib.services
+# import pyutilib.services
 import random
 
 import pyomo.opt

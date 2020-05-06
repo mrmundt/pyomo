@@ -19,7 +19,7 @@ import shutil
 import sys
 
 from pyutilib.pyro import using_pyro3, using_pyro4
-import pyutilib.services
+# import pyutilib.services
 import pyutilib.th as unittest
 
 from pyomo.common.dependencies import networkx_available as have_networkx

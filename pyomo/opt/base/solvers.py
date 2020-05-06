@@ -23,7 +23,7 @@ from pyutilib.misc.config import ConfigBlock, ConfigList, ConfigValue
 from pyomo.common import Factory
 import pyutilib.common
 import pyutilib.misc
-import pyutilib.services
+# import pyutilib.services
 
 from pyomo.opt.base.problem import ProblemConfigFactory
 from pyomo.opt.base.convert import convert_problem

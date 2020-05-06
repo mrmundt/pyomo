@@ -16,7 +16,7 @@ import time
 import subprocess
 import shutil
 
-import pyutilib.services
+# import pyutilib.services
 import pyutilib.th as unittest
 from pyutilib.pyro import using_pyro3, using_pyro4
 from pyomo.pysp.util.misc import (_get_test_nameserver,

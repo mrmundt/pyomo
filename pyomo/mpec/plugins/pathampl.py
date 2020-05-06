@@ -12,7 +12,7 @@ import logging
 import os
 import six
 
-import pyutilib.services
+# import pyutilib.services
 import pyutilib.misc
 
 from pyomo.opt.base.solvers import SolverFactory

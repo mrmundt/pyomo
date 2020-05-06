@@ -24,7 +24,7 @@ else:
         _ordered_dict_ = ordereddict.OrderedDict
 
 from pyutilib.pyro import using_pyro3, using_pyro4
-import pyutilib.services
+# import pyutilib.services
 import pyutilib.th as unittest
 
 from pyomo.common.dependencies import dill, dill_available
