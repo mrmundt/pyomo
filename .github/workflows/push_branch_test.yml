@@ -13,7 +13,7 @@ jobs:
         include:
         - os: ubuntu-18.04
           TARGET: linux
-        python-version: [3.7]
+        python-version: [2.7, 3.7]
 
     steps:
     - uses: actions/checkout@v2

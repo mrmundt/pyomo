@@ -9,7 +9,7 @@
 #  ___________________________________________________________________________
 
 from six import StringIO, iterkeys
-import pyutilib.misc
+# import pyutilib.misc
 from pyomo.core.expr import current
 from pyomo.common import DeveloperError
 from pyomo.common.dependencies import attempt_import

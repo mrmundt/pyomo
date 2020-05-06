@@ -29,7 +29,7 @@ __all__ = ['pyomo_callback',
         ]
 
 import logging
-import pyutilib.misc
+# import pyutilib.misc
 from pyomo.common.deprecation import deprecated
 from pyomo.common.modeling import unique_component_name
 from pyomo.common import Factory

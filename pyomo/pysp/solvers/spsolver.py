@@ -16,7 +16,7 @@ import sys
 import time
 import logging
 
-import pyutilib.misc
+# import pyutilib.misc
 
 from pyomo.opt import UndefinedData
 from pyomo.core import ComponentUID

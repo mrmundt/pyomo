@@ -9,7 +9,7 @@
 #  ___________________________________________________________________________
 
 import pyutilib.th as unittest
-import pyutilib.misc
+# import pyutilib.misc
 
 from pyomo.common import *
 from pyomo.common.log import LoggingIntercept

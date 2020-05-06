@@ -14,7 +14,7 @@ __all__ = [
         ]
 
 import logging
-import pyutilib.misc
+# import pyutilib.misc
 from pyomo.common import Factory
 
 logger = logging.getLogger('pyomo.core')

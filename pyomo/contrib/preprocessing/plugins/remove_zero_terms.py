@@ -10,7 +10,7 @@ from pyomo.core.base.plugin import TransformationFactory
 from pyomo.core.expr import current as EXPR
 from pyomo.core.plugins.transform.hierarchy import IsomorphicTransformation
 from pyomo.repn import generate_standard_repn
-from pyutilib.math.util import isclose
+# from pyutilib.math.util import isclose
 
 
 @TransformationFactory.register(

@@ -31,11 +31,12 @@ try:
 except ImportError:
     pstats_available=False
 
-from pyutilib.misc import Options
-memory_data = Options()
+# from pyutilib.misc import Options
+# memory_data = Options()
 
 import pyutilib.misc
-from pyutilib.misc import Container
+memory_data = pyutilib.misc.Options()
+# from pyutilib.misc import Container
 from pyutilib.services import TempfileManager
 
 from pyomo.common.dependencies import (
@@ -821,8 +822,8 @@ def finalize(data, model=None, instance=None, results=None):
 
 def configure_loggers(options=None, shutdown=False):
     if shutdown:
-        options = Options()
-        options.runtime = Options()
+        options = pyutilib.misc.Options()
+        options.runtime = pyutilib.misc.Options()
         options.runtime.logging = 'quiet'
         if configure_loggers.fileLogger is not None:
             logging.getLogger('pyomo').handlers = []
@@ -837,7 +838,7 @@ def configure_loggers(options=None, shutdown=False):
     # Configure the logger
     #
     if options.runtime is None:
-        options.runtime = Options()
+        options.runtime = pyutilib.misc.Options()
     if options.runtime.logging == 'quiet':
         logging.getLogger('pyomo').setLevel(logging.ERROR)
     elif options.runtime.logging == 'warning':
@@ -915,7 +916,7 @@ def run_command(command=None, parser=None, args=None, name='unknown', data=None,
         except SystemExit:
             # the parser throws a system exit if "-h" is specified - catch
             # it to exit gracefully.
-            return Container(retval=retval, errorcode=errorcode)
+            return pyutilib.misc.Container(retval=retval, errorcode=errorcode)
     #
     # Configure loggers
     #
@@ -1008,7 +1009,7 @@ def run_command(command=None, parser=None, args=None, name='unknown', data=None,
     if options.runtime.disable_gc:
         gc.enable()
     TempfileManager.pop(remove=not options.runtime.keep_files)
-    return Container(retval=retval, errorcode=errorcode)
+    return pyutilib.misc.Container(retval=retval, errorcode=errorcode)
 
 def cleanup():
     for key in modelapi:

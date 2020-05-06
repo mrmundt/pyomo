@@ -10,7 +10,7 @@
 
 __all__ = ['IndexedComponent', 'ActiveIndexedComponent']
 
-import pyutilib.misc
+# import pyutilib.misc
 
 from pyomo.core.expr.expr_errors import TemplateExpressionError
 from pyomo.core.expr.numvalue import native_types

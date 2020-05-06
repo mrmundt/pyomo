@@ -17,7 +17,7 @@ import logging
 import math
 from six import iteritems, StringIO, iterkeys
 from six.moves import xrange
-from pyutilib.math import isclose
+# from pyutilib.math import isclose
 
 from pyomo.opt import ProblemFormat
 from pyomo.opt.base import AbstractProblemWriter, WriterFactory

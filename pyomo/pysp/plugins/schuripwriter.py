@@ -8,7 +8,7 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from pyutilib.misc import *
+# from pyutilib.misc import *
 
 from pyomo.common.plugin import *
 from pyomo.pysp import phextension

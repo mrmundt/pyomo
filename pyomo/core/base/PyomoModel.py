@@ -23,7 +23,7 @@ try:
 except ImportError:                         #pragma:nocover
     from ordereddict import OrderedDict
 
-from pyutilib.math import *
+# from pyutilib.math import *
 from pyutilib.misc import tuplize, Container, PauseGC, Bunch
 
 import pyomo.common

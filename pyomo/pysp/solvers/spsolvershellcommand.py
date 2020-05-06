@@ -13,7 +13,7 @@ import os
 import logging
 import pprint
 
-import pyutilib.misc
+import pyutilib.services
 
 from pyomo.pysp.solvers.spsolver import SPSolver
 

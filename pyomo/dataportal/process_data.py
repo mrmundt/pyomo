@@ -14,9 +14,8 @@ import copy
 import math
 import logging
 
-from pyutilib.misc import quote_split, Options
+from pyutilib.misc import Options, flatten
 import pyutilib.common
-from pyutilib.misc import flatten
 
 from pyomo.dataportal.parse_datacmds import parse_data_commands
 from pyomo.dataportal.factory import DataManagerFactory, UnknownDataManager
