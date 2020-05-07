@@ -56,7 +56,11 @@ jobs:
         echo ""
         echo "Install PyUtilib..."
         echo ""
-        pip install --quiet git+https://github.com/PyUtilib/pyutilib
+        git clone --quiet https://github.com/mrmundt/pyutilib
+        git checkout remove_utilib_deps
+        cd pyutilib
+        python setup.py install
+        cd ..
         echo ""
         echo "Install Pyomo..."
         echo ""
