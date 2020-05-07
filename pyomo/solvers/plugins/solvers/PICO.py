@@ -16,7 +16,6 @@ from six import iteritems
 
 import pyomo.common
 import pyutilib.common
-import pyutilib.common
 import pyutilib.misc
 
 from pyomo.opt.base import *

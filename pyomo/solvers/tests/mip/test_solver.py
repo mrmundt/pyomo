@@ -18,7 +18,7 @@ currdir = dirname(abspath(__file__))+os.sep
 
 import pyutilib.th as unittest
 import pyutilib.services
-import pyutilib.common
+# import pyutilib.common
 
 import pyomo.opt
 import pyomo.solvers.plugins.solvers
