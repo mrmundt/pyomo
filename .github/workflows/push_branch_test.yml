@@ -33,12 +33,12 @@ jobs:
           PYENV: pip
 
         - os: macos-latest
-          python: 2.7
+          python: 3.7
           TARGET: osx
           PYENV: pip
 
         - os: windows-latest
-          python: 3.5
+          python: 3.7
           TARGET: win
           PYENV: conda
           PACKAGES: glpk
@@ -325,7 +325,7 @@ jobs:
         git clone --quiet https://github.com/mrmundt/pyutilib.git
         cd pyutilib
         git checkout remove_utilib_deps
-        python setup.py install
+        $PYTHON_EXE setup.py develop
         cd ..
         echo ""
         echo "Install Pyomo..."
