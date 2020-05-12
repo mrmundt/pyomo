@@ -23,13 +23,8 @@ try:
 except ImportError:                         #pragma:nocover
     from ordereddict import OrderedDict
 
-<<<<<<< HEAD
 # from pyutilib.math import *
 from pyutilib.misc import tuplize, Container, PauseGC, Bunch
-=======
-from pyutilib.math import *
-from pyutilib.misc import Container, PauseGC, Bunch
->>>>>>> origin
 
 import pyomo.common
 from pyomo.common.dependencies import pympler, pympler_available
