@@ -322,11 +322,7 @@ jobs:
         echo ""
         echo "Install PyUtilib..."
         echo ""
-        git clone --quiet https://github.com/mrmundt/pyutilib.git
-        cd pyutilib
-        git checkout remove_utilib_deps
-        $PYTHON_EXE setup.py develop
-        cd ..
+        $PYTHON_EXE -m pip install git+https://github.com/PyUtilib/pyutilib
         echo ""
         echo "Install Pyomo..."
         echo ""
