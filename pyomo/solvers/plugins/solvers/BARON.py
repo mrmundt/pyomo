@@ -32,7 +32,7 @@ logger = logging.getLogger('pyomo.solvers')
 class BARONSHELL(SystemCallSolver):
     """The BARON MINLP solver
     """
-
+    _valid_license = {}
 
     def __init__(self, **kwds):
         #
@@ -125,6 +125,10 @@ class BARONSHELL(SystemCallSolver):
         hidden. If the test fails for any reason (including
         the executable being invalid), then this function
         will return False."""
+        _result = BARONSHELL._valid_license.get(executable, None)
+        if _result is not None:
+            return _result
+
         fnames= BARONSHELL._get_dummy_input_files(check_license=True)
         try:
             process = subprocess.Popen([executable, fnames[0]],
@@ -144,9 +148,10 @@ class BARONSHELL(SystemCallSolver):
         finally:
             BARONSHELL._remove_dummy_input_files(fnames)
         if rc:
-            return False
+            _result = BARONSHELL._valid_license[executable] = False
         else:
-            return True
+            _result = BARONSHELL._valid_license[executable] = False
+        return _result
 
     def _default_executable(self):
         executable = Executable("baron")
@@ -162,7 +167,6 @@ class BARONSHELL(SystemCallSolver):
         Returns a tuple describing the solver executable version.
         """
         solver_exec = self.executable()
-
         if solver_exec is None:
             return _extract_version('')
         else:
