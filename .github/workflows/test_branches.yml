@@ -29,6 +29,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
+        python: ['3.10']
         other: [""]
         category: ["nightly"]
 
