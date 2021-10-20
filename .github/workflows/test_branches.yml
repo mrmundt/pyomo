@@ -36,7 +36,7 @@ jobs:
 
         include:
         - os: ubuntu-latest
-          python: 3.9
+          python: 3.10
           TARGET: linux
           PYENV: pip
 
@@ -69,7 +69,7 @@ jobs:
           PACKAGES: mpi4py openmpi
 
         - os: ubuntu-latest
-          python: 3.9
+          python: 3.10
           other: /slim
           slim: 1
           skip_doctest: 1
