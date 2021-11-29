@@ -11,7 +11,7 @@
 
 ## Pyomo Overview
 
-CHANGING FOR NO REASON.
+CHANGING FOR NO REASON. (Again)
 
 Pyomo is a Python-based open-source software package that supports a
 diverse set of optimization capabilities for formulating and analyzing
