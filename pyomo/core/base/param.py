@@ -212,12 +212,6 @@ class _ParamData(ComponentData, NumericValue):
         """
         return 0
 
-    def __nonzero__(self):
-        """Return True if the value is defined and non-zero."""
-        return bool(self())
-
-    __bool__ = __nonzero__
-
 
 @ModelComponentFactory.register("Parameter data that is used to define a model instance.")
 class Param(IndexedComponent, IndexedComponent_NDArrayMixin):
@@ -268,9 +262,6 @@ class Param(IndexedComponent, IndexedComponent_NDArrayMixin):
     def __init__(self, *args, **kwd):
         _init = self._pop_from_kwargs(
             'Param', kwd, ('rule', 'initialize'), NOTSET)
-        self._rule = Initializer(_init,
-                                 treat_sequences_as_mappings=False,
-                                 arg_not_specified=NOTSET)
         self.domain = self._pop_from_kwargs('Param', kwd, ('domain', 'within'))
         if self.domain is None:
             self.domain = _ImplicitAny(owner=self, name='Any')
@@ -286,6 +277,11 @@ class Param(IndexedComponent, IndexedComponent_NDArrayMixin):
 
         kwd.setdefault('ctype', Param)
         IndexedComponent.__init__(self, *args, **kwd)
+
+        # After IndexedComponent.__init__ so we can call is_indexed().
+        self._rule = Initializer(_init,
+                                 treat_sequences_as_mappings=self.is_indexed(),
+                                 arg_not_specified=NOTSET)
 
     def __len__(self):
         """
