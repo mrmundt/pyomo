@@ -9,6 +9,8 @@
 
 [![a COIN-OR project](https://www.coin-or.org/GitHub/coin-or-badge.png)](https://www.coin-or.org)
 
+# Pyomo - muhahaha!
+
 ## Pyomo Overview
 
 Pyomo is a Python-based open-source software package that supports a
