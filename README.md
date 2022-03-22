@@ -9,7 +9,7 @@
 
 [![a COIN-OR project](https://www.coin-or.org/GitHub/coin-or-badge.png)](https://www.coin-or.org)
 
-## Pyomo Overview - I DO WHAT I WANT WITH NO CONSEQUENCES
+## Pyomo Overview - I DO WHAT I WANT WITH NO CONSEQUENCES - MUAHAHA
 
 Pyomo is a Python-based open-source software package that supports a
 diverse set of optimization capabilities for formulating and analyzing
