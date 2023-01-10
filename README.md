@@ -14,7 +14,7 @@ diverse set of optimization capabilities for formulating and analyzing
 optimization models. Pyomo can be used to define symbolic problems,
 create concrete problem instances, and solve these instances with
 standard solvers. Pyomo supports a wide range of problem types,
-including:
+including
 
  -  Linear programming
  -  Quadratic programming
