@@ -15,6 +15,10 @@ import importlib
 def _do_import(pkg_name):
         importlib.import_module(pkg_name)
 
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 #
 # These packages contain plugins that need to be loaded
 #
