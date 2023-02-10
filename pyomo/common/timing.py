@@ -38,7 +38,7 @@ from pyomo.common.modeling import NOTSET as _NotSpecified
 
 _logger = logging.getLogger('pyomo.common.timing')
 _logger.propagate = False
-_logger.setLevel(logging.WARNING)
+_logger.setLevel(logging.INFO)
 
 _construction_logger = logging.getLogger('pyomo.common.timing.construction')
 _transform_logger = logging.getLogger('pyomo.common.timing.transformation')
@@ -64,7 +64,7 @@ def report_timing(stream=True, level=logging.INFO):
         _logger.addHandler(handler)
         return handler
     else:
-        _logger.setLevel(logging.WARNING)
+        _logger.setLevel(logging.INFO)
         for h in _logger.handlers:
             _logger.removeHandler(h)
 
