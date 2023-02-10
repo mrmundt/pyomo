@@ -80,13 +80,12 @@ class TestPyomoEnviron(unittest.TestCase):
         loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict if 'pyomo' in name]
         for logger in loggers:
             # We have to skip the log tester because it changes logging levels
-            if 'pyomo.common.log.testing' in logger.name:
-                pass
-            elif 'timing' in logger.name:
+            if 'timing' in logger.name:
                 # Timing is set to WARNING level - i.e., 30
                 self.assertEqual(logger.getEffectiveLevel(), 30)
             else:
                 # Everything else should be set to INFO - i.e., 20
+                print(logger.name)
                 self.assertEqual(logger.getEffectiveLevel(), 20)
 
     def test_not_auto_imported(self):
