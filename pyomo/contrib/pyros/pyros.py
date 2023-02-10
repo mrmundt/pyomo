@@ -10,7 +10,6 @@
 #  ___________________________________________________________________________
 
 # pyros.py: Generalized Robust Cutting-Set Algorithm for Pyomo
-import logging
 from pyomo.common.collections import Bunch, ComponentSet
 from pyomo.common.config import (
     ConfigDict, ConfigValue, In, NonNegativeFloat, add_docstring_list
@@ -346,7 +345,6 @@ class PyROS(object):
 
         # === Set up logger for logging results
         with time_code(model_data.timing, 'total', is_main_timer=True):
-            config.progress_logger.setLevel(logging.INFO)
 
             # === PREAMBLE
             output_logger(config=config, preamble=True, version=str(self.version()))

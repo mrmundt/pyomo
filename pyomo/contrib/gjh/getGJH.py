@@ -56,7 +56,6 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    logger.setLevel(logging.INFO)
     try:
         main(sys.argv[1:])
     except Exception as e:

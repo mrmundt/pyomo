@@ -19,7 +19,6 @@ from pyomo.gdp import Disjunct, Disjunction
 
 
 default_logger = logging.getLogger('pyomo.util.model_size')
-default_logger.setLevel(logging.INFO)
 
 
 class ModelSizeReport(Bunch):

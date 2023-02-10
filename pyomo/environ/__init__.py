@@ -16,7 +16,7 @@ def _do_import(pkg_name):
         importlib.import_module(pkg_name)
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('pyomo')
 logger.setLevel(logging.INFO)
 
 #

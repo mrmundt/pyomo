@@ -15,18 +15,15 @@ import sys
 from pyomo.common.extensions import ExtensionBuilderFactory
 from pyomo.scripting.pyomo_parser import add_subparser
 
+logger = logging.getLogger('pyomo.common')
+
+
 class ExtensionBuilder(object):
     def create_parser(self, parser):
         return parser
 
     def call(self, args, unparsed):
-        logger = logging.getLogger('pyomo.common')
-        original_level = logger.level
-        logger.setLevel(logging.INFO)
-        try:
-            return self._call_impl(args, unparsed, logger)
-        finally:
-            logger.setLevel(original_level)
+        return self._call_impl(args, unparsed, logger)
 
     def _call_impl(self, args, unparsed, logger):
         results = []

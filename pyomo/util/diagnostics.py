@@ -6,7 +6,6 @@ import logging
 
 
 logger = logging.getLogger('pyomo.util.diagnostics')
-logger.setLevel(logging.INFO)
 
 
 def log_disjunct_values(m):

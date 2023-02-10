@@ -23,7 +23,6 @@ def main():
                            intermediate_callback=iteration_callback)
 
 if __name__ == '__main__':
-    logging.getLogger('pyomo').setLevel(logging.INFO)
     main()
 
 

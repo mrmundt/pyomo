@@ -84,11 +84,6 @@ class SequentialDecomposition(FOQUSGraph):
 
             `default=1.0E-8`
 
-        log_info: `bool`
-            Set logger level to INFO during run.
-
-            `default=False`
-
         tear_method: `str`
             Method to use for converging tear streams, either "Direct" or
             "Wegstein".
@@ -156,7 +151,6 @@ class SequentialDecomposition(FOQUSGraph):
         options["guesses"] = ComponentMap()
         options["default_guess"] = None
         options["almost_equal_tol"] = 1.0E-8
-        options["log_info"] = False
         options["tear_method"] = "Direct"
         options["iterLim"] = 40
         options["tol"] = 1.0E-5
@@ -277,9 +271,6 @@ class SequentialDecomposition(FOQUSGraph):
             function
                 A function to be called on each block/node in the network
         """
-        if self.options["log_info"]:
-            old_log_level = logger.level
-            logger.setLevel(logging.INFO)
 
         self.cache.clear()
 
@@ -288,9 +279,6 @@ class SequentialDecomposition(FOQUSGraph):
         finally:
             # Cleanup
             self.cache.clear()
-
-            if self.options["log_info"]:
-                logger.setLevel(old_log_level)
 
 
     def _run_impl(self, model, function):

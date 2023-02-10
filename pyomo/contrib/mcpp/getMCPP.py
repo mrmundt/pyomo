@@ -33,7 +33,6 @@ def main(argv):
     get_mcpp(downloader)
 
 if __name__ == '__main__':
-    logger.setLevel(logging.INFO)
     try:
         main(sys.argv[1:])
     except Exception as e:

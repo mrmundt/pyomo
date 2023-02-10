@@ -15,6 +15,7 @@
 import re
 import sys
 import subprocess
+import logging
 
 from collections import namedtuple
 
@@ -73,6 +74,18 @@ def collect_import_time(module):
 
 class TestPyomoEnviron(unittest.TestCase):
 
+    def test_logger_level_set(self):
+        # We only care about pyomo loggers - this filters out anything else
+        # that might be coming from other packages
+        loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict if 'pyomo' in name]
+        for logger in loggers:
+            if 'timing' in logger.name:
+                # Timing is set to WARNING level - i.e., 30
+                self.assertEqual(logger.getEffectiveLevel(), 30)
+            else:
+                # Everything else should be set to INFO - i.e., 20
+                self.assertEqual(logger.getEffectiveLevel(), 20)
+
     def test_not_auto_imported(self):
         rc = subprocess.call([
                 sys.executable, '-c', 
@@ -81,7 +94,6 @@ class TestPyomoEnviron(unittest.TestCase):
         if rc:
             self.fail("Importing pyomo.core automatically imports "
                       "pyomo.environ and it should not.")
-
 
     @unittest.skipIf(sys.version_info[:2] < (3,7),
                      "Import timing introduced in python 3.7")

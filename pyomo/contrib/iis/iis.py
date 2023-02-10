@@ -9,7 +9,6 @@ import logging
 from pyomo.environ import SolverFactory
 
 logger = logging.getLogger("pyomo.contrib.iis")
-logger.setLevel(logging.INFO)
 
 
 def write_iis(pyomo_model, iis_file_name, solver=None, logger=logger):

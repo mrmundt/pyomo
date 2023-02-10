@@ -14,6 +14,8 @@ import sys
 from pyomo.common.download import FileDownloader, DownloadFactory
 from pyomo.scripting.pyomo_parser import add_subparser
 
+logger = logging.getLogger('pyomo.common')
+
 class GroupDownloader(object):
     def __init__(self):
         self.downloader = FileDownloader()
@@ -22,13 +24,7 @@ class GroupDownloader(object):
         return self.downloader.create_parser(parser)
 
     def call(self, args, unparsed):
-        logger = logging.getLogger('pyomo.common')
-        original_level = logger.level
-        logger.setLevel(logging.INFO)
-        try:
-            return self._call_impl(args, unparsed, logger)
-        finally:
-            logger.setLevel(original_level)
+        return self._call_impl(args, unparsed, logger)
 
     def _call_impl(self, args, unparsed, logger):
         results = []
