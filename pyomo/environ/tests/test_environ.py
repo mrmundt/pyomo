@@ -78,9 +78,11 @@ class TestPyomoEnviron(unittest.TestCase):
         # We only care about pyomo loggers - this filters out anything else
         # that might be coming from other packages
         loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict if 'pyomo' in name]
-        print([logger for logger in loggers if logger.getEffectiveLevel() == 30])
         for logger in loggers:
-            if 'timing' or 'testing' in logger.name:
+            # We have to skip the log tester because it changes logging levels
+            if 'pyomo.common.log.testing' in logger.name:
+                pass
+            elif 'timing' in logger.name:
                 # Timing is set to WARNING level - i.e., 30
                 self.assertEqual(logger.getEffectiveLevel(), 30)
             else:
