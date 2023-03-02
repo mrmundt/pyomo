@@ -819,7 +819,7 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         files: coverage-other.xml
-        token: ${{ secrets.PYOMO_CODECOV_TOKEN }}
+        token: ${{ secrets.PYOMO_CODECOV_TOKEN }} # Token
         name: ${{ matrix.TARGET }}/other
         flags: ${{ matrix.TARGET }},other
         fail_ci_if_error: true
