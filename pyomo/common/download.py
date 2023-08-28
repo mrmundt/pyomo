@@ -308,7 +308,8 @@ class FileDownloader(object):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
         try:
-            fetch = request.urlopen(url, context=ctx)
+            fetch = request.urlopen(url, context=ctx,
+                                    headers={'User-Agent': 'Mozilla/5.0'})
         except urllib_error.HTTPError as e:
             if e.code != 403:  # Forbidden
                 raise
@@ -317,9 +318,7 @@ class FileDownloader(object):
             # This is a fix implemented if we get stuck behind server
             # security features (attempting to block "bot" agents).
             # We are setting a known user-agent to get around that.
-            req = request.Request(url=url, headers={ "Accept": "*/*",
-    "Accept-Encoding": "gzip, deflate",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36"})
+            req = request.Request(url=url, headers={'User-Agent': 'Mozilla/5.0'})
             fetch = request.urlopen(req, context=ctx)
         ans = fetch.read()
         logger.info("  ...downloaded %s bytes" % (len(ans),))
