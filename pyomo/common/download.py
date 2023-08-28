@@ -317,7 +317,8 @@ class FileDownloader(object):
             # This is a fix implemented if we get stuck behind server
             # security features (attempting to block "bot" agents).
             # We are setting a known user-agent to get around that.
-            req = request.Request(url=url, headers={'User-Agent': 'Mozilla/5.0'})
+            req = request.Request(url=url, headers={'User-Agent': 'Mozilla/5.0',
+                                                    'Accept-Encoding': '*'})
             fetch = request.urlopen(req, context=ctx)
         ans = fetch.read()
         logger.info("  ...downloaded %s bytes" % (len(ans),))
