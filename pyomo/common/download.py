@@ -308,8 +308,9 @@ class FileDownloader(object):
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
         try:
-            fetch = request.urlopen(url, context=ctx,
-                                    headers={'User-Agent': 'Mozilla/5.0'})
+            req = request.Request(url)
+            req.add_header('User-Agent', 'Mozilla/5.0')
+            fetch = request.urlopen(req, context=ctx,)
         except urllib_error.HTTPError as e:
             if e.code != 403:  # Forbidden
                 raise
