@@ -18,7 +18,7 @@ logger = logging.getLogger('pyomo.common')
 
 
 def get_mcpp(downloader):
-    url = 'https://github.com/omega-icl/mcpp/archive/master.zip'
+    url = 'https://github.com/omega-icl/mcpp/zipball/master'
 
     downloader.set_destination_filename(os.path.join('src', 'mcpp'))
 

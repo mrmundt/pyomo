@@ -95,13 +95,10 @@ jobs:
           PACKAGES: mpi4py openmpi
 
         - os: ubuntu-latest
-          python: '3.10'
-          other: /cython
-          setup_options: --with-cython
+          python: pypy-3.9
           skip_doctest: 1
           TARGET: linux
           PYENV: pip
-          PACKAGES: cython
 
         - os: windows-latest
           python: 3.8
