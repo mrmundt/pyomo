@@ -95,7 +95,7 @@ jobs:
           PACKAGES: mpi4py openmpi
 
         - os: ubuntu-latest
-          python: 'pypy-3.10'
+          python: 'pypy-3.9'
           skip_doctest: 1
           TARGET: linux
           PYENV: pip
