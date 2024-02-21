@@ -241,3 +241,7 @@ class TestIpoptInterface(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             result = opt._create_command_line('myfile', opt.config, False)
+
+    def test_run_subprocess(self):
+        # TODO: Left off here!
+        pass

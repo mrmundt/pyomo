@@ -13,7 +13,6 @@ import os
 import subprocess
 import datetime
 import io
-import sys
 from typing import Mapping, Optional, Sequence
 
 from pyomo.common import Executable
@@ -324,6 +323,54 @@ class Ipopt(SolverBase):
                 cmd.append(str(k) + '=' + str(val))
         return cmd
 
+    def _run_subprocess(
+        self,
+        basename: str,
+        timer: HierarchicalTimer,
+        ostreams: list,
+        config: IpoptConfig,
+        nl_info: NLWriterInfo,
+    ):
+        # Get a copy of the environment to pass to the subprocess
+        env = os.environ.copy()
+        if nl_info.external_function_libraries:
+            if env.get('AMPLFUNC'):
+                nl_info.external_function_libraries.append(env.get('AMPLFUNC'))
+            env['AMPLFUNC'] = "\n".join(nl_info.external_function_libraries)
+        # Write the opt_file, if there should be one; return a bool to say
+        # whether or not we have one (so we can correctly build the command line)
+        opt_file = self._write_options_file(
+            filename=basename, options=config.solver_options
+        )
+        # Call ipopt - passing the files via the subprocess
+        cmd = self._create_command_line(
+            basename=basename, config=config, opt_file=opt_file
+        )
+        # this seems silly, but we have to give the subprocess slightly longer to finish than
+        # ipopt
+        if config.time_limit is not None:
+            timeout = config.time_limit + min(max(1.0, 0.01 * config.time_limit), 100)
+        else:
+            timeout = None
+
+        with TeeStream(*ostreams) as t:
+            timer.start('subprocess')
+            process = subprocess.run(
+                cmd,
+                timeout=timeout,
+                env=env,
+                universal_newlines=True,
+                stdout=t.STDOUT,
+                stderr=t.STDERR,
+            )
+            timer.stop('subprocess')
+            # This is the stuff we need to parse to get the iterations
+            # and time
+            iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time = (
+                self._parse_ipopt_output(ostreams[0])
+            )
+        return process, iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time
+
     @document_kwargs_from_configdict(CONFIG)
     def solve(self, model, **kwds):
         # Begin time tracking
@@ -371,48 +418,11 @@ class Ipopt(SolverBase):
                     symbolic_solver_labels=config.symbolic_solver_labels,
                 )
                 timer.stop('write_nl_file')
+            ostreams = [io.StringIO()] + config.tee
             if len(nl_info.variables) > 0:
-                # Get a copy of the environment to pass to the subprocess
-                env = os.environ.copy()
-                if nl_info.external_function_libraries:
-                    if env.get('AMPLFUNC'):
-                        nl_info.external_function_libraries.append(env.get('AMPLFUNC'))
-                    env['AMPLFUNC'] = "\n".join(nl_info.external_function_libraries)
-                # Write the opt_file, if there should be one; return a bool to say
-                # whether or not we have one (so we can correctly build the command line)
-                opt_file = self._write_options_file(
-                    filename=basename, options=config.solver_options
+                process, iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time = (
+                    self._run_subprocess(basename, timer, ostreams, config, nl_info)
                 )
-                # Call ipopt - passing the files via the subprocess
-                cmd = self._create_command_line(
-                    basename=basename, config=config, opt_file=opt_file
-                )
-                # this seems silly, but we have to give the subprocess slightly longer to finish than
-                # ipopt
-                if config.time_limit is not None:
-                    timeout = config.time_limit + min(
-                        max(1.0, 0.01 * config.time_limit), 100
-                    )
-                else:
-                    timeout = None
-
-                ostreams = [io.StringIO()] + config.tee
-                with TeeStream(*ostreams) as t:
-                    timer.start('subprocess')
-                    process = subprocess.run(
-                        cmd,
-                        timeout=timeout,
-                        env=env,
-                        universal_newlines=True,
-                        stdout=t.STDOUT,
-                        stderr=t.STDERR,
-                    )
-                    timer.stop('subprocess')
-                    # This is the stuff we need to parse to get the iterations
-                    # and time
-                    iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time = (
-                        self._parse_ipopt_output(ostreams[0])
-                    )
 
             if len(nl_info.variables) == 0:
                 if len(nl_info.eliminated_vars) == 0:
