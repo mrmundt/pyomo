@@ -207,7 +207,7 @@ class Ipopt(SolverBase):
         self._writer = NLWriter()
         self._available_cache = None
         self._version_cache = None
-        self.time_limit_buffer = {'min' : 1.0, 'max' : 100.0, 'tol' : 0.01}
+        self.time_limit_buffer = {'min': 1.0, 'max': 100.0, 'tol': 0.01}
 
     def available(self, config=None):
         if config is None:
@@ -323,6 +323,72 @@ class Ipopt(SolverBase):
             )
         return process, iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time
 
+    def _generate_results_object(
+        self,
+        basename: str,
+        timer: HierarchicalTimer,
+        proven_infeasible: bool,
+        nl_info: NLWriterInfo,
+        subprocess: tuple,
+    ):
+        if proven_infeasible:
+            results = Results()
+            results.termination_condition = TerminationCondition.provenInfeasible
+            results.solution_loader = SolSolutionLoader(None, None)
+            results.iteration_count = 0
+            results.timing_info.total_seconds = 0
+        elif len(nl_info.variables) == 0:
+            if len(nl_info.eliminated_vars) == 0:
+                results = Results()
+                results.termination_condition = TerminationCondition.emptyModel
+                results.solution_loader = SolSolutionLoader(None, None)
+            else:
+                results = Results()
+                results.termination_condition = (
+                    TerminationCondition.convergenceCriteriaSatisfied
+                )
+                results.solution_status = SolutionStatus.optimal
+                results.solution_loader = SolSolutionLoader(None, nl_info=nl_info)
+                results.iteration_count = 0
+                results.timing_info.total_seconds = 0
+        else:
+            if os.path.isfile(basename + '.sol'):
+                with open(basename + '.sol', 'r') as sol_file:
+                    timer.start('parse_sol')
+                    results = self._parse_solution(sol_file, nl_info)
+                    timer.stop('parse_sol')
+            else:
+                results = Results()
+            if subprocess[0].returncode != 0:
+                results.extra_info.return_code = subprocess[0].returncode
+                results.termination_condition = TerminationCondition.error
+                results.solution_loader = SolSolutionLoader(None, None)
+            else:
+                results.iteration_count = subprocess[1]
+                if subprocess[2] is not None:
+                    results.timing_info.ipopt_excluding_nlp_functions = subprocess[2]
+
+                if subprocess[3] is not None:
+                    results.timing_info.nlp_function_evaluations = subprocess[3]
+                if subprocess[4] is not None:
+                    results.timing_info.total_seconds = subprocess[4]
+        return results
+
+    def _load_solutions(self, model, results):
+        results.solution_loader.load_vars()
+        if (
+            hasattr(model, 'dual')
+            and isinstance(model.dual, Suffix)
+            and model.dual.import_enabled()
+        ):
+            model.dual.update(results.solution_loader.get_duals())
+        if (
+            hasattr(model, 'rc')
+            and isinstance(model.rc, Suffix)
+            and model.rc.import_enabled()
+        ):
+            model.rc.update(results.solution_loader.get_reduced_costs())
+
     @document_kwargs_from_configdict(CONFIG)
     def solve(self, model, **kwds):
         # Begin time tracking
@@ -374,55 +440,19 @@ class Ipopt(SolverBase):
                     proven_infeasible = False
                 except InfeasibleConstraintException:
                     proven_infeasible = True
+                    nl_info = None
                 timer.stop('write_nl_file')
             if not proven_infeasible and len(nl_info.variables) > 0:
-                process, iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time = (
-                    self._run_subprocess(basename, timer, config, nl_info)
+                subprocess_result = self._run_subprocess(
+                    basename, timer, config, nl_info
                 )
-
-            if proven_infeasible:
-                results = Results()
-                results.termination_condition = TerminationCondition.provenInfeasible
-                results.solution_loader = SolSolutionLoader(None, None)
-                results.iteration_count = 0
-                results.timing_info.total_seconds = 0
-            elif len(nl_info.variables) == 0:
-                if len(nl_info.eliminated_vars) == 0:
-                    results = Results()
-                    results.termination_condition = TerminationCondition.emptyModel
-                    results.solution_loader = SolSolutionLoader(None, None)
-                else:
-                    results = Results()
-                    results.termination_condition = (
-                        TerminationCondition.convergenceCriteriaSatisfied
-                    )
-                    results.solution_status = SolutionStatus.optimal
-                    results.solution_loader = SolSolutionLoader(None, nl_info=nl_info)
-                    results.iteration_count = 0
-                    results.timing_info.total_seconds = 0
             else:
-                if os.path.isfile(basename + '.sol'):
-                    with open(basename + '.sol', 'r') as sol_file:
-                        timer.start('parse_sol')
-                        results = self._parse_solution(sol_file, nl_info)
-                        timer.stop('parse_sol')
-                else:
-                    results = Results()
-                if process.returncode != 0:
-                    results.extra_info.return_code = process.returncode
-                    results.termination_condition = TerminationCondition.error
-                    results.solution_loader = SolSolutionLoader(None, None)
-                else:
-                    results.iteration_count = iters
-                    if ipopt_time_nofunc is not None:
-                        results.timing_info.ipopt_excluding_nlp_functions = (
-                            ipopt_time_nofunc
-                        )
+                subprocess_result = None
 
-                    if ipopt_time_func is not None:
-                        results.timing_info.nlp_function_evaluations = ipopt_time_func
-                    if ipopt_total_time is not None:
-                        results.timing_info.total_seconds = ipopt_total_time
+            results = self._generate_results_object(
+                basename, timer, proven_infeasible, nl_info, subprocess_result
+            )
+
         if (
             config.raise_exception_on_nonoptimal_result
             and results.solution_status != SolutionStatus.optimal
@@ -444,19 +474,7 @@ class Ipopt(SolverBase):
             )
 
         if config.load_solutions:
-            results.solution_loader.load_vars()
-            if (
-                hasattr(model, 'dual')
-                and isinstance(model.dual, Suffix)
-                and model.dual.import_enabled()
-            ):
-                model.dual.update(results.solution_loader.get_duals())
-            if (
-                hasattr(model, 'rc')
-                and isinstance(model.rc, Suffix)
-                and model.rc.import_enabled()
-            ):
-                model.rc.update(results.solution_loader.get_reduced_costs())
+            self._load_solutions(model, results)
 
         if (
             results.solution_status in {SolutionStatus.feasible, SolutionStatus.optimal}

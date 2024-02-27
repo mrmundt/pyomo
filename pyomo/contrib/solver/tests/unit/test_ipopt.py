@@ -88,7 +88,7 @@ class TestIpoptInterface(unittest.TestCase):
             'solve',
             'version',
             'name',
-            'time_limit_buffer'
+            'time_limit_buffer',
         ]
         method_list = [method for method in dir(opt) if method.startswith('_') is False]
         self.assertEqual(sorted(expected_list), sorted(method_list))
