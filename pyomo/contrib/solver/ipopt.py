@@ -16,13 +16,12 @@ import io
 from typing import Mapping, Optional, Sequence
 
 from pyomo.common import Executable
-from pyomo.common.config import (
-    ConfigValue,
-    NonNegativeFloat,
-    document_kwargs_from_configdict,
-    ConfigDict,
+from pyomo.common.config import ConfigValue, document_kwargs_from_configdict, ConfigDict
+from pyomo.common.errors import (
+    PyomoException,
+    DeveloperError,
+    InfeasibleConstraintException,
 )
-from pyomo.common.errors import PyomoException, DeveloperError
 from pyomo.common.tempfiles import TempfileManager
 from pyomo.common.timing import HierarchicalTimer
 from pyomo.core.base.var import _GeneralVarData
@@ -78,53 +77,6 @@ class IpoptConfig(SolverConfig):
         )
         self.writer_config: ConfigDict = self.declare(
             'writer_config', NLWriter.CONFIG()
-        )
-
-
-class IpoptResults(Results):
-    def __init__(
-        self,
-        description=None,
-        doc=None,
-        implicit=False,
-        implicit_domain=None,
-        visibility=0,
-    ):
-        super().__init__(
-            description=description,
-            doc=doc,
-            implicit=implicit,
-            implicit_domain=implicit_domain,
-            visibility=visibility,
-        )
-        self.timing_info.ipopt_excluding_nlp_functions: Optional[float] = (
-            self.timing_info.declare(
-                'ipopt_excluding_nlp_functions',
-                ConfigValue(
-                    domain=NonNegativeFloat,
-                    default=None,
-                    description="Total CPU seconds in IPOPT without function evaluations.",
-                ),
-            )
-        )
-        self.timing_info.nlp_function_evaluations: Optional[float] = (
-            self.timing_info.declare(
-                'nlp_function_evaluations',
-                ConfigValue(
-                    domain=NonNegativeFloat,
-                    default=None,
-                    description="Total CPU seconds in NLP function evaluations.",
-                ),
-            )
-        )
-        self.timing_info.total_seconds: Optional[float] = self.timing_info.declare(
-            'total_seconds',
-            ConfigValue(
-                domain=NonNegativeFloat,
-                default=None,
-                description="Total seconds in IPOPT. NOTE: Newer versions of IPOPT (3.14+) "
-                "no longer separate timing information.",
-            ),
         )
 
 
@@ -255,6 +207,7 @@ class Ipopt(SolverBase):
         self._writer = NLWriter()
         self._available_cache = None
         self._version_cache = None
+        self.time_limit_buffer = {'min' : 1.0, 'max' : 100.0, 'tol' : 0.01}
 
     def available(self, config=None):
         if config is None:
@@ -327,7 +280,6 @@ class Ipopt(SolverBase):
         self,
         basename: str,
         timer: HierarchicalTimer,
-        ostreams: list,
         config: IpoptConfig,
         nl_info: NLWriterInfo,
     ):
@@ -353,7 +305,7 @@ class Ipopt(SolverBase):
         else:
             timeout = None
 
-        with TeeStream(*ostreams) as t:
+        with TeeStream(*self._ostreams) as t:
             timer.start('subprocess')
             process = subprocess.run(
                 cmd,
@@ -367,7 +319,7 @@ class Ipopt(SolverBase):
             # This is the stuff we need to parse to get the iterations
             # and time
             iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time = (
-                self._parse_ipopt_output(ostreams[0])
+                self._parse_ipopt_output(self._ostreams[0])
             )
         return process, iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time
 
@@ -392,6 +344,7 @@ class Ipopt(SolverBase):
             timer = HierarchicalTimer()
         else:
             timer = config.timer
+        self._ostreams = [io.StringIO()] + config.tee
         StaleFlagManager.mark_all_as_stale()
         with TempfileManager.new_context() as tempfile:
             if config.working_dir is None:
@@ -410,27 +363,36 @@ class Ipopt(SolverBase):
             ) as row_file, open(basename + '.col', 'w') as col_file:
                 timer.start('write_nl_file')
                 self._writer.config.set_value(config.writer_config)
-                nl_info = self._writer.write(
-                    model,
-                    nl_file,
-                    row_file,
-                    col_file,
-                    symbolic_solver_labels=config.symbolic_solver_labels,
-                )
+                try:
+                    nl_info = self._writer.write(
+                        model,
+                        nl_file,
+                        row_file,
+                        col_file,
+                        symbolic_solver_labels=config.symbolic_solver_labels,
+                    )
+                    proven_infeasible = False
+                except InfeasibleConstraintException:
+                    proven_infeasible = True
                 timer.stop('write_nl_file')
-            ostreams = [io.StringIO()] + config.tee
-            if len(nl_info.variables) > 0:
+            if not proven_infeasible and len(nl_info.variables) > 0:
                 process, iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time = (
-                    self._run_subprocess(basename, timer, ostreams, config, nl_info)
+                    self._run_subprocess(basename, timer, config, nl_info)
                 )
 
-            if len(nl_info.variables) == 0:
+            if proven_infeasible:
+                results = Results()
+                results.termination_condition = TerminationCondition.provenInfeasible
+                results.solution_loader = SolSolutionLoader(None, None)
+                results.iteration_count = 0
+                results.timing_info.total_seconds = 0
+            elif len(nl_info.variables) == 0:
                 if len(nl_info.eliminated_vars) == 0:
-                    results = IpoptResults()
+                    results = Results()
                     results.termination_condition = TerminationCondition.emptyModel
                     results.solution_loader = SolSolutionLoader(None, None)
                 else:
-                    results = IpoptResults()
+                    results = Results()
                     results.termination_condition = (
                         TerminationCondition.convergenceCriteriaSatisfied
                     )
@@ -445,18 +407,22 @@ class Ipopt(SolverBase):
                         results = self._parse_solution(sol_file, nl_info)
                         timer.stop('parse_sol')
                 else:
-                    results = IpoptResults()
+                    results = Results()
                 if process.returncode != 0:
                     results.extra_info.return_code = process.returncode
                     results.termination_condition = TerminationCondition.error
                     results.solution_loader = SolSolutionLoader(None, None)
                 else:
                     results.iteration_count = iters
-                    results.timing_info.ipopt_excluding_nlp_functions = (
-                        ipopt_time_nofunc
-                    )
-                    results.timing_info.nlp_function_evaluations = ipopt_time_func
-                    results.timing_info.total_seconds = ipopt_total_time
+                    if ipopt_time_nofunc is not None:
+                        results.timing_info.ipopt_excluding_nlp_functions = (
+                            ipopt_time_nofunc
+                        )
+
+                    if ipopt_time_func is not None:
+                        results.timing_info.nlp_function_evaluations = ipopt_time_func
+                    if ipopt_total_time is not None:
+                        results.timing_info.total_seconds = ipopt_total_time
         if (
             config.raise_exception_on_nonoptimal_result
             and results.solution_status != SolutionStatus.optimal
@@ -512,8 +478,8 @@ class Ipopt(SolverBase):
                 )
 
         results.solver_configuration = config
-        if len(nl_info.variables) > 0:
-            results.solver_log = ostreams[0].getvalue()
+        if not proven_infeasible and len(nl_info.variables) > 0:
+            results.solver_log = self._ostreams[0].getvalue()
 
         # Capture/record end-time / wall-time
         end_timestamp = datetime.datetime.now(datetime.timezone.utc)
@@ -564,7 +530,7 @@ class Ipopt(SolverBase):
         return iters, nofunc_time, func_time, total_time
 
     def _parse_solution(self, instream: io.TextIOBase, nl_info: NLWriterInfo):
-        results = IpoptResults()
+        results = Results()
         res, sol_data = parse_sol_file(
             sol_file=instream, nl_info=nl_info, result=results
         )
