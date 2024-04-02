@@ -7,6 +7,11 @@ on:
   pull_request:
     branches:
       - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
   workflow_dispatch:
     inputs:
       git-ref:
@@ -34,6 +39,9 @@ jobs:
   lint:
     name: lint/style-and-typos
     runs-on: ubuntu-latest
+    if: |
+      ${{ ! github.event.pull_request.draft &&
+      github.event.pull_request.title != *"WIP"* }}
     steps:
     - name: Checkout Pyomo source
       uses: actions/checkout@v4
