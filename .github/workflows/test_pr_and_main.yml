@@ -39,7 +39,8 @@ jobs:
   lint:
     name: lint/style-and-typos
     runs-on: ubuntu-latest
-    if: ${{ !github.event.pull_request.draft }}
+    if: |
+      ${{ !github.event.pull_request.draft }} || !contains(github.event.pull_request.title, "WIP")
     steps:
     - name: Checkout Pyomo source
       uses: actions/checkout@v4
@@ -739,7 +740,7 @@ jobs:
   cover:
     name: process-coverage-${{ matrix.TARGET }}
     needs: build
-    if: always() # run even if a build job fails
+    if: success() || failure() # run even if a build job fails, but not if cancelled
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
