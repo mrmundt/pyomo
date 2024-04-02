@@ -40,7 +40,7 @@ jobs:
     name: lint/style-and-typos
     runs-on: ubuntu-latest
     if: |
-      !contains(github.event.pull_request.title, '["WIP"]') && !github.event.pull_request.draft
+      ${{ !contains(github.event.pull_request.title, 'WIP') }} && !github.event.pull_request.draft
     steps:
     - name: Checkout Pyomo source
       uses: actions/checkout@v4
