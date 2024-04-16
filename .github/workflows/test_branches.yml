@@ -339,7 +339,7 @@ jobs:
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
         conda config --set verbosity 2
-        for PGK in $CONDA_DEPENDENCIES; do
+        for PKG in $CONDA_DEPENDENCIES; do
             echo "------- Attempting to install $PKG --------"
             conda install --update-deps -y $PKG
         done
