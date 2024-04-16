@@ -211,7 +211,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: false
-        miniconda-version: ["latest"]
+        miniconda-version: latest
         python-version: ${{ matrix.python }}
 
     # This is necessary for qt (UI) tests; the package utilized here does not
