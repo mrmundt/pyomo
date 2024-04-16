@@ -210,7 +210,7 @@ jobs:
       if: matrix.PYENV == 'conda'
       uses: conda-incubator/setup-miniconda@v3
       with:
-        auto-update-conda: false
+        auto-update-conda: true
         python-version: ${{ matrix.python }}
 
     # This is necessary for qt (UI) tests; the package utilized here does not
@@ -337,7 +337,6 @@ jobs:
         echo "*** Install Pyomo dependencies ***"
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
-        conda update -y conda -n test
         conda install --update-deps -y $CONDA_DEPENDENCIES
         if test -z "${{matrix.slim}}"; then
             PYVER=$(echo "py${{matrix.python}}" | sed 's/\.//g')
