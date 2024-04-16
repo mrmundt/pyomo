@@ -92,7 +92,7 @@ jobs:
           skip_doctest: 1
           TARGET: linux
           PYENV: conda
-          PACKAGES: mpi4py==3.1.5
+          PACKAGES: 'mpi4py<=3.1.6'
 
         - os: ubuntu-latest
           python: '3.10'
@@ -338,11 +338,7 @@ jobs:
         echo "*** Install Pyomo dependencies ***"
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
-        conda config --set verbosity 2
-        for PKG in $CONDA_DEPENDENCIES; do
-            echo "------- Attempting to install $PKG --------"
-            conda install --update-deps -y $PKG
-        done
+        conda install --update-deps -y $CONDA_DEPENDENCIES
         if test -z "${{matrix.slim}}"; then
             PYVER=$(echo "py${{matrix.python}}" | sed 's/\.//g')
             echo "Installing for $PYVER"
