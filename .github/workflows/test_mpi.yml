@@ -68,13 +68,6 @@ jobs:
         conda config --remove channels defaults
         conda config --append channels nodefaults
         conda config --append channels conda-forge
-        # Try to install mamba
-        conda install --update-deps -q -y -n base conda-libmamba-solver \
-            || MAMBA_FAILED=1
-        if test -z "$MAMBA_FAILED"; then
-            echo "*** Activating the mamba environment solver ***"
-            conda config --set solver libmamba
-        fi
         # Print environment info
         echo "*** CONDA environment: ***"
         conda info
@@ -83,5 +76,6 @@ jobs:
         conda list --show-channel-urls
         which python
         python --version
+        echo "*** Attempting install ***"
         conda install --update-deps -y mpi4py
 
