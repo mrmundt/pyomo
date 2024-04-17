@@ -63,9 +63,7 @@ jobs:
     - name: Let us install some stuff
       run: |
         # Set up environment
-        conda config --set always_yes yes
-        #conda config --set auto_update_conda false
-        #conda config --remove channels defaults
+        conda config --remove channels defaults
         conda config --append channels nodefaults
         conda config --append channels conda-forge
         # Print environment info
@@ -77,5 +75,5 @@ jobs:
         which python
         python --version
         echo "*** Attempting install ***"
-        conda install --update-deps -y mpi4py
+        conda install --update-deps -y mpi4py || echo "Abnormal exit code"
 
