@@ -75,5 +75,6 @@ jobs:
         which python
         python --version
         echo "*** Attempting install ***"
-        conda install --update-deps -y mpi4py && echo $?
+        conda install --update-deps -y impi_rt
+        conda install --update-deps -y mpi4py
 
