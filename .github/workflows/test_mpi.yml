@@ -75,5 +75,5 @@ jobs:
         which python
         python --version
         echo "*** Attempting install ***"
-        conda install --update-deps -y mpi4py || echo "Abnormal exit code"
+        conda install --update-deps -y mpi4py
 
