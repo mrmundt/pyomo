@@ -1,0 +1,87 @@
+name: Let Us Test MPI
+
+on:
+  push:
+    branches-ignore:
+      - main
+  workflow_dispatch:
+    inputs:
+      git-ref:
+        description: Git Hash (Optional)
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+env:
+  PYTHONWARNINGS: ignore::UserWarning
+  PYTHON_CORE_PKGS: wheel
+  PYPI_ONLY: z3-solver
+  PYPY_EXCLUDE: scipy numdifftools seaborn statsmodels
+  CACHE_VER: v221013.1
+  NEOS_EMAIL: tests@pyomo.org
+  SRC_REF: ${{ github.head_ref || github.ref }}
+
+jobs:
+  build:
+    name: linux/3.10${{ matrix.other }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python: ['3.10']
+        other: ['']
+
+        include:
+        - os: ubuntu-latest
+          python: '3.10'
+          other: /mpi
+
+    steps:
+    - name: Set up list of stuff to install
+      run: |
+        EXTRAS=tests
+        if test -z "${{matrix.slim}}"; then
+            EXTRAS="$EXTRAS,docs,optional"
+        fi
+        echo "EXTRAS=$EXTRAS" >> $GITHUB_ENV
+        PYTHON_PACKAGES="${{matrix.PACKAGES}}"
+        echo "PYTHON_PACKAGES=$PYTHON_PACKAGES" \
+            | tr '\n' ' ' | sed 's/ \+/ /g' >> $GITHUB_ENV
+
+    - name: Set up Miniconda Python ${{ matrix.python }}
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: false
+        python-version: ${{ matrix.python }}
+
+    - name: Let us install some stuff
+      run: |
+        # Set up environment
+        conda config --set always_yes yes
+        conda config --set auto_update_conda false
+        conda config --remove channels defaults
+        conda config --append channels nodefaults
+        conda config --append channels conda-forge
+        # Try to install mamba
+        conda install --update-deps -q -y -n base conda-libmamba-solver \
+            || MAMBA_FAILED=1
+        if test -z "$MAMBA_FAILED"; then
+            echo "*** Activating the mamba environment solver ***"
+            conda config --set solver libmamba
+        fi
+        # Print environment info
+        echo "*** CONDA environment: ***"
+        conda info
+        conda config --show-sources
+        conda config --show channels
+        conda list --show-channel-urls
+        which python
+        python --version
+        conda install --update-deps -y mpi4py
+
