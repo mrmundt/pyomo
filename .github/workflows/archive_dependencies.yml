@@ -95,6 +95,7 @@ jobs:
     - name: Configure job parameters
       run: |
         JOB="${{matrix.TARGET}}/${{matrix.python}}${{matrix.other}}"
+        echo "TIMESTAMP=$(date +%F)" >> $GITHUB_ENV
         echo "GHA_JOBNAME=$JOB" | sed 's|/|_|g' >> $GITHUB_ENV
         if test -z "${{matrix.other}}"; then
             echo "GHA_JOBGROUP=${{matrix.TARGET}}" >> $GITHUB_ENV
@@ -110,7 +111,6 @@ jobs:
         PYTHON_PACKAGES="${{matrix.PACKAGES}}"
         echo "PYTHON_PACKAGES=$PYTHON_PACKAGES" \
             | tr '\n' ' ' | sed 's/ \+/ /g' >> $GITHUB_ENV
-        echo "TIMESTAMP=$(date +%F)" >> $GITHUB_ENV
 
     #- name: Pip package cache
     #  uses: actions/cache@v4
