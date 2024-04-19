@@ -1,6 +1,9 @@
 name: Nightly Dependencies Archive
 
 on:
+  push:
+    branches-ignore:
+      - main
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
