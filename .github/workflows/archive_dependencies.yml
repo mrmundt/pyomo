@@ -560,20 +560,21 @@ jobs:
         echo "--------------------------------------------------" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## Current Environment" >> $GITHUB_STEP_SUMMARY
+        echo "--------------------------------------------------" >> $GITHUB_STEP_SUMMARY
         env >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "--------------------------------------------------" >> $GITHUB_STEP_SUMMARY
         echo "## Packages installed via pip" >> $GITHUB_STEP_SUMMARY
+        echo "--------------------------------------------------" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         pip list >> $GITHUB_STEP_SUMMARY
-        echo "--------------------------------------------------" >> $GITHUB_STEP_SUMMARY
         if "${{ matrix.PYENV }}" == 'conda'; then
             echo "## Packages installed via conda" >> $GITHUB_STEP_SUMMARY
+            echo "--------------------------------------------------" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             conda list >> $GITHUB_STEP_SUMMARY
-            echo "--------------------------------------------------" >> $GITHUB_STEP_SUMMARY
         fi
         echo "## Pyomo Help Information" >> $GITHUB_STEP_SUMMARY
+        echo "--------------------------------------------------" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         pyomo help --solvers >> $GITHUB_STEP_SUMMARY
         pyomo help --transformations >> $GITHUB_STEP_SUMMARY
