@@ -1015,7 +1015,7 @@ def _finalize_numpy(np, available):
         # registration here (to bypass the deprecation warning) until we
         # finally remove all support for it
         numeric_types._native_boolean_types.add(t)
-    _complex = [np.complex_, np.complex64, np.complex128]
+    _complex = [np.complex64, np.complex128]
     # complex192 and complex256 may or may not be defined in this
     # particular numpy build (it depends on platform and version).
     # Register them only if they are present
