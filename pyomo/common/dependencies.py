@@ -1000,15 +1000,15 @@ def _finalize_numpy(np, available):
         # finally remove all support for it
         numeric_types._native_boolean_types.add(t)
     _floats = [np.float16, np.float32, np.float64]
-    if int(numpy.version.version.split('.')[0]) < 2:
-        _floats.append(np.float_)
-    # float96 and float128 may or may not be defined in this particular
+    # float_, float96, and float128 may or may not be defined in this particular
     # numpy build (it depends on platform and version).
     # Register them only if they are present
     if hasattr(np, 'float96'):
         _floats.append(np.float96)
     if hasattr(np, 'float128'):
         _floats.append(np.float128)
+    if hasattr(np, 'float_'):
+        _floats.append(np.float_)
     for t in _floats:
         numeric_types.RegisterNumericType(t)
         # We have deprecated RegisterBooleanType, so we will mock up the
@@ -1023,6 +1023,8 @@ def _finalize_numpy(np, available):
         _complex.append(np.complex192)
     if hasattr(np, 'complex256'):
         _complex.append(np.complex256)
+    if hasattr(np, 'complex_'):
+        _complex.append(np.complex_)
     for t in _complex:
         numeric_types.RegisterComplexType(t)
 
