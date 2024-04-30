@@ -999,7 +999,9 @@ def _finalize_numpy(np, available):
         # registration here (to bypass the deprecation warning) until we
         # finally remove all support for it
         numeric_types._native_boolean_types.add(t)
-    _floats = [np.float_, np.float16, np.float32, np.float64]
+    _floats = [np.float16, np.float32, np.float64]
+    if int(numpy.version.version.split('.')[0]) < 2:
+        _floats.append(np.float_)
     # float96 and float128 may or may not be defined in this particular
     # numpy build (it depends on platform and version).
     # Register them only if they are present
