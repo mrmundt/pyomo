@@ -21,7 +21,7 @@ defaults:
 env:
   PYTHONWARNINGS: ignore::UserWarning
   PYTHON_CORE_PKGS: wheel
-  PYPI_ONLY: z3-solver
+  PYPI_ONLY: z3-solver numpy==2.0.0rc1
   PYPY_EXCLUDE: scipy numdifftools seaborn statsmodels
   CACHE_VER: v221013.1
   NEOS_EMAIL: tests@pyomo.org
@@ -269,12 +269,12 @@ jobs:
                 || echo "WARNING: Gurobi is not available"
             python -m pip install --cache-dir cache/pip xpress \
                 || echo "WARNING: Xpress Community Edition is not available"
-            if [[ ${{matrix.python}} == pypy* ]]; then
-                echo "skipping wntr for pypy"
-            else
-                python -m pip install wntr \
-                    || echo "WARNING: WNTR is not available"
-            fi
+            # if [[ ${{matrix.python}} == pypy* ]]; then
+            #     echo "skipping wntr for pypy"
+            # else
+            #     python -m pip install wntr \
+            #         || echo "WARNING: WNTR is not available"
+            # fi
         fi
         python -c 'import sys; print("PYTHON_EXE=%s" \
             % (sys.executable,))' >> $GITHUB_ENV
@@ -373,7 +373,7 @@ jobs:
         fi
         # Re-try Pyomo (optional) dependencies with pip
         if test -n "$PYPI_DEPENDENCIES"; then
-            python -m pip install --cache-dir cache/pip $PYPI_DEPENDENCIES
+            python -m pip install --cache-dir cache/pip $PYPI_DEPENDENCIES numpy==2.0.0rc1
         fi
         # remember this python interpreter
         python -c 'import sys; print("PYTHON_EXE=%s" \
