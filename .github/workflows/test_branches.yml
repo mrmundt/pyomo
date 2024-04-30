@@ -258,7 +258,7 @@ jobs:
                 PACKAGES=${PACKAGES//$WORD / }
             done
         fi
-        python -m pip install --cache-dir cache/pip ${PACKAGES}
+        python -m pip install --cache-dir cache/pip ${PACKAGES} numpy==2.0.0rc1
         python -m pip install --cache-dir cache/pip pymysql || \
             python -m pip install --cache-dir cache/pip pymysql
         if test -z "${{matrix.slim}}"; then
@@ -275,7 +275,6 @@ jobs:
             #     python -m pip install wntr \
             #         || echo "WARNING: WNTR is not available"
             # fi
-            python -m pip install --cache-dir cache/pip numpy==2.0.0rc1
         fi
         python -c 'import sys; print("PYTHON_EXE=%s" \
             % (sys.executable,))' >> $GITHUB_ENV
@@ -374,7 +373,7 @@ jobs:
         fi
         # Re-try Pyomo (optional) dependencies with pip
         if test -n "$PYPI_DEPENDENCIES"; then
-            python -m pip install --cache-dir cache/pip $PYPI_DEPENDENCIES numpy==2.0.0rc1
+            python -m pip install --cache-dir cache/pip $PYPI_DEPENDENCIES
         fi
         # remember this python interpreter
         python -c 'import sys; print("PYTHON_EXE=%s" \
