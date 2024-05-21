@@ -355,6 +355,7 @@ jobs:
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
         for DEP in $CONDA_DEPENDENCIES; do
+            echo "Installing $DEP..."
             conda install --update-deps -y $DEP
         done
         #conda install --update-deps -q -y $CONDA_DEPENDENCIES
