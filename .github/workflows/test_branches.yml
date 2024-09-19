@@ -86,7 +86,7 @@ jobs:
           TARGET: osx
           PYENV: pip
 
-        - os: windows-latest
+        - os: windows-2019
           python: 3.9
           TARGET: win
           PYENV: conda
@@ -118,7 +118,7 @@ jobs:
           PYENV: pip
           PACKAGES: cython
 
-        - os: windows-latest
+        - os: windows-2019
           python: 3.8
           other: /pip
           skip_doctest: 1
