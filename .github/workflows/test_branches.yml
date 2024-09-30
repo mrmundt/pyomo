@@ -621,7 +621,7 @@ jobs:
             > ${SITE_PACKAGES}/run_coverage_at_startup.pth
 
     - name: Show path on Windows
-      if: matrix.TARGET == win
+      if: matrix.TARGET == 'win'
       shell: pwsh
       run: $env:PATH
 
