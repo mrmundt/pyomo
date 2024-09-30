@@ -393,6 +393,7 @@ jobs:
                 fi
             done
         fi
+        conda install "setuptools<75.0.0"
         # Re-try Pyomo (optional) dependencies with pip
         if test -n "$PYPI_DEPENDENCIES"; then
             python -m pip install --cache-dir cache/pip $PYPI_DEPENDENCIES
