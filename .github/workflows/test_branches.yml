@@ -620,12 +620,15 @@ jobs:
         echo 'import coverage; coverage.process_startup()' \
             > ${SITE_PACKAGES}/run_coverage_at_startup.pth
 
+    - name: Show path on Windows
+      if: matrix.TARGET == win
+      shell: pwsh
+      run: echo %PATH%
+
+
     - name: Download and install extensions
       if: ${{ ! matrix.slim }}
       run: |
-        echo ""
-        echo "Current PATH"
-        echo $PATH
         echo ""
         echo "Pyomo download-extensions"
         echo ""
