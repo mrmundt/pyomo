@@ -218,10 +218,8 @@ jobs:
     - name: Update Windows
       if: matrix.TARGET == 'win'
       run: |
-        winget install Microsoft.VisualStudio.2022.Community \
-        --accept-source-agreements --accept-source-agreements --silent \
-        --override "--wait --quiet --add ProductLang En-us \
-        --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended"
+        winget install Microsoft.VisualStudio.2022.BuildTools \
+        --accept-source-agreements --accept-source-agreements --silent
         echo "SETUPTOOLS_USE_DISTUTILS=local" >> $GITHUB_ENV
 
     - name: Set up Python ${{ matrix.python }}
