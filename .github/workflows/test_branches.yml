@@ -618,6 +618,9 @@ jobs:
       if: ${{ ! matrix.slim }}
       run: |
         echo ""
+        echo "Current PATH"
+        echo $PATH
+        echo ""
         echo "Pyomo download-extensions"
         echo ""
         pyomo download-extensions || exit 1
