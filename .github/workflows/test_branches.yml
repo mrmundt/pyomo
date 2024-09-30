@@ -314,6 +314,9 @@ jobs:
             echo "*** Activating the mamba environment solver ***"
             conda config --set solver libmamba
         fi
+        if test "${{matrix.TARGET}}" == win; then
+            conda install libpython m2w64-toolchain_win-64
+        fi
         # Add the rest of the channels
         conda config --append channels gurobi
         conda config --append channels ibmdecisionoptimization
