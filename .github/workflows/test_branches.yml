@@ -623,7 +623,7 @@ jobs:
     - name: Show path on Windows
       if: matrix.TARGET == win
       shell: pwsh
-      run: echo %PATH%
+      run: $env:PATH
 
 
     - name: Download and install extensions
