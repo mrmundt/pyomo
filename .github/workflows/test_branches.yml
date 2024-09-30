@@ -354,7 +354,7 @@ jobs:
         echo "*** Install Pyomo dependencies ***"
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
-        conda install --update-deps -q -y $CONDA_DEPENDENCIES "glib<2.81.0"
+        conda install --update-deps -q -y $CONDA_DEPENDENCIES "setuptools<74.0.0"
         if test -z "${{matrix.slim}}"; then
             PYVER=$(echo "py${{matrix.python}}" | sed 's/\.//g')
             echo "Installing for $PYVER"
