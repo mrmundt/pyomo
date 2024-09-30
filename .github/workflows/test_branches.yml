@@ -211,15 +211,9 @@ jobs:
             libginac-dev
         sudo chmod -R 777 ${GITHUB_WORKSPACE}/cache/os
 
-    - name: Install winget
-      if: matrix.TARGET == 'win'
-      uses: Cyberboss/install-winget@v1
-
     - name: Update Windows
       if: matrix.TARGET == 'win'
       run: |
-        winget install Microsoft.VisualStudio.2022.BuildTools \
-        --accept-source-agreements --accept-source-agreements --silent
         echo "SETUPTOOLS_USE_DISTUTILS=local" >> $GITHUB_ENV
 
     - name: Set up Python ${{ matrix.python }}
