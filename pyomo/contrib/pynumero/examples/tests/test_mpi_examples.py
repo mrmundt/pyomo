@@ -44,6 +44,8 @@ class TestExamples(unittest.TestCase):
     def test_parallel_vector_ops(self):
         z1_local, z2, z3 = parallel_vector_ops.main()
         z1_correct = np.array([6, 6, 6, 2, 2, 2, 4, 4, 4, 2, 4, 6])
+        print("First set:", z1_local)
+        print("Second set:", z1_correct)
         self.assertTrue(np.allclose(z1_local, z1_correct))
         self.assertAlmostEqual(z2, 56)
         self.assertAlmostEqual(z3, 3)
