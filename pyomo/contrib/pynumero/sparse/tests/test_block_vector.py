@@ -1080,9 +1080,9 @@ class TestBlockVector(unittest.TestCase):
             for i in range(2):
                 self.assertTrue(np.allclose(res.get_block(i), v2.get_block(i)))
 
-        other_funcs = [np.cumsum, np.cumproduct]
-        if hasattr(np, 'cumprod'):
-            other_funcs.append(np.cumprod)
+        other_funcs = [np.cumsum, np.cumprod]
+        if hasattr(np, 'cumproduct'):
+            other_funcs.append(np.cumproduct)
 
         for fun in other_funcs:
             res = fun(v)
