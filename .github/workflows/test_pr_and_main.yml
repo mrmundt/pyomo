@@ -107,7 +107,7 @@ jobs:
           skip_doctest: 1
           TARGET: linux
           PYENV: conda
-          PACKAGES: openmpi mpi4py
+          PACKAGES: mpich mpi4py
 
         - os: ubuntu-latest
           python: '3.12'
