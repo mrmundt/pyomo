@@ -67,7 +67,7 @@ jobs:
             CIBW_BUILD: ${{ matrix.wheel-version }}
             CIBW_SKIP: "*-musllinux*"
             CIBW_BUILD_VERBOSITY: 3
-            CIBW_BEFORE_ALL: echo -e '[tool.cibuildwheel]\n\nbefore-build = "pip install cython pybind11"' > /Users/runner/work/pyomo/pyomo/pyproject.toml && ls /Users/runner/work/pyomo && ls /Users/runner/work/pyomo/pyomo
+            CIBW_BEFORE_ALL: echo -e '[tool.cibuildwheel]\n\nbefore-build = "pip install cython pybind11"' > /Users/runner/work/pyomo/pyomo/pyproject.toml && cat /Users/runner/work/pyomo/pyomo/pyproject.toml
             CIBW_ENVIRONMENT: PYOMO_SETUP_ARGS="${{ matrix.GLOBAL_OPTIONS }}"
       - uses: actions/upload-artifact@v4
         with:
@@ -119,7 +119,7 @@ jobs:
             CIBW_BUILD: ${{ matrix.wheel-version }}
             CIBW_SKIP: "*-musllinux*"
             CIBW_BUILD_VERBOSITY: 3
-            CIBW_BEFORE_ALL: echo -e '[tool.cibuildwheel]\n\nbefore-build = "pip install cython pybind11"' > /Users/runner/work/pyomo/pyomo/pyproject.toml && ls /Users/runner/work/pyomo && ls /Users/runner/work/pyomo/pyomo
+            CIBW_BEFORE_ALL: echo -e '[tool.cibuildwheel]\n\nbefore-build = "pip install cython pybind11"' > /Users/runner/work/pyomo/pyomo/pyproject.toml && cat /Users/runner/work/pyomo/pyomo/pyproject.toml
             CIBW_ENVIRONMENT: PYOMO_SETUP_ARGS="${{ matrix.GLOBAL_OPTIONS }}"
       - uses: actions/upload-artifact@v4
         with:
