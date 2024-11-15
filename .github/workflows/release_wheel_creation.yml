@@ -62,6 +62,8 @@ jobs:
       - name: Create pyproject.toml
         run: |
           if [[ "${{ matrix.os }}" == *"windows"* ]]; then
+            touch $GITHUB_WORKSPACE\pyproject.toml
+            ls -la $GITHUB_WORKSPACE
             echo '[build-system]\n\nrequires = [ "setuptools", "wheel", "cython", "pybind11" ]' > $GITHUB_WORKSPACE\pyproject.toml
           else
             echo -e '[build-system]\n\nrequires = [ "setuptools", "wheel", "cython", "pybind11" ]' > $GITHUB_WORKSPACE/pyproject.toml
