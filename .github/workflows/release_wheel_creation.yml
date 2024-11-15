@@ -67,7 +67,7 @@ jobs:
             CIBW_BUILD: ${{ matrix.wheel-version }}
             CIBW_SKIP: "*-musllinux*"
             CIBW_BUILD_VERBOSITY: 1
-            CIBW_BEFORE_BUILD: pip install cython pybind11
+            CIBW_BEFORE_BUILD: python -m pip install cython pybind11
             CIBW_ENVIRONMENT: PYOMO_SETUP_ARGS="${{ matrix.GLOBAL_OPTIONS }}"
       - uses: actions/upload-artifact@v4
         with:
@@ -119,7 +119,7 @@ jobs:
             CIBW_BUILD: ${{ matrix.wheel-version }}
             CIBW_SKIP: "*-musllinux*"
             CIBW_BUILD_VERBOSITY: 1
-            CIBW_BEFORE_BUILD: pip install cython pybind11
+            CIBW_BEFORE_BUILD: python -m pip install cython pybind11
             CIBW_ENVIRONMENT: PYOMO_SETUP_ARGS="${{ matrix.GLOBAL_OPTIONS }}"
       - uses: actions/upload-artifact@v4
         with:
