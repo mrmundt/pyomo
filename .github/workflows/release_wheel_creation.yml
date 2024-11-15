@@ -61,7 +61,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Create pyproject.toml
         run: |
-          if [[ "${{ matrix.os }}" == *"windows"* ]]; then
+          if [[ "${{ matrix.os }}" == *"win"* ]]; then
+            echo "I AM HERE"
             touch $GITHUB_WORKSPACE\pyproject.toml
             ls -la $GITHUB_WORKSPACE
             echo '[build-system]\n\nrequires = [ "setuptools", "wheel", "cython", "pybind11" ]' > $GITHUB_WORKSPACE\pyproject.toml
