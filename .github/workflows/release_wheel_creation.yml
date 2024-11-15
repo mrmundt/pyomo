@@ -63,9 +63,9 @@ jobs:
         run: |
           if [[ "${{ matrix.os }}" == *"win"* ]]; then
             echo "I AM HERE"
-            touch $GITHUB_WORKSPACE\pyproject.toml
-            ls -la $GITHUB_WORKSPACE
-            echo '[build-system]\n\nrequires = [ "setuptools", "wheel", "cython", "pybind11" ]' > $GITHUB_WORKSPACE\pyproject.toml
+            pwd
+            echo '[build-system]\n\nrequires = [ "setuptools", "wheel", "cython", "pybind11" ]' > $GITHUB_WORKSPACE/pyproject.toml
+            cat $GITHUB_WORKSPACE/pyproject.toml
           else
             echo -e '[build-system]\n\nrequires = [ "setuptools", "wheel", "cython", "pybind11" ]' > $GITHUB_WORKSPACE/pyproject.toml
             cat $GITHUB_WORKSPACE/pyproject.toml
