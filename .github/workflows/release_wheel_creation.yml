@@ -111,6 +111,9 @@ jobs:
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
+      - name: Create pyproject.toml
+        run: |
+          echo -e '[build-system]\n\nrequires = [ "setuptools", "wheel", "cython", "pybind11" ]' > $GITHUB_WORKSPACE/pyproject.toml
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.21.3
         with:
@@ -120,7 +123,6 @@ jobs:
             CIBW_BUILD: ${{ matrix.wheel-version }}
             CIBW_SKIP: "*-musllinux*"
             CIBW_BUILD_VERBOSITY: 2
-            CIBW_BEFORE_ALL: echo -e '[build-system]\n\nrequires = [ "setuptools", "wheel", "cython", "pybind11" ]' > pyproject.toml && echo "${{ GITHUB_WORKSPACE }}" && mv pyproject.toml ${GITHUB_WORKSPACE} && ls ${GITHUB_WORKSPACE}
             CIBW_ENVIRONMENT: PYOMO_SETUP_ARGS="${{ matrix.GLOBAL_OPTIONS }}"
       - uses: actions/upload-artifact@v4
         with:
