@@ -419,6 +419,9 @@ jobs:
         echo ""
         echo "Final conda environment:"
         conda list | sed 's/^/    /'
+        echo ""
+        echo "CURRENT PATH..."
+        echo $GITHUB_PATH
 
     - name: Setup TPL package directories
       run: |
@@ -463,6 +466,9 @@ jobs:
         echo ""
         echo "$IPOPT_DIR"
         ls -l $IPOPT_DIR
+        echo ""
+        echo "CURRENT PATH..."
+        echo $GITHUB_PATH
 
     - name: Install GAMS
       if: ${{ ! matrix.slim }}
