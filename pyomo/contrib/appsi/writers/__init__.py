@@ -9,5 +9,5 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .nl_writer import NLWriter
-from .lp_writer import LPWriter
+from pyomo.contrib.appsi.writers.nl_writer import NLWriter
+from pyomo.contrib.appsi.writers.lp_writer import LPWriter

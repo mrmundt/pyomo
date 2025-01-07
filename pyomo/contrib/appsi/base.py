@@ -38,8 +38,8 @@ from pyomo.core.base.param import ParamData, Param
 from pyomo.core.base.block import BlockData, Block
 from pyomo.core.base.objective import ObjectiveData
 from pyomo.common.collections import ComponentMap
-from .utils.get_objective import get_objective
-from .utils.collect_vars_and_named_exprs import collect_vars_and_named_exprs
+from pyomo.contrib.appsi.utils.get_objective import get_objective
+from pyomo.contrib.appsi.utils.collect_vars_and_named_exprs import collect_vars_and_named_exprs
 from pyomo.opt.base import SolverFactory as LegacySolverFactory
 from pyomo.opt.results.results_ import SolverResults as LegacySolverResults
 from pyomo.opt.results.solution import (
@@ -52,7 +52,7 @@ from pyomo.opt.results.solver import (
 )
 from pyomo.core.kernel.objective import minimize
 from pyomo.core.base import SymbolMap
-from .cmodel import cmodel, cmodel_available
+from pyomo.contrib.appsi.cmodel import cmodel, cmodel_available
 from pyomo.core.staleflag import StaleFlagManager
 from pyomo.core.expr.numvalue import NumericConstant
 

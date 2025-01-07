@@ -27,7 +27,7 @@ def _importer():
         sys.path.insert(0, pyomo_config_dir)
         import appsi_cmodel
     except ImportError:
-        from . import appsi_cmodel
+        from pyomo.contrib.appsi.cmodel import appsi_cmodel
     finally:
         assert sys.path[0] == pyomo_config_dir
         sys.path.pop(0)

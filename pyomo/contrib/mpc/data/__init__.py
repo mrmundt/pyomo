@@ -9,10 +9,10 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .scalar_data import ScalarData
-from .series_data import TimeSeriesData
-from .interval_data import IntervalData
-from .convert import series_to_interval, interval_to_series
+from pyomo.contrib.mpc.data.scalar_data import ScalarData
+from pyomo.contrib.mpc.data.series_data import TimeSeriesData
+from pyomo.contrib.mpc.data.interval_data import IntervalData
+from pyomo.contrib.mpc.data.convert import series_to_interval, interval_to_series
 
 __doc__ = """A module containing data structures for storing values associated
     with time-indexed Pyomo variables.

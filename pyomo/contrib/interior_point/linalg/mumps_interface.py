@@ -9,21 +9,22 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .base_linear_solver_interface import IPLinearSolverInterface
-from pyomo.contrib.pynumero.linalg.base import LinearSolverStatus, LinearSolverResults
-from pyomo.common.dependencies import attempt_import
 from collections import OrderedDict
 from typing import Union, Optional, Tuple
+
+from pyomo.contrib.interior_point.linalg.base_linear_solver_interface import IPLinearSolverInterface
+from pyomo.contrib.pynumero.linalg.base import LinearSolverStatus, LinearSolverResults
+from pyomo.common.dependencies import attempt_import, numpy as np
 from pyomo.contrib.pynumero.sparse import BlockVector
-import numpy as np
+
+
+from pyomo.contrib.pynumero.linalg.mumps_interface import (
+    MumpsCentralizedAssembledLinearSolver,
+)
 
 mumps, mumps_available = attempt_import(
     name='pyomo.contrib.pynumero.linalg.mumps_interface',
     error_message='pymumps is required to use the MumpsInterface',
-)
-
-from pyomo.contrib.pynumero.linalg.mumps_interface import (
-    MumpsCentralizedAssembledLinearSolver,
 )
 
 

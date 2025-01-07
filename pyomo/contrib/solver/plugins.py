@@ -10,10 +10,10 @@
 #  ___________________________________________________________________________
 
 
-from .factory import SolverFactory
-from .ipopt import Ipopt
-from .gurobi import Gurobi
-from .gurobi_direct import GurobiDirect
+from pyomo.contrib.solver.factory import SolverFactory
+from pyomo.contrib.solver.ipopt import Ipopt
+from pyomo.contrib.solver.gurobi import Gurobi
+from pyomo.contrib.solver.gurobi_direct import GurobiDirect
 
 
 def load():

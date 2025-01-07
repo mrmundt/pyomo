@@ -9,18 +9,19 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .base import (
+from typing import Union, Tuple, Optional, Callable
+from scipy.sparse.linalg import splu, LinearOperator
+from scipy.linalg import eigvals
+from scipy.sparse import isspmatrix_csc, spmatrix
+
+from pyomo.contrib.pynumero.linalg.base import (
     DirectLinearSolverInterface,
     LinearSolverStatus,
     LinearSolverResults,
     LinearSolverInterface,
 )
-from scipy.sparse.linalg import splu, LinearOperator
-from scipy.linalg import eigvals
-from scipy.sparse import isspmatrix_csc, spmatrix
 from pyomo.contrib.pynumero.sparse import BlockVector, BlockMatrix
-import numpy as np
-from typing import Union, Tuple, Optional, Callable
+from pyomo.common.dependencies import numpy as np
 
 
 class ScipyLU(DirectLinearSolverInterface):

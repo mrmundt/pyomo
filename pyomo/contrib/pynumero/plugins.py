@@ -11,9 +11,9 @@
 
 from pyomo.common.extensions import ExtensionBuilderFactory
 from pyomo.opt import SolverFactory
-from .build import PyNumeroBuilder
-from .algorithms.solvers.cyipopt_solver import PyomoCyIpoptSolver
-from .algorithms.solvers.scipy_solvers import (
+from pyomo.contrib.pynumero.build import PyNumeroBuilder
+from pyomo.contrib.pynumero.algorithms.solvers.cyipopt_solver import PyomoCyIpoptSolver
+from pyomo.contrib.pynumero.algorithms.solvers.scipy_solvers import (
     PyomoFsolveSolver,
     PyomoRootSolver,
     PyomoNewtonSolver,

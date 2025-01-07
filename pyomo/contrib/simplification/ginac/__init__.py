@@ -41,7 +41,7 @@ def _importer():
 
         import ginac_interface
     except ImportError:
-        from . import ginac_interface
+        from pyomo.contrib.simplification.ginac import ginac_interface
     finally:
         assert sys.path[0] == pyomo_config_dir
         sys.path.pop(0)

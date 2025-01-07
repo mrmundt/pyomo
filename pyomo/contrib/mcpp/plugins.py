@@ -11,8 +11,8 @@
 
 from pyomo.common.download import DownloadFactory
 from pyomo.common.extensions import ExtensionBuilderFactory
-from .getMCPP import get_mcpp
-from .build import MCPPBuilder
+from pyomo.contrib.mcpp.getMCPP import get_mcpp
+from pyomo.contrib.mcpp.build import MCPPBuilder
 
 
 def load():

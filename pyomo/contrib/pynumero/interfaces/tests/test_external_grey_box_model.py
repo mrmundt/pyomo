@@ -31,8 +31,8 @@ if not AmplInterface.available():
 
 from pyomo.contrib.pynumero.algorithms.solvers.cyipopt_solver import cyipopt_available
 
-from ..external_grey_box import ExternalGreyBoxModel, ExternalGreyBoxBlock
-from ..pyomo_nlp import PyomoGreyBoxNLP
+from pyomo.contrib.pynumero.interfaces.external_grey_box import ExternalGreyBoxModel, ExternalGreyBoxBlock
+from pyomo.contrib.pynumero.interfaces.pyomo_nlp import PyomoGreyBoxNLP
 from pyomo.contrib.pynumero.interfaces.tests.compare_utils import (
     check_vectors_specific_order,
     check_sparse_matrix_specific_order,

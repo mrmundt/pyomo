@@ -10,9 +10,9 @@
 #  ___________________________________________________________________________
 
 from pyomo.common.extensions import ExtensionBuilderFactory
-from .base import SolverFactory
-from .solvers import Gurobi, Ipopt, Cbc, Cplex, Highs, MAiNGO
-from .build import AppsiBuilder
+from pyomo.contrib.appsi.base import SolverFactory
+from pyomo.contrib.appsi.solvers import Gurobi, Ipopt, Cbc, Cplex, Highs, MAiNGO
+from pyomo.contrib.appsi.build import AppsiBuilder
 
 
 def load():

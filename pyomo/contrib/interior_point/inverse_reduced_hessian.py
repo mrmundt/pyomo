@@ -12,8 +12,8 @@
 import pyomo.environ as pyo
 from pyomo.opt import check_optimal_termination
 from pyomo.common.dependencies import attempt_import
-from .interface import InteriorPointInterface
-from .linalg.scipy_interface import ScipyInterface
+from pyomo.contrib.interior_point.interface import InteriorPointInterface
+from pyomo.contrib.interior_point.linalg.scipy_interface import ScipyInterface
 
 np, numpy_available = attempt_import(
     'numpy', 'Interior point requires numpy', minimum_version='1.13.0'

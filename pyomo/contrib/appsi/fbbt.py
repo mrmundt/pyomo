@@ -16,7 +16,7 @@ from pyomo.common.config import (
     NonNegativeFloat,
     NonNegativeInt,
 )
-from .cmodel import cmodel, cmodel_available
+from pyomo.contrib.appsi.cmodel import cmodel, cmodel_available
 from typing import List, Optional
 from pyomo.core.base.var import VarData
 from pyomo.core.base.param import ParamData

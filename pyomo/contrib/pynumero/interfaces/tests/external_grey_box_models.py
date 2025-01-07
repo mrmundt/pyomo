@@ -9,6 +9,7 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
+import pyomo.common.unittest as unittest
 from pyomo.contrib.pynumero.dependencies import (
     numpy as np,
     numpy_available,
@@ -20,7 +21,7 @@ from pyomo.common.dependencies.scipy import sparse as spa
 if not (numpy_available and scipy_available):
     raise unittest.SkipTest("Pynumero needs scipy and numpy to run NLP tests")
 
-from ..external_grey_box import ExternalGreyBoxModel, ExternalGreyBoxBlock
+from pyomo.contrib.pynumero.interfaces.external_grey_box import ExternalGreyBoxModel, ExternalGreyBoxBlock
 
 # set of external models for testing
 # basic model is a simple pipe sequence with nonlinear pressure drop

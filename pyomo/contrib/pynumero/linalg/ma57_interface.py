@@ -9,8 +9,8 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .base import DirectLinearSolverInterface, LinearSolverStatus, LinearSolverResults
-from .ma57 import MA57Interface
+from pyomo.contrib.pynumero.linalg.base import DirectLinearSolverInterface, LinearSolverStatus, LinearSolverResults
+from pyomo.contrib.pynumero.linalg.ma57 import MA57Interface
 from scipy.sparse import isspmatrix_coo, tril, spmatrix
 from pyomo.contrib.pynumero.sparse import BlockVector, BlockMatrix
 from typing import Union, Tuple, Optional

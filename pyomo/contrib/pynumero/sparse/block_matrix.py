@@ -22,14 +22,16 @@ where m_{i,j} are sparse matrices
 
 """
 
-from pyomo.contrib.pynumero.sparse.block_vector import BlockVector
-from scipy.sparse import coo_matrix, csr_matrix, csc_matrix
-from scipy.sparse import isspmatrix
-from .base_block import BaseBlockMatrix
 import operator
-import numpy as np
 import logging
 import warnings
+from scipy.sparse import coo_matrix, csr_matrix, csc_matrix
+from scipy.sparse import isspmatrix
+
+from pyomo.common.dependencies import numpy as np
+from pyomo.contrib.pynumero.sparse.block_vector import BlockVector
+from pyomo.contrib.pynumero.sparse.base_block import BaseBlockMatrix
+
 
 
 logger = logging.getLogger(__name__)

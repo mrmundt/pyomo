@@ -11,6 +11,6 @@
 
 
 def load():
-    from . import interval_var
-    from .repn import docplex_writer
-    from .transform import logical_to_disjunctive_program
+    from pyomo.contrib.cp import interval_var
+    from pyomo.contrib.cp.repn import docplex_writer
+    from pyomo.contrib.cp.transform import logical_to_disjunctive_program

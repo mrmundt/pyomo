@@ -9,18 +9,17 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from pyomo.common.dependencies import mpi4py
+import operator
+from pyomo.common.dependencies import mpi4py, numpy as np
 from pyomo.contrib.pynumero.sparse import BlockVector
-from .base_block import (
+from pyomo.contrib.pynumero.sparse.base_block import (
     BaseBlockVector,
     vec_unary_ufuncs,
     vec_binary_ufuncs,
     vec_associative_reductions,
 )
-from .block_vector import NotFullyDefinedBlockVectorError
-from .block_vector import assert_block_structure as block_vector_assert_block_structure
-import numpy as np
-import operator
+from pyomo.contrib.pynumero.sparse.block_vector import NotFullyDefinedBlockVectorError
+from pyomo.contrib.pynumero.sparse.block_vector import assert_block_structure as block_vector_assert_block_structure
 
 
 def assert_block_structure(vec):

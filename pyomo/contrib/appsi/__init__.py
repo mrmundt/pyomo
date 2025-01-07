@@ -9,7 +9,7 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from . import base
-from . import solvers
-from . import writers
-from . import fbbt
+from pyomo.contrib.appsi import base
+from pyomo.contrib.appsi import solvers
+from pyomo.contrib.appsi import writers
+from pyomo.contrib.appsi import fbbt

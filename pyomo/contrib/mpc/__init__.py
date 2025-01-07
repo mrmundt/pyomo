@@ -9,8 +9,8 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .interfaces.model_interface import DynamicModelInterface
-from .data.series_data import TimeSeriesData
-from .data.interval_data import IntervalData
-from .data.scalar_data import ScalarData
-from .data.get_cuid import get_indexed_cuid
+from pyomo.contrib.mpc.interfaces.model_interface import DynamicModelInterface
+from pyomo.contrib.mpc.data.series_data import TimeSeriesData
+from pyomo.contrib.mpc.data.interval_data import IntervalData
+from pyomo.contrib.mpc.data.scalar_data import ScalarData
+from pyomo.contrib.mpc.data.get_cuid import get_indexed_cuid

@@ -10,7 +10,7 @@
 #  ___________________________________________________________________________
 
 from pyomo.common.extensions import ExtensionBuilderFactory
-from .build import GiNaCInterfaceBuilder
+from pyomo.contrib.simplification.build import GiNaCInterfaceBuilder
 
 
 def load():

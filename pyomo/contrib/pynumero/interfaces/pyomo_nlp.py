@@ -13,21 +13,21 @@ the Ampl Solver Library (ASL) implementation
 """
 
 import os
-import numpy as np
 
 from scipy.sparse import coo_matrix
 from pyomo.common.deprecation import deprecated
+from pyomo.common.dependencies import numpy as np
 from pyomo.common.tempfiles import TempfileManager
 from pyomo.opt import WriterFactory
 import pyomo.core.base as pyo
 from pyomo.common.collections import ComponentMap
 from pyomo.common.env import CtypesEnviron
 from pyomo.solvers.amplfunc_merge import amplfunc_merge
-from ..sparse.block_matrix import BlockMatrix
+from pyomo.contrib.pynumero.sparse.block_matrix import BlockMatrix
 from pyomo.contrib.pynumero.interfaces.ampl_nlp import AslNLP
 from pyomo.contrib.pynumero.interfaces.nlp import NLP
 from pyomo.core.base.suffix import SuffixFinder
-from .external_grey_box import ExternalGreyBoxBlock
+from pyomo.contrib.pynumero.interfaces.external_grey_box import ExternalGreyBoxBlock
 
 
 # TODO: There are todos in the code below

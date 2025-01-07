@@ -182,8 +182,8 @@ For example,
 
 import operator
 
-from ..dependencies import numpy as np
-from .base_block import (
+from pyomo.contrib.pynumero.dependencies import numpy as np
+from pyomo.contrib.pynumero.sparse.base_block import (
     BaseBlockVector,
     vec_unary_ufuncs,
     vec_binary_ufuncs,
@@ -621,7 +621,7 @@ class BlockVector(BaseBlockVector, np.ndarray):
                 accum += nelements
             return result
         else:
-            if other.__class__.__name__ == 'MPIBlockVector':
+            if condition.__class__.__name__ == 'MPIBlockVector':
                 raise RuntimeError('Operation not supported by BlockVector')
             raise NotImplementedError()
 

@@ -22,15 +22,15 @@ where m_{i,j} are sparse matrices
 
 """
 from __future__ import annotations
-from pyomo.common.dependencies import mpi4py
-from .mpi_block_vector import MPIBlockVector
-from .block_vector import BlockVector
-from .block_matrix import BlockMatrix, NotFullyDefinedBlockMatrixError
-from .block_matrix import assert_block_structure as block_matrix_assert_block_structure
-from .base_block import BaseBlockMatrix
-import numpy as np
 from scipy.sparse import coo_matrix
 import operator
+
+from pyomo.common.dependencies import mpi4py, numpy as np
+from pyomo.contrib.pynumero.sparse.mpi_block_vector import MPIBlockVector
+from pyomo.contrib.pynumero.sparse.block_vector import BlockVector
+from pyomo.contrib.pynumero.sparse.block_matrix import BlockMatrix, NotFullyDefinedBlockMatrixError
+from pyomo.contrib.pynumero.sparse.block_matrix import assert_block_structure as block_matrix_assert_block_structure
+from pyomo.contrib.pynumero.sparse.base_block import BaseBlockMatrix
 
 
 def assert_block_structure(mat: MPIBlockMatrix):

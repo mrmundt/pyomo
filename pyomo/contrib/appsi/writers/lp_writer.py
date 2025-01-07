@@ -22,8 +22,8 @@ from pyomo.contrib.appsi.base import PersistentBase
 from pyomo.core.base import SymbolMap, NumericLabeler, TextLabeler
 from pyomo.common.timing import HierarchicalTimer
 from pyomo.core.kernel.objective import minimize, maximize
-from .config import WriterConfig
-from ..cmodel import cmodel, cmodel_available
+from pyomo.contrib.appsi.writers.config import WriterConfig
+from pyomo.contrib.appsi.cmodel import cmodel, cmodel_available
 
 
 class LPWriter(PersistentBase):

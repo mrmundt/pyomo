@@ -9,7 +9,9 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
+import os
 from typing import List
+
 from pyomo.core.base.param import ParamData
 from pyomo.core.base.var import VarData
 from pyomo.core.base.constraint import ConstraintData
@@ -22,10 +24,9 @@ from pyomo.contrib.appsi.base import PersistentBase
 from pyomo.core.base import SymbolMap, NumericLabeler, TextLabeler
 from pyomo.common.timing import HierarchicalTimer
 from pyomo.core.kernel.objective import minimize
-from .config import WriterConfig
+from pyomo.contrib.appsi.writers.config import WriterConfig
 from pyomo.common.collections import OrderedSet
-import os
-from ..cmodel import cmodel, cmodel_available
+from pyomo.contrib.appsi.cmodel import cmodel, cmodel_available
 from pyomo.repn.plugins.ampl.ampl_ import set_pyomo_amplfunc_env
 
 

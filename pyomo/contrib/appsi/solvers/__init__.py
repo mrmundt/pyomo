@@ -9,10 +9,10 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .gurobi import Gurobi, GurobiResults
-from .ipopt import Ipopt
-from .cbc import Cbc
-from .cplex import Cplex
-from .highs import Highs
-from .wntr import Wntr, WntrResults
-from .maingo import MAiNGO
+from pyomo.contrib.appsi.solvers.gurobi import Gurobi, GurobiResults
+from pyomo.contrib.appsi.solvers.ipopt import Ipopt
+from pyomo.contrib.appsi.solvers.cbc import Cbc
+from pyomo.contrib.appsi.solvers.cplex import Cplex
+from pyomo.contrib.appsi.solvers.highs import Highs
+from pyomo.contrib.appsi.solvers.wntr import Wntr, WntrResults
+from pyomo.contrib.appsi.solvers.maingo import MAiNGO

@@ -9,12 +9,13 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .base_linear_solver_interface import IPLinearSolverInterface
+from typing import Union
+from scipy.sparse import isspmatrix_coo, tril, spmatrix
+
+from pyomo.contrib.interior_point.linalg.base_linear_solver_interface import IPLinearSolverInterface
 from pyomo.contrib.pynumero.linalg.base import LinearSolverStatus, LinearSolverResults
 from pyomo.contrib.pynumero.linalg.ma27_interface import MA27
-from scipy.sparse import isspmatrix_coo, tril, spmatrix
 from pyomo.contrib.pynumero.sparse import BlockVector, BlockMatrix
-from typing import Union
 
 
 class InteriorPointMA27Interface(MA27, IPLinearSolverInterface):

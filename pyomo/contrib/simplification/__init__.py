@@ -9,4 +9,4 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .simplify import Simplifier
+from pyomo.contrib.simplification.simplify import Simplifier

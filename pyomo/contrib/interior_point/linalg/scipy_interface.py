@@ -9,15 +9,17 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .base_linear_solver_interface import IPLinearSolverInterface
-from pyomo.contrib.pynumero.linalg.base import LinearSolverResults
+from typing import Union
+import logging
 from scipy.linalg import eigvals
 from scipy.sparse import spmatrix
+
+from pyomo.contrib.interior_point.linalg.base_linear_solver_interface import IPLinearSolverInterface
+from pyomo.contrib.pynumero.linalg.base import LinearSolverResults
 from pyomo.contrib.pynumero.sparse import BlockMatrix
-import logging
-import numpy as np
 from pyomo.contrib.pynumero.linalg.scipy_interface import ScipyLU
-from typing import Union
+from pyomo.common.dependencies import numpy as np
+
 
 
 class ScipyInterface(ScipyLU, IPLinearSolverInterface):

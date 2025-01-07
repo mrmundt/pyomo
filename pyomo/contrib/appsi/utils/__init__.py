@@ -9,5 +9,5 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .get_objective import get_objective
-from .collect_vars_and_named_exprs import collect_vars_and_named_exprs
+from pyomo.contrib.appsi.utils.get_objective import get_objective
+from pyomo.contrib.appsi.utils.collect_vars_and_named_exprs import collect_vars_and_named_exprs
