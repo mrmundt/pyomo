@@ -25,10 +25,8 @@ where m_{i,j} are sparse matrices
 import operator
 import logging
 import warnings
-from scipy.sparse import coo_matrix, csr_matrix, csc_matrix
-from scipy.sparse import isspmatrix
 
-from pyomo.common.dependencies import numpy as np
+from pyomo.contrib.pynumero.dependencies import numpy as np, scipy
 from pyomo.contrib.pynumero.sparse.block_vector import BlockVector
 from pyomo.contrib.pynumero.sparse.base_block import BaseBlockMatrix
 
@@ -408,7 +406,7 @@ class BlockMatrix(BaseBlockMatrix):
             col[idx] = B.col + col_offsets[j]
             nnz += B.nnz
 
-        return coo_matrix((data, (row, col)), shape=shape)
+        return scipy.sparse.coo_matrix((data, (row, col)), shape=shape)
 
     def tocsr(self, copy=True):
         """
@@ -498,14 +496,16 @@ class BlockMatrix(BaseBlockMatrix):
             # compute result
             for i in range(self.bshape[0]):
                 for j in range(other.bshape[1]):
-                    accum = coo_matrix((self._brow_lengths[i], other_col_sizes[i]))
+                    accum = scipy.sparse.coo_matrix(
+                        (self._brow_lengths[i], other_col_sizes[i])
+                    )
                     for k in range(self.bshape[1]):
                         if self._block_mask[i, k] and not other.is_empty_block(k, j):
                             prod = self._blocks[i, k] * other.get_block(k, j)
                             accum = accum + prod
                     result.set_block(i, j, accum)
             return result
-        elif isspmatrix(other):
+        elif scipy.sparse.isspmatrix(other):
             raise NotImplementedError(
                 'BlockMatrix multiply with spmatrix not supported. Multiply a BlockMatrix '
                 'with another BlockMatrix of compatible dimensions.'
@@ -632,13 +632,13 @@ class BlockMatrix(BaseBlockMatrix):
                     for j in range(n):
                         self.set_block(i, j, other.get_block(i, j))
 
-        elif isspmatrix(other) or isinstance(other, np.ndarray):
+        elif scipy.sparse.isspmatrix(other) or isinstance(other, np.ndarray):
             assert other.shape == self.shape, 'dimensions mismatch {} != {}'.format(
                 self.shape, other.shape
             )
             if isinstance(other, np.ndarray):
                 # cast numpy.array to coo_matrix for ease of manipulation
-                m = csr_matrix(other)
+                m = scipy.sparse.csr_matrix(other)
             else:
                 m = other.tocsr()
 
@@ -701,23 +701,23 @@ class BlockMatrix(BaseBlockMatrix):
                 for i in range(m):
                     for j in range(n):
                         other.set_block(i, j, self.get_block(i, j))
-        elif isspmatrix(other) or isinstance(other, np.ndarray):
+        elif scipy.sparse.isspmatrix(other) or isinstance(other, np.ndarray):
             assert other.shape == self.shape, 'dimensions mismatch {} != {}'.format(
                 self.shape, other.shape
             )
 
             # create temporary matrix to copy
             tmp_matrix = self.tocoo()
-            if isinstance(other, coo_matrix):
+            if isinstance(other, scipy.sparse.coo_matrix):
                 np.copyto(other.data, tmp_matrix.data)
                 np.copyto(other.row, tmp_matrix.row)
                 np.copyto(other.col, tmp_matrix.col)
-            elif isinstance(other, csr_matrix):
+            elif isinstance(other, scipy.sparse.csr_matrix):
                 tmp_matrix2 = tmp_matrix.tocsr()
                 np.copyto(other.data, tmp_matrix2.data)
                 np.copyto(other.indices, tmp_matrix2.indices)
                 np.copyto(other.indptr, tmp_matrix2.indptr)
-            elif isinstance(other, csc_matrix):
+            elif isinstance(other, scipy.sparse.csc_matrix):
                 tmp_matrix2 = tmp_matrix.tocsc()
                 np.copyto(other.data, tmp_matrix2.data)
                 np.copyto(other.indices, tmp_matrix2.indices)
@@ -789,7 +789,7 @@ class BlockMatrix(BaseBlockMatrix):
                 result.set_block(i, j, self._blocks[i, j].copy_structure())
             else:
                 nrows, ncols = self._blocks[i, j].shape
-                result.set_block(i, j, coo_matrix((nrows, ncols)))
+                result.set_block(i, j, scipy.sparse.coo_matrix((nrows, ncols)))
         return result
 
     def __repr__(self):
@@ -850,9 +850,9 @@ class BlockMatrix(BaseBlockMatrix):
                 msg = 'blocks need to be sparse matrices or BlockMatrices; a numpy array was given; copying the numpy array to a coo_matrix'
                 logger.warning(msg)
                 warnings.warn(msg)
-                value = coo_matrix(value)
+                value = scipy.sparse.coo_matrix(value)
             else:
-                assert isspmatrix(
+                assert scipy.sparse.isspmatrix(
                     value
                 ), 'blocks need to be sparse matrices or BlockMatrices'
 
@@ -900,7 +900,7 @@ class BlockMatrix(BaseBlockMatrix):
                 elif mat2 is not None:
                     result.set_block(i, j, operation(0, mat2))
             return result
-        elif isspmatrix(other):
+        elif scipy.sparse.isspmatrix(other):
             # Note: this is not efficient but is just for flexibility.
             mat = self.copy_structure()
             mat.copyfrom(other)
@@ -974,7 +974,7 @@ class BlockMatrix(BaseBlockMatrix):
                         blk += A * x
                     counter += self.get_col_size(j)
             return result
-        elif isinstance(other, BlockMatrix) or isspmatrix(other):
+        elif isinstance(other, BlockMatrix) or scipy.sparse.isspmatrix(other):
             assert_block_structure(self)
             return self._mul_sparse_matrix(other)
         else:
@@ -1001,7 +1001,7 @@ class BlockMatrix(BaseBlockMatrix):
             for i, j in zip(ii, jj):
                 result.set_block(i, j, self._blocks[i, j] * other)
             return result
-        elif isspmatrix(other):
+        elif scipy.sparse.isspmatrix(other):
             raise NotImplementedError(
                 'sparse matrix times block matrix is not supported.'
             )
@@ -1035,7 +1035,7 @@ class BlockMatrix(BaseBlockMatrix):
                 elif not other.is_empty_block(i, j):
                     self.set_block(i, j, other.get_block(i, j).copy())
             return self
-        elif isspmatrix(other):
+        elif scipy.sparse.isspmatrix(other):
             # Note: this is not efficient but is just for flexibility.
             mat = self.copy_structure()
             mat.copyfrom(other)
@@ -1062,7 +1062,7 @@ class BlockMatrix(BaseBlockMatrix):
                         i, j, -other.get_block(i, j)
                     )  # the copy happens in __neg__ of other.get_block(i, j)
             return self
-        elif isspmatrix(other):
+        elif scipy.sparse.isspmatrix(other):
             # Note: this is not efficient but is just for flexibility.
             mat = self.copy_structure()
             mat.copyfrom(other)
@@ -1119,7 +1119,7 @@ class BlockMatrix(BaseBlockMatrix):
                     else:
                         nrows = self._brow_lengths[i]
                         ncols = self._bcol_lengths[j]
-                        mat = coo_matrix((nrows, ncols))
+                        mat = scipy.sparse.coo_matrix((nrows, ncols))
                         if not self.is_empty_block(i, j):
                             result.set_block(i, j, operation(self._blocks[i, j], mat))
                         elif not other.is_empty_block(i, j):
@@ -1129,7 +1129,7 @@ class BlockMatrix(BaseBlockMatrix):
                         else:
                             result.set_block(i, j, operation(mat, mat))
             return result
-        elif isinstance(other, BlockMatrix) or isspmatrix(other):
+        elif isinstance(other, BlockMatrix) or scipy.sparse.isspmatrix(other):
             if isinstance(other, BlockMatrix):
                 raise NotImplementedError(
                     'Operation supported with same block structure only'
@@ -1145,7 +1145,7 @@ class BlockMatrix(BaseBlockMatrix):
                     else:
                         nrows = self._brow_lengths[i]
                         ncols = self._bcol_lengths[j]
-                        mat = coo_matrix((nrows, ncols))
+                        mat = scipy.sparse.coo_matrix((nrows, ncols))
                         result.set_block(i, j, operation(mat, other))
             return result
         else:
