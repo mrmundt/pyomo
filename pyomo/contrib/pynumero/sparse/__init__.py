@@ -11,6 +11,9 @@
 
 from pyomo.contrib.pynumero.dependencies import numpy_available, scipy_available
 
+print("Numpy is available: ", numpy_available)
+print("SciPy is available: ", scipy_available)
+
 if numpy_available and scipy_available:
     from pyomo.contrib.pynumero.sparse.block_vector import (
         BlockVector,
