@@ -9,15 +9,15 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from pyomo.common.incidence_analysis.triangularize import block_triangularize
-from pyomo.common.incidence_analysis.matching import maximum_matching
-from pyomo.common.incidence_analysis.interface import IncidenceGraphInterface, get_bipartite_incidence_graph
-from pyomo.common.incidence_analysis.scc_solver import (
+from pyomo.contrib.incidence_analysis.triangularize import block_triangularize
+from pyomo.contrib.incidence_analysis.matching import maximum_matching
+from pyomo.contrib.incidence_analysis.interface import IncidenceGraphInterface, get_bipartite_incidence_graph
+from pyomo.contrib.incidence_analysis.scc_solver import (
     generate_strongly_connected_components,
     solve_strongly_connected_components,
 )
-from pyomo.common.incidence_analysis.incidence import get_incident_variables
-from pyomo.common.incidence_analysis.config import IncidenceMethod
+from pyomo.contrib.incidence_analysis.incidence import get_incident_variables
+from pyomo.contrib.incidence_analysis.config import IncidenceMethod
 
 #
 # declare deprecation paths for removed modules
