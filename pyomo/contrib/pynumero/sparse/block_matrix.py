@@ -33,7 +33,6 @@ from pyomo.contrib.pynumero.sparse.block_vector import BlockVector
 from pyomo.contrib.pynumero.sparse.base_block import BaseBlockMatrix
 
 
-
 logger = logging.getLogger(__name__)
 
 

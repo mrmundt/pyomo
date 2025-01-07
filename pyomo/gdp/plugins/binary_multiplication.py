@@ -9,13 +9,13 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .gdp_to_mip_transformation import GDP_to_MIP_Transformation
+from weakref import ref as weakref_ref
+import logging
+from pyomo.gdp.gdp_to_mip_transformation import GDP_to_MIP_Transformation
 from pyomo.common.config import ConfigDict, ConfigValue
 from pyomo.core.base import TransformationFactory
 from pyomo.core.util import target_list
 from pyomo.gdp import Disjunction
-from weakref import ref as weakref_ref
-import logging
 
 
 logger = logging.getLogger(__name__)

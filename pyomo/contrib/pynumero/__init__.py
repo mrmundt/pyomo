@@ -9,4 +9,11 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from pyomo.contrib.pynumero.intrinsic import norm, allclose, where, isin, intersect1d, setdiff1d
+from pyomo.contrib.pynumero.intrinsic import (
+    norm,
+    allclose,
+    where,
+    isin,
+    intersect1d,
+    setdiff1d,
+)

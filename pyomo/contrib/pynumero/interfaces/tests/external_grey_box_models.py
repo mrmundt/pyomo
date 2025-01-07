@@ -21,7 +21,10 @@ from pyomo.common.dependencies.scipy import sparse as spa
 if not (numpy_available and scipy_available):
     raise unittest.SkipTest("Pynumero needs scipy and numpy to run NLP tests")
 
-from pyomo.contrib.pynumero.interfaces.external_grey_box import ExternalGreyBoxModel, ExternalGreyBoxBlock
+from pyomo.contrib.pynumero.interfaces.external_grey_box import (
+    ExternalGreyBoxModel,
+    ExternalGreyBoxBlock,
+)
 
 # set of external models for testing
 # basic model is a simple pipe sequence with nonlinear pressure drop

@@ -15,7 +15,7 @@
 import os
 import random
 
-from ..lp_diff import load_and_compare_lp_baseline
+from pyomo.repn.tests.lp_diff import load_and_compare_lp_baseline
 
 import pyomo.common.unittest as unittest
 

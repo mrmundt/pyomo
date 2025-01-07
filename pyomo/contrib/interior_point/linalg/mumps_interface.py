@@ -12,7 +12,9 @@
 from collections import OrderedDict
 from typing import Union, Optional, Tuple
 
-from pyomo.contrib.interior_point.linalg.base_linear_solver_interface import IPLinearSolverInterface
+from pyomo.contrib.interior_point.linalg.base_linear_solver_interface import (
+    IPLinearSolverInterface,
+)
 from pyomo.contrib.pynumero.linalg.base import LinearSolverStatus, LinearSolverResults
 from pyomo.common.dependencies import attempt_import, numpy as np
 from pyomo.contrib.pynumero.sparse import BlockVector

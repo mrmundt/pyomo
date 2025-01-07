@@ -34,9 +34,16 @@ from pyomo.core.expr.numvalue import (
 )
 from pyomo.core.expr.base import ExpressionBase
 from pyomo.core.expr.boolean_value import BooleanValue, BooleanConstant
-from pyomo.core.expr.expr_common import _and, _or, _equiv, _inv, _xor, _impl, ExpressionType
+from pyomo.core.expr.expr_common import (
+    _and,
+    _or,
+    _equiv,
+    _inv,
+    _xor,
+    _impl,
+    ExpressionType,
+)
 from pyomo.core.expr.numeric_expr import NumericExpression
-
 
 
 relocated_module_attribute(

@@ -14,12 +14,13 @@ import logging
 from scipy.linalg import eigvals
 from scipy.sparse import spmatrix
 
-from pyomo.contrib.interior_point.linalg.base_linear_solver_interface import IPLinearSolverInterface
+from pyomo.contrib.interior_point.linalg.base_linear_solver_interface import (
+    IPLinearSolverInterface,
+)
 from pyomo.contrib.pynumero.linalg.base import LinearSolverResults
 from pyomo.contrib.pynumero.sparse import BlockMatrix
 from pyomo.contrib.pynumero.linalg.scipy_interface import ScipyLU
 from pyomo.common.dependencies import numpy as np
-
 
 
 class ScipyInterface(ScipyLU, IPLinearSolverInterface):

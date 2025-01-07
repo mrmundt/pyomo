@@ -29,9 +29,9 @@ from pyomo.core.expr.relational_expr import (
     RangedExpression,
 )
 from pyomo.core.base.expression import Expression
-from . import linear
-from . import util
-from .linear import _merge_dict, to_expression
+from pyomo.repn import linear
+from pyomo.repn import util
+from pyomo.repn.linear import _merge_dict, to_expression
 
 _CONSTANT = linear.ExprType.CONSTANT
 _LINEAR = linear.ExprType.LINEAR

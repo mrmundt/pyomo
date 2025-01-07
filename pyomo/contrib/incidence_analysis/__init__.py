@@ -11,7 +11,10 @@
 
 from pyomo.contrib.incidence_analysis.triangularize import block_triangularize
 from pyomo.contrib.incidence_analysis.matching import maximum_matching
-from pyomo.contrib.incidence_analysis.interface import IncidenceGraphInterface, get_bipartite_incidence_graph
+from pyomo.contrib.incidence_analysis.interface import (
+    IncidenceGraphInterface,
+    get_bipartite_incidence_graph,
+)
 from pyomo.contrib.incidence_analysis.scc_solver import (
     generate_strongly_connected_components,
     solve_strongly_connected_components,

@@ -12,11 +12,14 @@
 from typing import Union, Tuple, Optional
 
 from pyomo.common.dependencies import numpy as np
-from pyomo.contrib.pynumero.linalg.base import DirectLinearSolverInterface, LinearSolverStatus, LinearSolverResults
+from pyomo.contrib.pynumero.linalg.base import (
+    DirectLinearSolverInterface,
+    LinearSolverStatus,
+    LinearSolverResults,
+)
 from pyomo.contrib.pynumero.linalg.ma27 import MA27Interface
 from scipy.sparse import isspmatrix_coo, tril, spmatrix
 from pyomo.contrib.pynumero.sparse import BlockVector, BlockMatrix
-
 
 
 class MA27(DirectLinearSolverInterface):

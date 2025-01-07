@@ -12,7 +12,9 @@
 from typing import Union
 from scipy.sparse import isspmatrix_coo, tril, spmatrix
 
-from pyomo.contrib.interior_point.linalg.base_linear_solver_interface import IPLinearSolverInterface
+from pyomo.contrib.interior_point.linalg.base_linear_solver_interface import (
+    IPLinearSolverInterface,
+)
 from pyomo.contrib.pynumero.linalg.base import LinearSolverStatus, LinearSolverResults
 from pyomo.contrib.pynumero.linalg.ma27_interface import MA27
 from pyomo.contrib.pynumero.sparse import BlockVector, BlockMatrix

@@ -8,7 +8,11 @@
 #  rights in this software.
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
-from pyomo.contrib.doe.doe import DesignOfExperiments, ObjectiveLib, FiniteDifferenceStep
+from pyomo.contrib.doe.doe import (
+    DesignOfExperiments,
+    ObjectiveLib,
+    FiniteDifferenceStep,
+)
 from pyomo.contrib.doe.utils import rescale_FIM
 
 # Deprecation errors for old Pyomo.DoE interface classes and structures

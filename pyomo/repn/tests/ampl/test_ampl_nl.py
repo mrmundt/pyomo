@@ -28,7 +28,7 @@ from pyomo.environ import (
     ExternalFunction,
     value,
 )
-from ..nl_diff import load_and_compare_nl_baseline
+from pyomo.repn.tests.nl_diff import load_and_compare_nl_baseline
 
 import pyomo.repn.plugins.ampl.ampl_ as ampl_
 from pyomo.repn.ampl import TextNLDebugTemplate as template

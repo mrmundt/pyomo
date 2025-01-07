@@ -12,7 +12,7 @@
 # The log should be imported first so that the Pyomo LogHandler can be
 # set up as soon as possible
 from pyomo.common import log
-from pyomo.common  import envvar
+from pyomo.common import envvar
 
 from pyomo.common.factory import Factory
 

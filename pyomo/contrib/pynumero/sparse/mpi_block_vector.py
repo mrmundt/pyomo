@@ -19,7 +19,9 @@ from pyomo.contrib.pynumero.sparse.base_block import (
     vec_associative_reductions,
 )
 from pyomo.contrib.pynumero.sparse.block_vector import NotFullyDefinedBlockVectorError
-from pyomo.contrib.pynumero.sparse.block_vector import assert_block_structure as block_vector_assert_block_structure
+from pyomo.contrib.pynumero.sparse.block_vector import (
+    assert_block_structure as block_vector_assert_block_structure,
+)
 
 
 def assert_block_structure(vec):

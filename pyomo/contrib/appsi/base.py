@@ -39,7 +39,9 @@ from pyomo.core.base.block import BlockData, Block
 from pyomo.core.base.objective import ObjectiveData
 from pyomo.common.collections import ComponentMap
 from pyomo.contrib.appsi.utils.get_objective import get_objective
-from pyomo.contrib.appsi.utils.collect_vars_and_named_exprs import collect_vars_and_named_exprs
+from pyomo.contrib.appsi.utils.collect_vars_and_named_exprs import (
+    collect_vars_and_named_exprs,
+)
 from pyomo.opt.base import SolverFactory as LegacySolverFactory
 from pyomo.opt.results.results_ import SolverResults as LegacySolverResults
 from pyomo.opt.results.solution import (
