@@ -260,7 +260,7 @@ setup_kwargs = dict(
             'sphinx-toolbox>=2.16.0',
             'sphinx-jinja2-compat>=0.1.1',
             'numpy',  # Needed by autodoc for pynumero
-            'scipy',  # Needed by autodoc for pynumero
+            'scipy<1.15',  # Needed by autodoc for pynumero
         ],
         'optional': [
             'dill',  # No direct use, but improves lambda pickle
@@ -287,7 +287,7 @@ setup_kwargs = dict(
             # qtconsole also requires a supported Qt version (PyQt5 or PySide6).
             # Because those are environment specific, we have left that out here.
             'qtconsole',  # contrib.viewer
-            'scipy',
+            'scipy<1.15',
             'sympy',  # differentiation
             'xlrd',  # dataportals
             'z3-solver',  # community_detection
