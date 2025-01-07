@@ -20,11 +20,11 @@ from pyomo.common.numeric_types import (
     value,
 )
 
-from .base import ExpressionBase
-from .boolean_value import BooleanValue
-from .expr_common import _lt, _le, _eq, ExpressionType
-from .numvalue import is_potentially_variable, is_constant
-from .visitor import polynomial_degree
+from pyomo.core.expr.base import ExpressionBase
+from pyomo.core.expr.boolean_value import BooleanValue
+from pyomo.core.expr.expr_common import _lt, _le, _eq, ExpressionType
+from pyomo.core.expr.numvalue import is_potentially_variable, is_constant
+from pyomo.core.expr.visitor import polynomial_degree
 
 # -------------------------------------------------------
 #

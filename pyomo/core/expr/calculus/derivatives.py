@@ -10,8 +10,8 @@
 #  ___________________________________________________________________________
 
 import enum
-from .diff_with_sympy import differentiate as sympy_diff
-from .diff_with_pyomo import reverse_sd, reverse_ad
+from pyomo.core.expr.calculus.diff_with_sympy import differentiate as sympy_diff
+from pyomo.core.expr.calculus.diff_with_pyomo import reverse_sd, reverse_ad
 
 
 class Modes(str, enum.Enum):

@@ -47,7 +47,7 @@ from pyomo.core.expr.numeric_expr import (
 )
 from pyomo.core.expr.numvalue import NumericValue, native_types, native_numeric_types
 
-from .test_numeric_expr_dispatcher import Base
+from pyomo.core.tests.unit.test_numeric_expr_dispatcher import Base
 
 
 class TestExpressionGeneration_ZeroFilter(Base, unittest.TestCase):

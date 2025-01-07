@@ -437,7 +437,7 @@ class _slice_generator(object):
         # We have to defer this import to here to resolve circular
         # imports.  Ideally, we would move normalize_index to another
         # module to resolve this.
-        from .indexed_component import normalize_index
+        from pyomo.core.base.indexed_component import normalize_index
 
         if self.component_iter is _NotIterable:
             # Special case handling for "slices" rooted at concrete

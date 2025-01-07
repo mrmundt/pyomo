@@ -12,7 +12,7 @@
 
 import types
 from itertools import islice
-
+import operator
 import logging
 import traceback
 
@@ -24,7 +24,7 @@ from pyomo.common.deprecation import (
     RenamedClass,
     relocated_module_attribute,
 )
-from .numvalue import (
+from pyomo.core.expr.numvalue import (
     native_types,
     native_numeric_types,
     as_numeric,
@@ -32,12 +32,12 @@ from .numvalue import (
     value,
     is_potentially_variable,
 )
-from .base import ExpressionBase
-from .boolean_value import BooleanValue, BooleanConstant
-from .expr_common import _and, _or, _equiv, _inv, _xor, _impl, ExpressionType
-from .numeric_expr import NumericExpression
+from pyomo.core.expr.base import ExpressionBase
+from pyomo.core.expr.boolean_value import BooleanValue, BooleanConstant
+from pyomo.core.expr.expr_common import _and, _or, _equiv, _inv, _xor, _impl, ExpressionType
+from pyomo.core.expr.numeric_expr import NumericExpression
 
-import operator
+
 
 relocated_module_attribute(
     'EqualityExpression',

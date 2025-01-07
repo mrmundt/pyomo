@@ -9,7 +9,7 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from . import pmedian
+from pyomo.core.tests.examples import pmedian
 
 
 def pyomo_preprocess(**kwds):

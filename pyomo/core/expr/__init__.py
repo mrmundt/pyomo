@@ -9,7 +9,7 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from . import (
+from pyomo.core.expr import (
     numvalue,
     visitor,
     numeric_expr,
@@ -39,10 +39,10 @@ from pyomo.common.numeric_types import (
 )
 from pyomo.common.errors import TemplateExpressionError
 
-from .base import ExpressionBase
-from .boolean_value import BooleanValue
-from .expr_common import ExpressionType, Mode, OperatorAssociativity
-from .logical_expr import (
+from pyomo.core.expr.base import ExpressionBase
+from pyomo.core.expr.boolean_value import BooleanValue
+from pyomo.core.expr.expr_common import ExpressionType, Mode, OperatorAssociativity
+from pyomo.core.expr.logical_expr import (
     native_logical_types,
     special_boolean_atom_types,
     #
@@ -78,7 +78,7 @@ from .logical_expr import (
     count_if,
     implies,
 )
-from .numeric_expr import (
+from pyomo.core.expr.numeric_expr import (
     NumericValue,
     NumericExpression,
     # operators:
@@ -136,7 +136,7 @@ from .numeric_expr import (
     nonlinear_expression,
     mutable_expression,
 )
-from .numvalue import (
+from pyomo.core.expr.numvalue import (
     as_numeric,
     is_constant,
     is_fixed,
@@ -145,7 +145,7 @@ from .numvalue import (
     ZeroConstant,
     polynomial_degree,
 )
-from .relational_expr import (
+from pyomo.core.expr.relational_expr import (
     RelationalExpression,
     RangedExpression,
     InequalityExpression,
@@ -153,8 +153,8 @@ from .relational_expr import (
     NotEqualExpression,
     inequality,
 )
-from .symbol_map import SymbolMap
-from .template_expr import (
+from pyomo.core.expr.symbol_map import SymbolMap
+from pyomo.core.expr.template_expr import (
     GetItemExpression,
     Numeric_GetItemExpression,
     Boolean_GetItemExpression,
@@ -182,7 +182,7 @@ from .template_expr import (
     templatize_rule,
     templatize_constraint,
 )
-from .visitor import (
+from pyomo.core.expr.visitor import (
     StreamBasedExpressionVisitor,
     SimpleExpressionVisitor,
     ExpressionValueVisitor,
@@ -200,8 +200,8 @@ from .visitor import (
     sizeof_expression,
 )
 
-from .calculus.derivatives import differentiate
-from .taylor_series import taylor_series_expansion
+from pyomo.core.expr.calculus.derivatives import differentiate
+from pyomo.core.expr.taylor_series import taylor_series_expansion
 
 #
 # declare deprecation paths for removed modules and attributes

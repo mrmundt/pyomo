@@ -9,8 +9,10 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 import collections
-from .visitor import StreamBasedExpressionVisitor
-from .numvalue import nonpyomo_leaf_types
+from typing import List
+
+from pyomo.core.expr.visitor import StreamBasedExpressionVisitor
+from pyomo.core.expr.numvalue import nonpyomo_leaf_types
 from pyomo.core.expr import (
     LinearExpression,
     MonomialTermExpression,
@@ -38,7 +40,6 @@ from pyomo.core.expr import (
     EqualityExpression,
     GetItemExpression,
 )
-from typing import List
 from pyomo.common.collections import Sequence
 from pyomo.common.errors import PyomoException
 from pyomo.common.formatting import tostr
