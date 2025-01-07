@@ -11,6 +11,9 @@
 
 from pyomo.contrib.pynumero.dependencies import numpy_available, scipy_available
 
+import scipy
+
+print("SciPy has been imported, maybe...")
 print("Numpy is available: ", numpy_available)
 print("SciPy is available: ", scipy_available)
 
