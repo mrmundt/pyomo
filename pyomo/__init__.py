@@ -9,8 +9,8 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from . import common
-from .version import __version__
+from pyomo import common
+from pyomo.version import __version__
 
 
 #

@@ -11,7 +11,7 @@
 
 import os
 
-from .dependencies import ctypes
+from pyomo.common.dependencies import ctypes
 
 
 def _as_bytes(val):

@@ -41,9 +41,9 @@ import importlib.util
 import subprocess
 import sys
 
-from . import envvar
-from .dependencies import ctypes
-from .deprecation import deprecated, relocated_module_attribute
+from pyomo.common import envvar
+from pyomo.common.dependencies import ctypes
+from pyomo.common.deprecation import deprecated, relocated_module_attribute
 
 relocated_module_attribute('StreamIndenter', 'pyomo.common.formatting', version='6.2')
 

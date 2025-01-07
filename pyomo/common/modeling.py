@@ -9,10 +9,10 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from .dependencies import random
+from pyomo.common.dependencies import random
 
 # [Aug 24] Importing for backwards compatibility; may deprecate this import later
-from .flags import FlagType, NOTSET
+from pyomo.common.flags import FlagType, NOTSET
 
 # Backward compatibility with the previous name for this flag
 NoArgumentGiven = NOTSET

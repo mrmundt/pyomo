@@ -11,12 +11,12 @@
 
 # The log should be imported first so that the Pyomo LogHandler can be
 # set up as soon as possible
-from . import log
-from . import envvar
+from pyomo.common import log
+from pyomo.common  import envvar
 
-from .factory import Factory
+from pyomo.common.factory import Factory
 
-from .fileutils import (
+from pyomo.common.fileutils import (
     Executable,
     Library,
     # The following will be deprecated soon
@@ -24,15 +24,15 @@ from .fileutils import (
     registered_executable,
     unregister_executable,
 )
-from . import config, dependencies, shutdown, timing
-from .deprecation import deprecated
-from .errors import DeveloperError
-from ._command import pyomo_command, get_pyomo_commands
+from pyomo.common import config, dependencies, shutdown, timing
+from pyomo.common.deprecation import deprecated
+from pyomo.common.errors import DeveloperError
+from pyomo.common._command import pyomo_command, get_pyomo_commands
 
 #
 # declare deprecation paths for removed modules
 #
-from .deprecation import moved_module
+from pyomo.common.deprecation import moved_module
 
 moved_module('pyomo.common.getGSL', 'pyomo.common.gsl', version='6.5.0')
 moved_module('pyomo.common.plugin', 'pyomo.common.plugin_base', version='6.5.0')

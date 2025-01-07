@@ -19,10 +19,9 @@ import shutil
 import sys
 import subprocess
 
-from . import envvar
-from .deprecation import deprecated
-from .errors import DeveloperError
-import pyomo.common
+from pyomo.common import envvar, Factory
+from pyomo.common.deprecation import deprecated
+from pyomo.common.errors import DeveloperError
 from pyomo.common.dependencies import attempt_import
 
 request = attempt_import('urllib.request')[0]
@@ -35,7 +34,7 @@ distro, distro_available = attempt_import('distro')
 
 logger = logging.getLogger('pyomo.common.download')
 
-DownloadFactory = pyomo.common.Factory('library downloaders')
+DownloadFactory = Factory('library downloaders')
 
 
 class FileDownloader(object):

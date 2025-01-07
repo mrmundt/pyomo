@@ -1022,7 +1022,7 @@ def _finalize_numpy(np, available):
     # fail when run under pytest.
     import numpy.testing
 
-    from . import numeric_types
+    from pyomo.common import numeric_types
 
     # Register ndarray as a native type to prevent 1-element ndarrays
     # from accidentally registering ndarray as a native_numeric_type.

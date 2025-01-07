@@ -33,9 +33,7 @@ from pyomo.common.dependencies import (
     mpi4py_available,
 )
 
-import pyomo.common.tests.dep_mod as dep_mod
-
-from . import deps
+from pyomo.common.tests import deps, dep_mod
 
 
 # global objects for the submodule tests
