@@ -553,7 +553,7 @@ jobs:
         $BARON_DIR = "${env:TPL_DIR}/baron"
         echo "$BARON_DIR" | `
             Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        $CURRENT_PYOMO_PATH=$"{env:PYOMO_PATH}"
+        $CURRENT_PYOMO_PATH="${env:PYOMO_PATH}"
         $NEW_PYOMO_PATH = "${env:BARON_DIR}:${env:NEW_PYOMO_PATH}"
         echo "PYOMO_PATH=$NEW_PYOMO_PATH" | `
             Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
