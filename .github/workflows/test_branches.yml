@@ -471,6 +471,9 @@ jobs:
         echo "$IPOPT_DIR"
         ls -l $IPOPT_DIR
         echo "$PATH"
+        echo ""
+        echo "$PYOMO_PATH"
+        echo ""
         which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
@@ -536,6 +539,9 @@ jobs:
             popd
         fi
         echo "$PATH"
+        echo ""
+        echo "$PYOMO_PATH"
+        echo ""
         which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
@@ -605,6 +611,9 @@ jobs:
         echo "$GJH_DIR"
         ls -l $GJH_DIR
         echo "$PATH"
+        echo ""
+        echo "$PYOMO_PATH"
+        echo ""
         which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
@@ -623,6 +632,9 @@ jobs:
         echo ""
         echo "PYOMO_CONFIG_DIR=${GITHUB_WORKSPACE}/config" >> $GITHUB_ENV
         echo "$PATH"
+        echo ""
+        echo "$PYOMO_PATH"
+        echo ""
         which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
@@ -650,6 +662,9 @@ jobs:
         echo ""
         pyomo build-extensions --parallel 2
         echo "$PATH"
+        echo ""
+        echo "$PYOMO_PATH"
+        echo ""
         which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
