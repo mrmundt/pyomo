@@ -441,7 +441,7 @@ jobs:
         IPOPT_DIR=$TPL_DIR/ipopt
         echo "$IPOPT_DIR" >> $GITHUB_PATH
         NEW_PYOMO_PATH="$IPOPT_DIR:$PYOMO_PATH"
-        echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $$GITHUB_ENV
+        echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $GITHUB_ENV
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$IPOPT_DIR" >> $GITHUB_ENV
         mkdir -p $IPOPT_DIR
         IPOPT_TAR=${DOWNLOAD_DIR}/ipopt.tar.gz
@@ -530,7 +530,7 @@ jobs:
       run: |
         GAMS_DIR="$TPL_DIR/gams"
         NEW_PYOMO_PATH="$GAMS_DIR:$PYOMO_PATH"
-        echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $$GITHUB_ENV
+        echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $GITHUB_ENV
         py_ver=$($PYTHON_EXE -c 'import sys;v="_%s%s" % sys.version_info[:2] \
             ;print(v if v != "_27" else "")')
         if test -e $GAMS_DIR/apifiles/Python/api$py_ver; then
@@ -592,7 +592,7 @@ jobs:
         BARON_DIR="$TPL_DIR/baron"
         echo "${GJH_DIR}" >> $GITHUB_PATH
         NEW_PYOMO_PATH="$GJH_DIR:$BARON_DIR:$PYOMO_PATH"
-        echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $$GITHUB_ENV
+        echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $GITHUB_ENV
         INSTALL_DIR="${DOWNLOAD_DIR}/gjh"
         if test ! -e "$INSTALL_DIR/bin"; then
             mkdir -p "$INSTALL_DIR"
