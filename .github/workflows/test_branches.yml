@@ -644,6 +644,10 @@ jobs:
         echo "$PATH"
         which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
+        for SOLVER in ipopt gams baron gjh; do
+            SOLVER_DIR="$TPL_DIR/$SOLVER"
+            echo "${SOLVER_DIR}" >> $GITHUB_PATH
+        done
 
     - name: Report pyomo plugin information
       run: |
