@@ -421,6 +421,7 @@ jobs:
         echo "Final conda environment:"
         conda list | sed 's/^/    /'
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
     - name: Setup TPL package directories
@@ -467,6 +468,7 @@ jobs:
         echo "$IPOPT_DIR"
         ls -l $IPOPT_DIR
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
     - name: Install GAMS
@@ -528,6 +530,7 @@ jobs:
             popd
         fi
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
     - name: Install BARON
@@ -566,6 +569,7 @@ jobs:
         echo "$BARON_DIR"
         ls -l $BARON_DIR
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
     - name: Install GJH_ASL_JSON
@@ -592,6 +596,7 @@ jobs:
         echo "$GJH_DIR"
         ls -l $GJH_DIR
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
     - name: Install Pyomo
@@ -609,6 +614,7 @@ jobs:
         echo ""
         echo "PYOMO_CONFIG_DIR=${GITHUB_WORKSPACE}/config" >> $GITHUB_ENV
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
     # this has to be done after Pyomo is installed because highspy 
@@ -620,6 +626,7 @@ jobs:
         $PYTHON_EXE -m pip install --cache-dir cache/pip highspy \
             || echo "WARNING: highspy is not available"
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
     - name: Download and install extensions
@@ -634,11 +641,14 @@ jobs:
         echo ""
         pyomo build-extensions --parallel 2
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
     - name: Report pyomo plugin information
       run: |
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
+        ipopt --version || echo "IPOPT not found on PATH"
         pyomo help --solvers || exit 1
         pyomo help --transformations || exit 1
         pyomo help --writers || exit 1
