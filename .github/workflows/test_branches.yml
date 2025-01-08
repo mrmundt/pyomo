@@ -592,7 +592,7 @@ jobs:
       if: ${{ ! matrix.slim && matrix.TARGET != 'win' }}
       run: |
         GJH_DIR="$TPL_DIR/gjh"
-        NEW_PYOMO_PATH="$GJH_DIR:$NEW_PYOMO_PATH"
+        NEW_PYOMO_PATH="$GJH_DIR:$PYOMO_PATH"
         echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $GITHUB_ENV
         echo "${GJH_DIR}" >> $GITHUB_PATH
         INSTALL_DIR="${DOWNLOAD_DIR}/gjh"
