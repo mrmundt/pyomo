@@ -590,11 +590,11 @@ jobs:
       run: |
         GJH_DIR="$TPL_DIR/gjh"
         BARON_DIR="$TPL_DIR/baron"
-        echo ""
+        echo "Current PYOMO_PATH..."
         echo "$PYOMO_PATH"
-        NEW_PYOMO_PATH="$BARON_DIR:$PYOMO_PATH"
+        export NEW_PYOMO_PATH="$BARON_DIR:$PYOMO_PATH"
         NEW_PYOMO_PATH="$GJH_DIR:$NEW_PYOMO_PATH"
-        echo ""
+        echo "New PYOMO_PATH..."
         echo "$NEW_PYOMO_PATH"
         echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $GITHUB_ENV
         echo "${GJH_DIR}" >> $GITHUB_PATH
