@@ -515,6 +515,7 @@ jobs:
         echo "$GAMS_DIR"
         ls -l $GAMS_DIR
         echo "$PATH"
+        which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
     - name: Install GAMS Python bindings
@@ -566,9 +567,9 @@ jobs:
             mv baron-* $BARON_DIR
         }
         echo ""
-        echo "$BARON_DIR"
+        echo "${env:BARON_DIR}"
         ls -l $BARON_DIR
-        echo "$PATH"
+        echo "${env:PATH}"
         which ipopt || echo "IPOPT not found on PATH"
         ipopt --version || echo "IPOPT not found on PATH"
 
