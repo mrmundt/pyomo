@@ -229,12 +229,16 @@ class TestCyIpoptSolver(unittest.TestCase):
         solver = CyIpoptSolver(cynlp, options=options)
         x, info = solver.solve()
 
-        with open('_cyipopt-scaling.log', 'r') as fd:
+        self.assertTrue(os.path.exists(options['output_file']))
+
+        with open(options['output_file'], 'r') as fd:
             solver_trace = fd.read()
         cynlp.close()
-        os.remove('_cyipopt-scaling.log')
+        os.remove(options['output_file'])
 
-        # check for the following strings in the log and then delete the log
+        self.assertFalse(os.path.exists(options['output_file']))
+
+        # check for the following strings in the log
         self.assertIn('nlp_scaling_method = user-scaling', solver_trace)
         self.assertIn('output_file = _cyipopt-scaling.log', solver_trace)
         self.assertIn('objective scaling factor = 1e-06', solver_trace)
