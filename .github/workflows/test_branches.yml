@@ -654,14 +654,14 @@ jobs:
         echo "Pyomo build-extensions"
         echo ""
         pyomo build-extensions --parallel 2
+
+    - name: Report pyomo plugin information
+      run: |
         # MRM / Jan 9, 2025: We update the PATH manually to make sure we capture
         # the all of our changes. This is necessary because of an
         # issue with how the PATH rearranges on Windows.
         # Issue: https://github.com/actions/runner-images/issues/11328
-        echo "$PYOMO_PATH" > $GITHUB_PATH
-
-    - name: Report pyomo plugin information
-      run: |
+        export PATH=$PYOMO_PATH
         echo "$PATH"
         pyomo help --solvers || exit 1
         pyomo help --transformations || exit 1
@@ -670,6 +670,7 @@ jobs:
     - name: Run Pyomo tests
       if: matrix.mpi == 0
       run: |
+        export PATH=$PYOMO_PATH
         $PYTHON_EXE -m pytest -v \
             -W ignore::Warning ${{matrix.category}} \
             pyomo `pwd`/pyomo-model-libraries \
