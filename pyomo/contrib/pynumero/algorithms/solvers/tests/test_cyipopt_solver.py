@@ -221,8 +221,8 @@ class TestCyIpoptSolver(unittest.TestCase):
         m.scaling_factor[m.d] = 3.0  # scale the inequality constraint
         m.scaling_factor[m.x[1]] = 4.0  # scale one of the x variables
 
-        cynlp = CyIpoptNLP(PyomoNLP(m))
         with TempfileManager.new_context() as temp:
+            cynlp = CyIpoptNLP(PyomoNLP(m))
             logfile = temp.create_tempfile('_cyipopt-scaling.log')
             options = {
                 'nlp_scaling_method': 'user-scaling',
@@ -232,12 +232,10 @@ class TestCyIpoptSolver(unittest.TestCase):
             }
             solver = CyIpoptSolver(cynlp, options=options)
             x, info = solver.solve()
-            # Let the job sleep for a wee bit before opening the log file
-            time.sleep(1)
+            cynlp.close()
 
             with open(logfile, 'r') as fd:
                 solver_trace = fd.read()
-        cynlp.close()
 
         # check for the following strings in the log
         self.assertIn('nlp_scaling_method = user-scaling', solver_trace)
