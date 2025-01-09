@@ -9,7 +9,7 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-import os
+import time
 
 import pyomo.common.unittest as unittest
 import pyomo.environ as pyo
@@ -179,6 +179,8 @@ class TestExternalInputOutputModel(unittest.TestCase):
             }
             solver = CyIpoptSolver(cyipopt_problem, options=options)
             x, info = solver.solve(tee=False)
+            # Let the job sleep for a wee bit before opening the log file
+            time.sleep(1)
 
             with open(logfile, 'r') as fd:
                 solver_trace = fd.read()
@@ -254,6 +256,8 @@ class TestExternalInputOutputModel(unittest.TestCase):
             }
             solver = CyIpoptSolver(cyipopt_problem, options=options)
             x, info = solver.solve(tee=False)
+            # Let the job sleep for a wee bit before opening the log file
+            time.sleep(1)
 
             with open(logfile, 'r') as fd:
                 solver_trace = fd.read()
