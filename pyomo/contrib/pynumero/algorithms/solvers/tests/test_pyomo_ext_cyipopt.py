@@ -168,7 +168,7 @@ class TestExternalInputOutputModel(unittest.TestCase):
             nl_file_options={'file_determinism': 2},
         )
         with TempfileManager.new_context() as temp:
-            _, logfile = temp.mkstemp('_cyipopt-pyomo-ext-scaling.log')
+            logfile = temp.create_tempfile('_cyipopt-pyomo-ext-scaling.log')
             # solve the problem
             options = {
                 'hessian_approximation': 'limited-memory',
@@ -243,7 +243,7 @@ class TestExternalInputOutputModel(unittest.TestCase):
             nl_file_options={'file_determinism': 2},
         )
         with TempfileManager.new_context() as temp:
-            _, logfile = temp.mkstemp('_cyipopt-pyomo-ext-scaling-ndarray.log')
+            logfile = temp.create_tempfile('_cyipopt-pyomo-ext-scaling-ndarray.log')
             # solve the problem
             options = {
                 'hessian_approximation': 'limited-memory',

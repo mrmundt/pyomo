@@ -223,7 +223,7 @@ class TestCyIpoptSolver(unittest.TestCase):
 
         cynlp = CyIpoptNLP(PyomoNLP(m))
         with TempfileManager.new_context() as temp:
-            _, logfile = temp.mkstemp('_cyipopt-scaling.log')
+            logfile = temp.create_tempfile('_cyipopt-scaling.log')
             options = {
                 'nlp_scaling_method': 'user-scaling',
                 'output_file': logfile,
