@@ -159,18 +159,16 @@ class TestExternalInputOutputModel(unittest.TestCase):
         m.scaling_factor[m.F_con] = 8.0  # scale the pyomo constraint
         m.scaling_factor[m.Pin_con] = 9.0  # scale the pyomo constraint
 
+        cyipopt_problem = PyomoExternalCyIpoptProblem(
+            pyomo_model=m,
+            ex_input_output_model=PressureDropModel(),
+            inputs=[m.Pin, m.c1, m.c2, m.F],
+            outputs=[m.P1, m.P2],
+            outputs_eqn_scaling=[10.0, 11.0],
+            nl_file_options={'file_determinism': 2},
+        )
         with TempfileManager.new_context() as temp:
-            cyipopt_problem = PyomoExternalCyIpoptProblem(
-                pyomo_model=m,
-                ex_input_output_model=PressureDropModel(),
-                inputs=[m.Pin, m.c1, m.c2, m.F],
-                outputs=[m.P1, m.P2],
-                outputs_eqn_scaling=[10.0, 11.0],
-                nl_file_options={'file_determinism': 2},
-            )
-
-            dname = temp.mkdtemp()
-            logfile = os.path.join(dname, '_cyipopt-pyomo-ext-scaling.log')
+            _, logfile = temp.mkstemp('_cyipopt-pyomo-ext-scaling.log')
             # solve the problem
             options = {
                 'hessian_approximation': 'limited-memory',
@@ -184,7 +182,7 @@ class TestExternalInputOutputModel(unittest.TestCase):
 
             with open(logfile, 'r') as fd:
                 solver_trace = fd.read()
-            cyipopt_problem.close()
+        cyipopt_problem.close()
 
         self.assertIn('nlp_scaling_method = user-scaling', solver_trace)
         self.assertIn(f"output_file = {logfile}", solver_trace)
@@ -236,18 +234,16 @@ class TestExternalInputOutputModel(unittest.TestCase):
         m.scaling_factor[m.Pin_con] = 9.0  # scale the pyomo constraint
 
         # test that this all works with ndarray input as well
+        cyipopt_problem = PyomoExternalCyIpoptProblem(
+            pyomo_model=m,
+            ex_input_output_model=PressureDropModel(),
+            inputs=[m.Pin, m.c1, m.c2, m.F],
+            outputs=[m.P1, m.P2],
+            outputs_eqn_scaling=np.asarray([10.0, 11.0], dtype=np.float64),
+            nl_file_options={'file_determinism': 2},
+        )
         with TempfileManager.new_context() as temp:
-            cyipopt_problem = PyomoExternalCyIpoptProblem(
-                pyomo_model=m,
-                ex_input_output_model=PressureDropModel(),
-                inputs=[m.Pin, m.c1, m.c2, m.F],
-                outputs=[m.P1, m.P2],
-                outputs_eqn_scaling=np.asarray([10.0, 11.0], dtype=np.float64),
-                nl_file_options={'file_determinism': 2},
-            )
-
-            dname = temp.mkdtemp()
-            logfile = os.path.join(dname, '_cyipopt-pyomo-ext-scaling-ndarray.log')
+            _, logfile = temp.mkstemp('_cyipopt-pyomo-ext-scaling-ndarray.log')
             # solve the problem
             options = {
                 'hessian_approximation': 'limited-memory',
@@ -261,7 +257,7 @@ class TestExternalInputOutputModel(unittest.TestCase):
 
             with open(logfile, 'r') as fd:
                 solver_trace = fd.read()
-            cyipopt_problem.close()
+        cyipopt_problem.close()
 
         self.assertIn('nlp_scaling_method = user-scaling', solver_trace)
         self.assertIn(f'output_file = {logfile}', solver_trace)
