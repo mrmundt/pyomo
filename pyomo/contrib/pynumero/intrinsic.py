@@ -9,7 +9,8 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from pyomo.common.dependencies import numpy as np, attempt_import
+from pyomo.contrib.pynumero.dependencies import numpy as np
+from pyomo.common.dependencies import attempt_import
 
 block_vector = attempt_import('pyomo.contrib.pynumero.sparse.block_vector')[0]
 

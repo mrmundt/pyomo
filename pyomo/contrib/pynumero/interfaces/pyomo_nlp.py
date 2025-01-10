@@ -14,9 +14,8 @@ the Ampl Solver Library (ASL) implementation
 
 import os
 
-from scipy.sparse import coo_matrix
 from pyomo.common.deprecation import deprecated
-from pyomo.common.dependencies import numpy as np
+from pyomo.contrib.pynumero.dependencies import numpy as np, scipy
 from pyomo.common.tempfiles import TempfileManager
 from pyomo.opt import WriterFactory
 import pyomo.core.base as pyo
@@ -386,7 +385,7 @@ class PyomoNLP(AslNLP):
         for i, v in enumerate(submatrix_jcols):
             submatrix_jcols[i] = col_submatrix_map[v]
 
-        return coo_matrix(
+        return scipy.sparse.coo_matrix(
             (submatrix_data, (submatrix_irows, submatrix_jcols)),
             shape=(len(constraint_indices), len(primal_indices)),
         )
@@ -422,7 +421,7 @@ class PyomoNLP(AslNLP):
         for i, v in enumerate(submatrix_jcols):
             submatrix_jcols[i] = submatrix_map[v]
 
-        return coo_matrix(
+        return scipy.sparse.coo_matrix(
             (submatrix_data, (submatrix_irows, submatrix_jcols)),
             shape=(len(primal_indices_rows), len(primal_indices_cols)),
         )
@@ -950,14 +949,14 @@ class PyomoGreyBoxNLP(NLP):
 
         if out is not None:
             if (
-                not isinstance(out, coo_matrix)
+                not isinstance(out, scipy.sparse.coo_matrix)
                 or out.shape[0] != self.n_constraints()
                 or out.shape[1] != self.n_primals()
                 or out.nnz != self.nnz_jacobian()
             ):
                 raise RuntimeError(
                     'evaluate_jacobian called with an "out" argument'
-                    ' that is invalid. This should be a coo_matrix with'
+                    ' that is invalid. This should be a scipy.sparse.coo_matrix with'
                     ' shape=({},{}) and nnz={}'.format(
                         self.n_constraints(), self.n_primals(), self.nnz_jacobian()
                     )
@@ -967,7 +966,7 @@ class PyomoGreyBoxNLP(NLP):
             # to avoid an additional copy, we pass in a slice (numpy view) of the underlying
             # data, row, and col that we were handed to be populated in evaluate_jacobian
             self._pyomo_nlp.evaluate_jacobian(
-                out=coo_matrix(
+                out=scipy.sparse.coo_matrix(
                     (
                         out.data[: -self._nnz_greybox_jac],
                         (
@@ -982,7 +981,7 @@ class PyomoGreyBoxNLP(NLP):
             return out
         else:
             base = self._pyomo_nlp.evaluate_jacobian()
-            base = coo_matrix(
+            base = scipy.sparse.coo_matrix(
                 (base.data, (base.row, base.col)),
                 shape=(base.shape[0], self.n_primals()),
             )
@@ -993,7 +992,7 @@ class PyomoGreyBoxNLP(NLP):
             return jac.tocoo()
 
             # TODO: Doesn't this need a "shape" specification?
-            # return coo_matrix((
+            # return scipy.sparse.coo_matrix((
             #    np.concatenate((base.data, self._cached_greybox_jac.data)),
             #    ( np.concatenate((base.row, self._cached_greybox_jac.row)),
             #      np.concatenate((base.col, self._cached_greybox_jac.col)) )
@@ -1006,18 +1005,18 @@ class PyomoGreyBoxNLP(NLP):
         self._evaluate_greybox_jacobians_and_cache_if_necessary()
 
         if out is not None:
-            if ( not isinstance(out, coo_matrix)
+            if ( not isinstance(out, scipy.sparse.coo_matrix)
                  or out.shape[0] != self.n_eq_constraints()
                  or out.shape[1] != self.n_primals()
                  or out.nnz != self.nnz_jacobian_eq() ):
                 raise RuntimeError(
                     'evaluate_jacobian called with an "out" argument'
-                    ' that is invalid. This should be a coo_matrix with'
+                    ' that is invalid. This should be a scipy.sparse.coo_matrix with'
                     ' shape=({},{}) and nnz={}'
                     .format(self.n_eq_constraints(), self.n_primals(),
                             self.nnz_jacobian_eq()))
             self._pyomo_nlp.evaluate_jacobian_eq(
-                coo_matrix((out.data[:-self._nnz_greybox_jac],
+                scipy.sparse.coo_matrix((out.data[:-self._nnz_greybox_jac],
                             (out.row[:-self._nnz_greybox_jac],
                              out.col[:-self._nnz_greybox_jac])))
             )
@@ -1027,7 +1026,7 @@ class PyomoGreyBoxNLP(NLP):
         else:
             base = self._pyomo_nlp.evaluate_jacobian_eq()
             # TODO: Doesn't this need a "shape" specification?
-            return coo_matrix((
+            return scipy.sparse.coo_matrix((
                 np.concatenate((base.data, self._cached_greybox_jac.data)),
                 ( np.concatenate((base.row, self._cached_greybox_jac.row)),
                   np.concatenate((base.col, self._cached_greybox_jac.col)) )
@@ -1052,7 +1051,7 @@ class PyomoGreyBoxNLP(NLP):
         irow = np.concatenate(irow)
         jcol = np.concatenate(jcol)
 
-        self._cached_greybox_hess = coo_matrix(
+        self._cached_greybox_hess = scipy.sparse.coo_matrix(
             (data, (irow, jcol)), shape=(self.n_primals(), self.n_primals())
         )
         self._greybox_hess_cached = True
@@ -1061,23 +1060,23 @@ class PyomoGreyBoxNLP(NLP):
         self._evaluate_greybox_hessians_and_cache_if_necessary()
         if out is not None:
             if (
-                not isinstance(out, coo_matrix)
+                not isinstance(out, scipy.sparse.coo_matrix)
                 or out.shape[0] != self.n_primals()
                 or out.shape[1] != self.n_primals()
                 or out.nnz != self.nnz_hessian_lag()
             ):
                 raise RuntimeError(
                     'evaluate_hessian_lag called with an "out" argument'
-                    ' that is invalid. This should be a coo_matrix with'
+                    ' that is invalid. This should be a scipy.sparse.coo_matrix with'
                     ' shape=({},{}) and nnz={}'.format(
                         self.n_primals(), self.n_primals(), self.nnz_hessian()
                     )
                 )
             # to avoid an additional copy, we pass in a slice (numpy view) of the underlying
             # data, row, and col that we were handed to be populated in evaluate_hessian_lag
-            # the coo_matrix is simply a holder of the data, row, and col structures
+            # the scipy.sparse.coo_matrix is simply a holder of the data, row, and col structures
             self._pyomo_nlp.evaluate_hessian_lag(
-                out=coo_matrix(
+                out=scipy.sparse.coo_matrix(
                     (
                         out.data[: -self._nnz_greybox_hess],
                         (
@@ -1097,7 +1096,7 @@ class PyomoGreyBoxNLP(NLP):
             data = np.concatenate((hess.data, self._cached_greybox_hess.data))
             row = np.concatenate((hess.row, self._cached_greybox_hess.row))
             col = np.concatenate((hess.col, self._cached_greybox_hess.col))
-            hess = coo_matrix(
+            hess = scipy.sparse.coo_matrix(
                 (data, (row, col)), shape=(self.n_primals(), self.n_primals())
             )
             return hess
@@ -1338,7 +1337,7 @@ class _ExternalGreyBoxModelHelper(object):
                 # primals ('x')
                 self._eq_jac_primal_jcol = self._inputs_to_primals_map[eq_jac.col]
             # map the columns from the inputs "u" back to the full primals "x"
-            eq_jac = coo_matrix(
+            eq_jac = scipy.sparse.coo_matrix(
                 (eq_jac.data, (eq_jac.row, self._eq_jac_primal_jcol)),
                 (eq_jac.shape[0], self._n_primals),
             )
@@ -1374,7 +1373,7 @@ class _ExternalGreyBoxModelHelper(object):
             row = np.concatenate((row, self._additional_output_entries_irow))
             col = np.concatenate((col, self._additional_output_entries_jcol))
             data = np.concatenate((data, self._additional_output_entries_data))
-            outputs_jac = coo_matrix(
+            outputs_jac = scipy.sparse.coo_matrix(
                 (data, (row, col)), shape=(outputs_jac.shape[0], self._n_primals)
             )
 
@@ -1467,6 +1466,6 @@ class _ExternalGreyBoxModelHelper(object):
         data = np.concatenate(data_list)
         irow = np.concatenate(irow_list)
         jcol = np.concatenate(jcol_list)
-        hess = coo_matrix((data, (irow, jcol)), (self._n_primals, self._n_primals))
+        hess = scipy.sparse.coo_matrix((data, (irow, jcol)), (self._n_primals, self._n_primals))
 
         return hess

@@ -10,10 +10,8 @@
 #  ___________________________________________________________________________
 
 from typing import Union, Tuple, Optional, Callable
-from scipy.sparse.linalg import splu, LinearOperator
-from scipy.linalg import eigvals
-from scipy.sparse import isspmatrix_csc, spmatrix
 
+from pyomo.contrib.pynumero.dependencies import numpy as np, scipy
 from pyomo.contrib.pynumero.linalg.base import (
     DirectLinearSolverInterface,
     LinearSolverStatus,
@@ -21,7 +19,6 @@ from pyomo.contrib.pynumero.linalg.base import (
     LinearSolverInterface,
 )
 from pyomo.contrib.pynumero.sparse import BlockVector, BlockMatrix
-from pyomo.common.dependencies import numpy as np
 
 
 class ScipyLU(DirectLinearSolverInterface):
@@ -29,20 +26,20 @@ class ScipyLU(DirectLinearSolverInterface):
         self._lu = None
 
     def do_symbolic_factorization(
-        self, matrix: Union[spmatrix, BlockMatrix], raise_on_error: bool = True
+        self, matrix: Union[scipy.sparse.spmatrix, BlockMatrix], raise_on_error: bool = True
     ) -> LinearSolverResults:
         res = LinearSolverResults()
         res.status = LinearSolverStatus.successful
         return res
 
     def do_numeric_factorization(
-        self, matrix: Union[spmatrix, BlockMatrix], raise_on_error: bool = True
+        self, matrix: Union[scipy.sparse.spmatrix, BlockMatrix], raise_on_error: bool = True
     ) -> LinearSolverResults:
-        if not isspmatrix_csc(matrix):
+        if not scipy.sparse.isspmatrix_csc(matrix):
             matrix = matrix.tocsc()
         res = LinearSolverResults()
         try:
-            self._lu = splu(matrix)
+            self._lu = scipy.sparse.splu(matrix)
             res.status = LinearSolverStatus.successful
         except RuntimeError as err:
             if raise_on_error:
@@ -72,8 +69,8 @@ class ScipyLU(DirectLinearSolverInterface):
         return result, LinearSolverResults(LinearSolverStatus.successful)
 
 
-class _LinearOperator(LinearOperator):
-    def __init__(self, matrix: Union[spmatrix, BlockMatrix]):
+class _LinearOperator(scipy.sparse.LinearOperator):
+    def __init__(self, matrix: Union[scipy.sparse.spmatrix, BlockMatrix]):
         self._matrix = matrix
         shape = self._matrix.shape
         dtype = self._matrix.dtype
@@ -96,7 +93,7 @@ class ScipyIterative(LinearSolverInterface):
 
     def solve(
         self,
-        matrix: Union[spmatrix, BlockMatrix],
+        matrix: Union[scipy.sparse.spmatrix, BlockMatrix],
         rhs: Union[np.ndarray, BlockVector],
         raise_on_error: bool = True,
     ) -> Tuple[Optional[Union[np.ndarray, BlockVector]], LinearSolverResults]:

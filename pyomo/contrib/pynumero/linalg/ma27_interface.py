@@ -11,14 +11,13 @@
 
 from typing import Union, Tuple, Optional
 
-from pyomo.common.dependencies import numpy as np
+from pyomo.contrib.pynumero.dependencies import numpy as np, scipy
 from pyomo.contrib.pynumero.linalg.base import (
     DirectLinearSolverInterface,
     LinearSolverStatus,
     LinearSolverResults,
 )
 from pyomo.contrib.pynumero.linalg.ma27 import MA27Interface
-from scipy.sparse import isspmatrix_coo, tril, spmatrix
 from pyomo.contrib.pynumero.sparse import BlockVector, BlockMatrix
 
 
@@ -41,11 +40,11 @@ class MA27(DirectLinearSolverInterface):
         self._dim = None
 
     def do_symbolic_factorization(
-        self, matrix: Union[spmatrix, BlockMatrix], raise_on_error: bool = True
+        self, matrix: Union[scipy.sparse.spmatrix, BlockMatrix], raise_on_error: bool = True
     ) -> LinearSolverResults:
-        if not isspmatrix_coo(matrix):
+        if not scipy.sparse.isspmatrix_coo(matrix):
             matrix = matrix.tocoo()
-        matrix = tril(matrix)
+        matrix = scipy.sparse.tril(matrix)
         nrows, ncols = matrix.shape
         if nrows != ncols:
             raise ValueError("Matrix must be square")
@@ -72,11 +71,11 @@ class MA27(DirectLinearSolverInterface):
         return res
 
     def do_numeric_factorization(
-        self, matrix: Union[spmatrix, BlockMatrix], raise_on_error: bool = True
+        self, matrix: Union[scipy.sparse.spmatrix, BlockMatrix], raise_on_error: bool = True
     ) -> LinearSolverResults:
-        if not isspmatrix_coo(matrix):
+        if not scipy.sparse.isspmatrix_coo(matrix):
             matrix = matrix.tocoo()
-        matrix = tril(matrix)
+        matrix = scipy.sparse.tril(matrix)
         nrows, ncols = matrix.shape
         if nrows != ncols:
             raise ValueError("Matrix must be square")

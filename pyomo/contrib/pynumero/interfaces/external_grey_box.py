@@ -9,10 +9,8 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-import abc
 import logging
-from scipy.sparse import coo_matrix
-from pyomo.common.dependencies import numpy as np
+from pyomo.contrib.pynumero.dependencies import numpy as np
 
 from pyomo.common.deprecation import RenamedClass
 from pyomo.common.log import is_debug_set

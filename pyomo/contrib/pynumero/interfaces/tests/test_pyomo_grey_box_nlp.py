@@ -2497,8 +2497,7 @@ class TestPyomoNLPWithGreyBoxModels(unittest.TestCase):
         m.scaling_factor[m.pincon] = 2.2
 
         with TempfileManager.new_context() as temp:
-            dname = temp.mkdtemp()
-            logfile = os.path.join(dname, '_cyipopt-external-greybox-scaling.log')
+            logfile = temp.create_tempfile('_cyipopt-external-greybox-scaling.log')
             solver = pyo.SolverFactory('cyipopt')
             solver.config.options = {
                 'hessian_approximation': 'limited-memory',
