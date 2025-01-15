@@ -243,14 +243,17 @@ def help_solvers():
                 continue
             # Log the solver being checked
             print(f"Checking solver: {s}")
+            sys.stdout.flush()
             # Create a solver, and see if it is available
             with pyomo.opt.SolverFactory(s) as opt:
                 ver = ''
                 if opt.available(False):
                     print(f"Solver {s} is available.")
+                    sys.stdout.flush()
                     avail = '-'
                     if opt.license_is_valid():
                         print(f"Solver {s} has a valid license.")
+                        sys.stdout.flush()
                         avail = '+'
                     try:
                         ver = opt.version()
@@ -263,9 +266,11 @@ def help_solvers():
                         else:
                             ver = ''
                         print(f"Solver {s} reports version {ver}.")
+                        sys.stdout.flush()
                     except (AttributeError, NameError):
                         # Log that a solver was not found/skipped
                         print(f"Error retrieving version for solver: {s}")
+                        sys.stdout.flush()
                         pass
                 elif s == 'py':
                     # py is a metasolver, but since we don't specify a subsolver
