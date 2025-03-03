@@ -409,6 +409,7 @@ jobs:
                         if [ $? -eq 124 ]; then
                             echo "TIMEOUT: Conda install process for $PKG took \
                                   too long and was terminated"
+                            _BUILDS=""
                         else
                             echo "Installation complete for $PKG"
                         fi
