@@ -405,13 +405,13 @@ jobs:
                         # indefinitely (lately while installing SCIP),
                         # we will run "conda install" in a subshell and
                         # kill it after 5-minutes.
-                        (conda install -q -y $PKG) &
-                        conda_pid=$!
-                        (sleep 300 && kill "$conda_pid" 2>/dev/null) &
-                        timeout_pid=$!
-                        wait "$conda_pid" || _BUILDS=""
-                        kill "$timeout_pid" 2>/dev/null \
-                            || echo "TIMEOUT: killed conda install process"
+                        timeout 300 conda install -q -y $PKG
+                        if [ $? -eq 124 ]; then
+                            echo "TIMEOUT: Conda install process for $PKG took \
+                                  too long and was terminated"
+                        else
+                            echo "Installation complete for $PKG"
+                        fi
                     fi
                 fi
                 echo ""
