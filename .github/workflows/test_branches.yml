@@ -401,17 +401,22 @@ jobs:
                     if test -z "$_ISPY" -o -n "$_PYOK"; then
                         echo ""
                         echo "... INSTALLING $PKG"
-                        # Because conda can occasionally hang
-                        # indefinitely (lately while installing SCIP),
-                        # we will run "conda install" in a subshell and
-                        # kill it after 5-minutes.
-                        timeout 300 conda install -q -y $PKG
-                        if [ $? -eq 124 ]; then
-                            echo "TIMEOUT: Conda install process for $PKG took \
-                                  too long and was terminated"
-                            _BUILDS=""
-                        else
-                            echo "Installation complete for $PKG"
+                        # Run "conda install" in a subshell and enforce a 5-minute timeout.
+                        (conda install -q -y $PKG) &
+                        conda_pid=$!
+                        (sleep 300 && kill "$conda_pid" 2>/dev/null && echo "TIMEOUT: killed conda install process") &
+                        timeout_pid=$!
+                        wait "$conda_pid" || _BUILDS=""
+
+                        # Ensure the timeout process is killed if conda install finishes
+                        kill "$timeout_pid" 2>/dev/null || echo "Conda install completed successfully."
+
+                        # If installation failed due to timeout, restart the conda environment
+                        if test -z "$_BUILDS"; then
+                            echo "WARNING: $PKG is not available. Checking if a timeout occurred."
+                            echo "Resetting conda environment..."
+                            conda deactivate
+                            conda activate test
                         fi
                     fi
                 fi
