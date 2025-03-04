@@ -384,7 +384,6 @@ jobs:
             # Main installation loop
             for PKG in $PACKAGES; do
                 if [[ "${{matrix.TARGET}}" == win ]]; then
-                    # Use PowerShell to run conda install with a timeout
                     powershell -Command "
                         $process = Start-Process conda -ArgumentList 'install', '-q', '-y', '$PKG' -NoNewWindow -PassThru;
                         $timeout = 30;
@@ -392,7 +391,7 @@ jobs:
                         while (-not $process.HasExited) {
                             Start-Sleep -Seconds 1;
                             if ((Get-Date) - $startTime -gt [TimeSpan]::FromSeconds($timeout)) {
-                                Stop-Process -Id $process.Id;
+                                Stop-Process -Id $process.Id -Force;
                                 Write-Host 'WARNING: $PKG installation timed out';
                                 break;
                             }
