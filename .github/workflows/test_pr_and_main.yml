@@ -335,8 +335,8 @@ jobs:
         echo "Final pip environment:"
         python -m pip list | sed 's/^/    /'
 
-    - name: Install Python packages (conda)
-      if: matrix.PYENV == 'conda'
+    - name: Install Python packages (conda / unix)
+      if: ${{ matrix.PYENV == 'conda' && matrix.TARGET != 'win' }}
       run: |
         # Set up environment
         conda config --set always_yes yes
@@ -376,10 +376,6 @@ jobs:
         if test "${{matrix.TARGET}}" == linux; then
             EXCLUDE="casadi numdifftools $EXCLUDE"
         fi
-        if [[ "${{matrix.TARGET}}" == win && "${{matrix.python}}" == "3.13" ]]; then
-            # As of Nov 7, 2024, qtconsole is not compatible with python 3.13 on win
-            EXCLUDE="qtconsole $EXCLUDE"
-        fi
         EXCLUDE=`echo "$EXCLUDE" | xargs`
         if test -n "$EXCLUDE"; then
             for WORD in $EXCLUDE; do
@@ -395,62 +391,17 @@ jobs:
         done
         echo ""
         echo "*** Install Pyomo dependencies ***"
-        # For windows, cannot use newer setuptools because of APPSI compilation issues
-        if test "${{matrix.TARGET}}" == 'win'; then
-            CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES setuptools<74.0.0"
-        fi
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
         conda install --update-deps -q -y $CONDA_DEPENDENCIES
         if test -z "${{matrix.slim}}"; then
-            # xpress.init() (from conda) hangs indefinitely on GHA/Windows under
-            # Python 3.10 and 3.11.  Exclude that release on that platform.
-            if [[ ${{matrix.TARGET}} == win && ${{matrix.python}} =~ 3.1[01] ]]; then
-                # We would like to just use something like:
-                #  - "!=9.5.1" (conda errors)
-                #  - "<9.5.1|>9.5.1" (conda installs 9.1.2, which also hangs)
-                #  - "<=9.5.0|>9.5.1" (conda seg faults)
-                XPRESS='xpress=9.5.0'
-            else
-                XPRESS='xpress'
-            fi
             PYVER=$(echo "py${{matrix.python}}" | sed 's/\.//g')
             echo "Installing for $PYVER"
-            PACKAGES='cplex>=12.10 docplex gurobi $XPRESS cyipopt pymumps scip'
+            PACKAGES='cplex>=12.10 docplex gurobi xpress cyipopt pymumps scip'
 
             # Main installation loop
             for PKG in $PACKAGES; do
-                if [[ "${{matrix.TARGET}}" == win ]]; then
-                    powershell -Command "
-                        # Set the timeout duration (in seconds)
-                        `$Timeout = 30
-                        `$RetryInterval = 1
-                        `$timer = [Diagnostics.Stopwatch]::StartNew()
-
-                        # Start the process
-                        `$process = Start-Process -FilePath conda -ArgumentList 'install', '-q', '-y', '$PKG' -NoNewWindow -PassThru
-
-                        # Monitor the process
-                        while ((`$timer.Elapsed.TotalSeconds -lt `$Timeout) -and (-not `$process.HasExited)) {
-                            Start-Sleep -Seconds `$RetryInterval
-                            `$totalSecs = [math]::Round(`$timer.Elapsed.TotalSeconds, 0)
-                            Write-Host \"Still waiting for $PKG installation... [`$totalSecs seconds elapsed]\"
-                        }
-                        `$timer.Stop()
-
-                        if (-not `$process.HasExited) {
-                            Stop-Process -Id `$process.Id -Force
-                            Write-Host \"WARNING: $PKG installation timed out after `$Timeout seconds\"
-                        } elseif (`$process.ExitCode -ne 0) {
-                            Write-Host \"WARNING: $PKG installation failed with exit code `$(`$process.ExitCode)\"
-                        } else {
-                            Write-Host \"SUCCESS: $PKG installed successfully\"
-                        }
-                    "
-                else
-                    # For Linux or other environments
-                    timeout 30 conda install -q -y $PKG || echo "WARNING: $PKG not available or did not install correctly"
-                fi
+                timeout 30 conda install -q -y $PKG || echo "WARNING: $PKG not available or did not install correctly"
             done
         fi
         # Re-try Pyomo (optional) dependencies with pip
@@ -478,6 +429,109 @@ jobs:
         echo ""
         echo "Final conda environment:"
         conda list | sed 's/^/    /'
+
+    - name: Install Python packages (conda / win)
+      if: ${{ matrix.PYENV == 'conda' && matrix.TARGET == 'win' }}
+      shell: pwsh
+      run: |
+        # Set up environment
+        conda config --set always_yes yes
+        conda config --set auto_update_conda false
+        conda config --remove channels defaults
+        conda config --append channels nodefaults
+        conda config --append channels conda-forge
+
+        # Try to install mamba
+        $MAMBA_FAILED = $false
+        conda install -q -y -n base conda-libmamba-solver || $MAMBA_FAILED = $true
+        if (-not $MAMBA_FAILED) {
+            echo "*** Activating the mamba environment solver ***"
+            conda config --set solver libmamba
+        }
+
+        # Add the rest of the channels
+        conda config --append channels gurobi
+        conda config --append channels ibmdecisionoptimization
+        conda config --append channels fico-xpress
+
+        # Print environment info
+        echo "*** CONDA environment: ***"
+        conda info
+        conda config --show-sources
+        conda config --show channels
+        conda list --show-channel-urls
+        Get-Command python | Select-Object -ExpandProperty Definition
+        python --version
+
+        # Retrieve dependencies
+        $PYOMO_DEPENDENCIES = python setup.py dependencies --extras "$env:EXTRAS" | Select-Object -Last 1
+        $PACKAGES = "$env:PYTHON_CORE_PKGS $env:PYTHON_PACKAGES $PYOMO_DEPENDENCIES"
+
+        if ($env:MATRIX_PYTHON -match "^pypy") {
+            $EXCLUDE = "$env:PYPY_EXCLUDE $env:EXCLUDE"
+        }
+
+        if ($env:MATRIX_PYTHON -eq "3.13") {
+            $EXCLUDE = "qtconsole $EXCLUDE"
+        }
+
+        $EXCLUDE = ($EXCLUDE -split " ") | Where-Object { $_ -ne "" }
+        $PACKAGES = ($PACKAGES -split " ") | Where-Object { $_ -notin $EXCLUDE }
+
+        $CONDA_DEPENDENCIES = @()
+        $PYPI_DEPENDENCIES = @()
+        foreach ($PKG in $PACKAGES) {
+            if ($env:PYPI_ONLY -match " $PKG ") {
+                $PYPI_DEPENDENCIES += $PKG
+            } else {
+                $CONDA_DEPENDENCIES += $PKG
+            }
+        }
+
+        echo ""
+        echo "*** Install Pyomo dependencies ***"
+        $CONDA_DEPENDENCIES += "setuptools<74.0.0"
+
+        conda install --update-deps -q -y @CONDA_DEPENDENCIES
+
+        if (-not $env:MATRIX_SLIM) {
+            if ($env:MATRIX_PYTHON -match "3.1[01]") {
+                $XPRESS = "xpress=9.5.0"
+            } else {
+                $XPRESS = "xpress"
+            }
+
+            $PYVER = "py" + $env:MATRIX_PYTHON -replace "\."
+            echo "Installing for $PYVER"
+            $PACKAGES = @("cplex>=12.10", "docplex", "gurobi", $XPRESS, "cyipopt", "pymumps", "scip")
+
+            foreach ($PKG in $PACKAGES) {
+                try {
+                    Start-Process -FilePath conda -ArgumentList "install -q -y $PKG" -NoNewWindow -Wait -ErrorAction Stop
+                } catch {
+                    echo "WARNING: $PKG not available or did not install correctly"
+                }
+            }
+        }
+
+        echo ""
+        echo "Installing packages only available on PyPI"
+        if ($PYPI_DEPENDENCIES.Count -gt 0) {
+            python -m pip install --cache-dir cache/pip @PYPI_DEPENDENCIES
+        }
+
+        python -c "import sys; print(f'PYTHON_EXE={sys.executable}')" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+        foreach ($profile in @("$HOME/.profile", "$HOME/.bash_profile")) {
+            if (Test-Path $profile) {
+                Add-Content -Path $profile -Value ""
+                Add-Content -Path $profile -Value "export PATH=`echo \"$PATH\" | tr \":\" "\n" | grep runner | tr \"\n\" \":\"`:`echo \"$PATH\" | tr \":\" "\n" | grep -v runner | tr \"\n\" \":\"`"
+            }
+        }
+
+        echo ""
+        echo "Final conda environment:"
+        conda list | ForEach-Object { "    $_" }
 
     - name: Setup TPL package directories
       run: |
