@@ -386,24 +386,26 @@ jobs:
                 if [[ "${{matrix.TARGET}}" == win ]]; then
                     powershell -Command "
                         # Set the timeout duration (in seconds)
-                        $Timeout = 30
-                        $RetryInterval = 1
-                        $timer = [Diagnostics.Stopwatch]::StartNew()
-                        # Start the process
-                        $process = Start-Process -FilePath conda -ArgumentList 'install', '-q', '-y', '$PKG' -NoNewWindow -PassThru
-                        # Monitor the process
-                        while (($timer.Elapsed.TotalSeconds -lt $Timeout) -and (-not $process.HasExited)) {
-                            Start-Sleep -Seconds $RetryInterval
-                            $totalSecs = [math]::Round($timer.Elapsed.TotalSeconds, 0)
-                            Write-Host \"Still waiting for $PKG installation... [$totalSecs seconds elapsed]\"
-                        }
-                        $timer.Stop()
+                        `$Timeout = 30
+                        `$RetryInterval = 1
+                        `$timer = [Diagnostics.Stopwatch]::StartNew()
 
-                        if (-not $process.HasExited) {
-                            Stop-Process -Id $process.Id -Force
-                            Write-Host \"WARNING: $PKG installation timed out after $Timeout seconds\"
-                        } elseif ($process.ExitCode -ne 0) {
-                            Write-Host \"WARNING: $PKG installation failed with exit code $($process.ExitCode)\"
+                        # Start the process
+                        `$process = Start-Process -FilePath conda -ArgumentList 'install', '-q', '-y', '$PKG' -NoNewWindow -PassThru
+
+                        # Monitor the process
+                        while ((`$timer.Elapsed.TotalSeconds -lt `$Timeout) -and (-not `$process.HasExited)) {
+                            Start-Sleep -Seconds `$RetryInterval
+                            `$totalSecs = [math]::Round(`$timer.Elapsed.TotalSeconds, 0)
+                            Write-Host \"Still waiting for $PKG installation... [`$totalSecs seconds elapsed]\"
+                        }
+                        `$timer.Stop()
+
+                        if (-not `$process.HasExited) {
+                            Stop-Process -Id `$process.Id -Force
+                            Write-Host \"WARNING: $PKG installation timed out after `$Timeout seconds\"
+                        } elseif (`$process.ExitCode -ne 0) {
+                            Write-Host \"WARNING: $PKG installation failed with exit code `$(`$process.ExitCode)\"
                         } else {
                             Write-Host \"SUCCESS: $PKG installed successfully\"
                         }
