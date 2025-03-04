@@ -420,7 +420,13 @@ jobs:
 
             # Main installation loop
             for PKG in $PACKAGES; do
-               timeout 30 conda install -q -y $PKG || echo "WARNING: $PKG not available or did not install correctly"
+                if [[ "${{matrix.TARGET}}" == win ]]; then
+                    # Use PowerShell to run conda install with a timeout
+                    powershell -Command "Start-Process conda -ArgumentList 'install', '-q', '-y', '$PKG' -NoNewWindow -Wait -Timeout 30; if ($LASTEXITCODE -ne 0) { Write-Host 'WARNING: $PKG not available or did not install correctly' }"
+                else
+                    # For Linux or other environments
+                    timeout 30 conda install -q -y $PKG || echo "WARNING: $PKG not available or did not install correctly"
+                fi
             done
         fi
         # Re-try Pyomo (optional) dependencies with pip
