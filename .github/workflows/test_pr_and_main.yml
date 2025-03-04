@@ -338,6 +338,36 @@ jobs:
     - name: Install Python packages (conda)
       if: matrix.PYENV == 'conda'
       run: |
+        # Function to install a package with a timeout
+        install_with_timeout() {
+            local pkg=$1
+            local timeout_duration=30
+
+            echo "... INSTALLING $pkg"
+            (conda install -q -y "$pkg") &
+            conda_pid=$!
+
+            # Set a trap to kill the conda process if the script exits
+            trap "kill $conda_pid 2>/dev/null" EXIT
+
+            (sleep "$timeout_duration" && kill -INT "$conda_pid" 2>/dev/null) &
+            timeout_pid=$!
+
+            wait "$conda_pid"
+            exit_status=$?
+
+            # Clean up the timeout process
+            kill "$timeout_pid" 2>/dev/null
+
+            # Check if the installation was successful
+            if [ $exit_status -ne 0 ]; then
+                echo "ERROR: Installation of $pkg failed (exit status: $exit_status)"
+                return 1
+            fi
+
+            echo "Successfully installed $pkg"
+            return 0
+        }
         # Set up environment
         conda config --set always_yes yes
         conda config --set auto_update_conda false
@@ -419,40 +449,19 @@ jobs:
             for PKG in 'cplex>=12.10' docplex gurobi "$XPRESS" cyipopt pymumps scip; do
                 echo ""
                 echo "*** Install $PKG ***"
-                echo ""
-                # conda can literally take an hour to determine that a
-                # package is not available.  Perform a quick search to see
-                # if the package is available for this interpreter before
-                # attempting an install.
-                # NOTE: conda search will attempt approximate matches.
                 _PKGLIST=$(conda search -f "$PKG") || echo "Package $PKG not found"
                 echo "$_PKGLIST"
                 _BASE=$(echo "$PKG" | sed 's/[=<>].*//')
-                _BUILDS=$(echo "$_PKGLIST" | grep "^$_BASE " \
-                    | sed -r 's/\s+/ /g' | cut -d\  -f3) || echo ""
+                _BUILDS=$(echo "$_PKGLIST" | grep "^$_BASE " | sed -r 's/\s+/ /g' | cut -d\  -f3) || echo ""
+
                 if test -n "$_BUILDS"; then
-                    _ISPY=$(echo "$_BUILDS" | grep "^py") \
-                        || echo "INFO: No python build detected."
-                    _PYOK=$(echo "$_BUILDS" | grep -E "^($PYVER|pyh)") \
-                        || echo "INFO: No python build matching $PYVER detected."
+                    _ISPY=$(echo "$_BUILDS" | grep "^py") || echo "INFO: No python build detected."
+                    _PYOK=$(echo "$_BUILDS" | grep -E "^($PYVER|pyh)") || echo "INFO: No python build matching $PYVER detected."
+
                     if test -z "$_ISPY" -o -n "$_PYOK"; then
-                        echo ""
-                        echo "... INSTALLING $PKG"
-                        # Because conda can occasionally hang
-                        # indefinitely (lately while installing SCIP),
-                        # we will run "conda install" in a subshell and
-                        # kill it after 5-minutes.
-                        (conda install -q -y $PKG) &
-                        conda_pid=$!
-                        (sleep 30 && kill -INT "$conda_pid" 2>/dev/null) &
-                        timeout_pid=$!
-                        wait "$conda_pid" || _BUILDS=""
-                        kill "$timeout_pid" 2>/dev/null \
-                            || echo "TIMEOUT: killed conda install process"
+                        install_with_timeout "$PKG"
                     fi
-                fi
-                echo ""
-                if test -z "$_BUILDS"; then
+                else
                     echo "WARNING: $PKG is not available"
                 fi
             done
