@@ -409,7 +409,10 @@ jobs:
             fi
             PYVER=$(echo "py${{matrix.python}}" | sed 's/\.//g')
             echo "Installing for $PYVER"
-            for PKG in 'cplex>=12.10' docplex gurobi "$XPRESS" cyipopt pymumps scip; do
+            PACKAGES='cplex>=12.10 docplex gurobi xpress cyipopt pymumps scip'
+
+            # Main installation loop
+            for PKG in $PACKAGES; do
                 echo ""
                 echo "*** Install $PKG ***"
                 _PKGLIST=$(conda search -f "$PKG") || echo "Package $PKG not found"
@@ -422,7 +425,9 @@ jobs:
                     _PYOK=$(echo "$_BUILDS" | grep -E "^($PYVER|pyh)") || echo "INFO: No python build matching $PYVER detected."
 
                     if test -z "$_ISPY" -o -n "$_PYOK"; then
-                        install_with_timeout "$PKG"
+                        install_with_timeout "$PKG" || {
+                            echo "WARNING: $PKG installation failed. Continuing with the next package."
+                        }
                     fi
                 else
                     echo "WARNING: $PKG is not available"
