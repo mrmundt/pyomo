@@ -416,7 +416,7 @@ jobs:
             fi
             PYVER=$(echo "py${{matrix.python}}" | sed 's/\.//g')
             echo "Installing for $PYVER"
-            for PKG in scip 'cplex>=12.10' docplex gurobi "$XPRESS" cyipopt pymumps; do
+            for PKG in 'cplex>=12.10' docplex gurobi "$XPRESS" cyipopt pymumps scip; do
                 echo ""
                 echo "*** Install $PKG ***"
                 echo ""
@@ -444,7 +444,7 @@ jobs:
                         # kill it after 5-minutes.
                         (conda install -q -y $PKG) &
                         conda_pid=$!
-                        (sleep 300 && kill "$conda_pid" 2>/dev/null) &
+                        (sleep 30 && kill -INT "$conda_pid" 2>/dev/null) &
                         timeout_pid=$!
                         wait "$conda_pid" || _BUILDS=""
                         kill "$timeout_pid" 2>/dev/null \
@@ -482,6 +482,7 @@ jobs:
         echo ""
         echo "Final conda environment:"
         conda list | sed 's/^/    /'
+
 
     - name: Setup TPL package directories
       run: |
