@@ -406,10 +406,11 @@ jobs:
 
         # Try to install mamba
         $MAMBA_FAILED = $false
-        conda install -q -y -n base conda-libmamba-solver || $MAMBA_FAILED = $true
-        if (-not $MAMBA_FAILED) {
-            echo "*** Activating the mamba environment solver ***"
-            conda config --set solver libmamba
+        try {
+            conda install -q -y -n base conda-libmamba-solver -ErrorAction Stop
+        } catch {
+            Write-Host "Error: Failed to install conda-libmamba-solver"
+            $MAMBA_FAILED = $true
         }
 
         # Add the rest of the channels
