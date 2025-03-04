@@ -532,7 +532,7 @@ jobs:
 
         echo ""
         echo "Final conda environment:"
-        conda list | ForEach-Object { "    $($_)" }
+        conda list | ForEach-Object { Write-Host "    $_" }
 
     - name: Setup TPL package directories
       run: |
