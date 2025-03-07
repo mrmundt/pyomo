@@ -2433,10 +2433,10 @@ class EllipsoidalSet(UncertaintySet):
     >>> conf_ellipsoid.center
     array([0, 0, 0, 0])
     >>> conf_ellipsoid.shape_matrix
-    array([[1, 0, 0, 0]],
-           [0, 2, 0, 0]],
-           [0, 0, 3, 0]],
-           [0, 0, 0. 4]])
+    array([[1, 0, 0, 0],
+           [0, 2, 0, 0],
+           [0, 0, 3, 0],
+           [0, 0, 0, 4]])
     >>> conf_ellipsoid.scale
     ...9.4877...
     >>> conf_ellipsoid.gaussian_conf_lvl
