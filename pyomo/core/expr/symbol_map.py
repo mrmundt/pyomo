@@ -10,7 +10,7 @@
 #  ___________________________________________________________________________
 
 
-class SymbolMap(object):
+class SymbolMap:
     """
     A class for tracking assigned labels for modeling components.
 
@@ -30,9 +30,9 @@ class SymbolMap(object):
     byObject : dict
         maps (object id) to (string label)
     bySymbol : dict
-        maps (string label) to (object)
+        maps (string label) to 
     aliases : dict
-        maps (string label) to (object)
+        maps (string label) to 
     default_labeler:
         used to compute a string label from an object
     """

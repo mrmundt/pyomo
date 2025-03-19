@@ -16,7 +16,7 @@ from pyomo.opt import *
 
 
 @plugin_factory(SolverFactory)
-class MySolver(object):
+class MySolver:
     alias('greedy')
 
     # Declare that this is an IOptSolver plugin

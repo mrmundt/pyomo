@@ -39,7 +39,7 @@ default_print_options = Bunch(schema=False, ignore_time=False)
 strict = False
 
 
-class UndefinedData(object):
+class UndefinedData:
     def __str__(self):
         return "<undefined>"
 
@@ -48,7 +48,7 @@ undefined = UndefinedData()
 ignore = UndefinedData()
 
 
-class ScalarData(object):
+class ScalarData:
     def __init__(
         self,
         value=undefined,
@@ -158,7 +158,7 @@ class ScalarData(object):
 #
 # This class manages a list of MapContainer objects.
 #
-class ListContainer(object):
+class ListContainer:
     def __init__(self, cls):
         self._cls = cls
         self._list = []

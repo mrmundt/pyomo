@@ -101,7 +101,7 @@ class GurobiSolutionLoader(PersistentSolutionLoader):
         )
 
 
-class _MutableLowerBound(object):
+class _MutableLowerBound:
     def __init__(self, expr):
         self.var = None
         self.expr = expr
@@ -110,7 +110,7 @@ class _MutableLowerBound(object):
         self.var.setAttr('lb', value(self.expr))
 
 
-class _MutableUpperBound(object):
+class _MutableUpperBound:
     def __init__(self, expr):
         self.var = None
         self.expr = expr
@@ -119,7 +119,7 @@ class _MutableUpperBound(object):
         self.var.setAttr('ub', value(self.expr))
 
 
-class _MutableLinearCoefficient(object):
+class _MutableLinearCoefficient:
     def __init__(self):
         self.expr = None
         self.var = None
@@ -130,7 +130,7 @@ class _MutableLinearCoefficient(object):
         self.gurobi_model.chgCoeff(self.con, self.var, value(self.expr))
 
 
-class _MutableRangeConstant(object):
+class _MutableRangeConstant:
     def __init__(self):
         self.lhs_expr = None
         self.rhs_expr = None
@@ -146,7 +146,7 @@ class _MutableRangeConstant(object):
         slack.ub = rhs_val - lhs_val
 
 
-class _MutableConstant(object):
+class _MutableConstant:
     def __init__(self):
         self.expr = None
         self.con = None
@@ -155,7 +155,7 @@ class _MutableConstant(object):
         self.con.rhs = value(self.expr)
 
 
-class _MutableQuadraticConstraint(object):
+class _MutableQuadraticConstraint:
     def __init__(
         self, gurobi_model, gurobi_con, constant, linear_coefs, quadratic_coefs
     ):
@@ -190,7 +190,7 @@ class _MutableQuadraticConstraint(object):
         return value(self.constant.expr)
 
 
-class _MutableObjective(object):
+class _MutableObjective:
     def __init__(self, gurobi_model, constant, linear_coefs, quadratic_coefs):
         self.gurobi_model = gurobi_model
         self.constant = constant
@@ -218,7 +218,7 @@ class _MutableObjective(object):
         return gurobi_expr
 
 
-class _MutableQuadraticCoefficient(object):
+class _MutableQuadraticCoefficient:
     def __init__(self):
         self.expr = None
         self.var1 = None

@@ -617,7 +617,7 @@ class Constraint(ActiveIndexedComponent):
 
     _ComponentDataClass = ConstraintData
 
-    class Infeasible(object):
+    class Infeasible:
         pass
 
     Feasible = ActiveIndexedComponent.Skip
@@ -969,7 +969,7 @@ class ConstraintList(IndexedConstraint):
     added an index value is not specified.
     """
 
-    class End(object):
+    class End:
         pass
 
     def __init__(self, **kwargs):

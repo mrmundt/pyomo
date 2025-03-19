@@ -1554,7 +1554,7 @@ class TestYamlPortal(TestTextPortal):
         }
 
 
-class LoadTests(object):
+class LoadTests:
     skiplist = []
 
     #

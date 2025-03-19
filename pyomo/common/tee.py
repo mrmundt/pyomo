@@ -50,7 +50,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class _SignalFlush(object):
+class _SignalFlush:
     def __init__(self, ostream, handle):
         super().__setattr__('_ostream', ostream)
         super().__setattr__('_handle', handle)
@@ -76,7 +76,7 @@ class _AutoFlush(_SignalFlush):
         self.flush()
 
 
-class redirect_fd(object):
+class redirect_fd:
     """Redirect a file descriptor to a new file or file descriptor.
 
     This context manager will redirect the specified file descriptor to
@@ -177,7 +177,7 @@ class redirect_fd(object):
         os.close(self.original_fd)
 
 
-class capture_output(object):
+class capture_output:
     """Context manager to capture output sent to sys.stdout and sys.stderr
 
     This is a drop-in substitute for PyUtilib's capture_output to
@@ -319,7 +319,7 @@ class capture_output(object):
         return self.__exit__(None, None, None)
 
 
-class _StreamHandle(object):
+class _StreamHandle:
     def __init__(self, mode, buffering, encoding, newline):
         self.buffering = buffering
         self.newlines = newline
@@ -479,7 +479,7 @@ class _StreamHandle(object):
                 )
 
 
-class TeeStream(object):
+class TeeStream:
     def __init__(self, *ostreams, encoding=None, buffering=-1):
         self.ostreams = ostreams
         self.encoding = encoding

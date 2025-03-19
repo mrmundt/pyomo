@@ -331,7 +331,7 @@ class TestTeeStream(unittest.TestCase):
         )
 
     def test_deadlock(self):
-        class MockStream(object):
+        class MockStream:
             def write(self, data):
                 # This test will kill the write before this sleep is
                 # done, so a long sleep won't impact suite run time.
@@ -360,7 +360,7 @@ class TestTeeStream(unittest.TestCase):
             tee._poll_timeout, tee._poll_timeout_deadlock = _save
 
 
-class BufferTester(object):
+class BufferTester:
     def setUp(self):
         sys.stdout.flush()
         sys.stderr.flush()

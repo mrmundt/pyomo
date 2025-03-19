@@ -183,7 +183,7 @@ class LogicalConstraint(ActiveIndexedComponent):
 
     _ComponentDataClass = LogicalConstraintData
 
-    class Infeasible(object):
+    class Infeasible:
         pass
 
     Feasible = ActiveIndexedComponent.Skip

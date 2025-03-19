@@ -216,7 +216,7 @@ class StdoutHandler(logging.StreamHandler):
         super(StdoutHandler, self).emit(record)
 
 
-class Preformatted(object):
+class Preformatted:
     __slots__ = ('msg',)
 
     def __init__(self, msg):
@@ -229,7 +229,7 @@ class Preformatted(object):
         return f'Preformatted({self.msg!r})'
 
 
-class _GlobalLogFilter(object):
+class _GlobalLogFilter:
     def __init__(self):
         self.logger = logging.getLogger()
 
@@ -271,7 +271,7 @@ class LogHandler(logging.StreamHandler):
         self.setFormatter(LegacyPyomoFormatter(base=base, verbosity=verbosity))
 
 
-class LoggingIntercept(object):
+class LoggingIntercept:
     r"""Context manager for intercepting messages sent to a log stream
 
     This class is designed to enable easy testing of log messages.
