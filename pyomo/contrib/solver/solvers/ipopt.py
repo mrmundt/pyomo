@@ -14,10 +14,16 @@ import os
 import subprocess
 import datetime
 import io
+import re
 from typing import Mapping, Optional, Sequence
 
 from pyomo.common import Executable
-from pyomo.common.config import ConfigValue, document_kwargs_from_configdict, ConfigDict
+from pyomo.common.config import (
+    ConfigValue,
+    document_kwargs_from_configdict,
+    ConfigDict,
+    ADVANCED_OPTION,
+)
 from pyomo.common.errors import (
     ApplicationError,
     DeveloperError,
@@ -239,7 +245,7 @@ class Ipopt(SolverBase):
                 version = version.split(' ')[1].strip()
                 version = tuple(int(i) for i in version.split('.'))
                 self._version_cache = (pth, version)
-        return self._version_cache[1]
+        return tuple(self._version_cache[1])
 
     def has_linear_solver(self, linear_solver):
         import pyomo.core as AML
@@ -353,101 +359,14 @@ class Ipopt(SolverBase):
                 except InfeasibleConstraintException:
                     proven_infeasible = True
                 timer.stop('write_nl_file')
-            if not proven_infeasible and len(nl_info.variables) > 0:
-                # Get a copy of the environment to pass to the subprocess
-                env = os.environ.copy()
-                if nl_info.external_function_libraries:
-                    if env.get('AMPLFUNC'):
-                        nl_info.external_function_libraries.append(env.get('AMPLFUNC'))
-                    env['AMPLFUNC'] = "\n".join(nl_info.external_function_libraries)
-                # Write the opt_file, if there should be one; return a bool to say
-                # whether or not we have one (so we can correctly build the command line)
-                opt_file = self._write_options_file(
-                    filename=basename, options=config.solver_options
-                )
-                # Call ipopt - passing the files via the subprocess
-                cmd = self._create_command_line(
-                    basename=basename, config=config, opt_file=opt_file
-                )
-                # this seems silly, but we have to give the subprocess slightly longer to finish than
-                # ipopt
-                if config.time_limit is not None:
-                    timeout = config.time_limit + min(
-                        max(1.0, 0.01 * config.time_limit), 100
-                    )
-                else:
-                    timeout = None
 
-                ostreams = [io.StringIO()] + config.tee
-                with TeeStream(*ostreams) as t:
-                    timer.start('subprocess')
-                    process = subprocess.run(
-                        cmd,
-                        timeout=timeout,
-                        env=env,
-                        universal_newlines=True,
-                        stdout=t.STDOUT,
-                        stderr=t.STDERR,
-                        check=False,
-                    )
-                    timer.stop('subprocess')
-                    # This is the stuff we need to parse to get the iterations
-                    # and time
-                    (iters, ipopt_time_nofunc, ipopt_time_func, ipopt_total_time) = (
-                        self._parse_ipopt_output(ostreams[0])
-                    )
+            results = self._solve(proven_infeasible, nl_info, config, timer, basename)
 
-            if proven_infeasible:
-                results = Results()
-                results.termination_condition = TerminationCondition.provenInfeasible
-                results.solution_loader = SolSolutionLoader(None, None)
-                results.iteration_count = 0
-                results.timing_info.total_seconds = 0
-            elif len(nl_info.variables) == 0:
-                if len(nl_info.eliminated_vars) == 0:
-                    results = Results()
-                    results.termination_condition = TerminationCondition.emptyModel
-                    results.solution_loader = SolSolutionLoader(None, None)
-                else:
-                    results = Results()
-                    results.termination_condition = (
-                        TerminationCondition.convergenceCriteriaSatisfied
-                    )
-                    results.solution_status = SolutionStatus.optimal
-                    results.solution_loader = SolSolutionLoader(None, nl_info=nl_info)
-                    results.iteration_count = 0
-                    results.timing_info.total_seconds = 0
-            else:
-                if os.path.isfile(basename + '.sol'):
-                    with open(basename + '.sol', 'r', encoding='utf-8') as sol_file:
-                        timer.start('parse_sol')
-                        results = self._parse_solution(sol_file, nl_info)
-                        timer.stop('parse_sol')
-                else:
-                    results = Results()
-                if process.returncode != 0:
-                    results.extra_info.return_code = process.returncode
-                    results.termination_condition = TerminationCondition.error
-                    results.solution_loader = SolSolutionLoader(None, None)
-                else:
-                    results.iteration_count = iters
-                    if ipopt_time_nofunc is not None:
-                        results.timing_info.ipopt_excluding_nlp_functions = (
-                            ipopt_time_nofunc
-                        )
-
-                    if ipopt_time_func is not None:
-                        results.timing_info.nlp_function_evaluations = ipopt_time_func
-                    if ipopt_total_time is not None:
-                        results.timing_info.total_seconds = ipopt_total_time
         if (
             config.raise_exception_on_nonoptimal_result
             and results.solution_status != SolutionStatus.optimal
         ):
             raise NoOptimalSolutionError()
-
-        results.solver_name = self.name
-        results.solver_version = self.version(config)
 
         if config.load_solutions:
             if results.solution_status == SolutionStatus.noSolution:
@@ -485,10 +404,6 @@ class Ipopt(SolverBase):
                     )
                 )
 
-        results.solver_config = config
-        if not proven_infeasible and len(nl_info.variables) > 0:
-            results.solver_log = ostreams[0].getvalue()
-
         # Capture/record end-time / wall-time
         end_timestamp = datetime.datetime.now(datetime.timezone.utc)
         results.timing_info.start_timestamp = start_timestamp
@@ -498,44 +413,231 @@ class Ipopt(SolverBase):
         results.timing_info.timer = timer
         return results
 
-    def _parse_ipopt_output(self, stream: io.StringIO):
+    def _solve(self, proven_infeasible, nl_info, config, timer, basename):
         """
-        Parse an IPOPT output file and return:
-
-        * number of iterations
-        * time in IPOPT
-
+        Run the subprocess and generate a Results object with
+        relevant information
         """
+        len_nl_info_vars = len(nl_info.variables)
+        if not proven_infeasible and len_nl_info_vars > 0:
+            # Get a copy of the environment to pass to the subprocess
+            env = os.environ.copy()
+            if nl_info.external_function_libraries:
+                if env.get('AMPLFUNC'):
+                    nl_info.external_function_libraries.append(env.get('AMPLFUNC'))
+                env['AMPLFUNC'] = "\n".join(nl_info.external_function_libraries)
+            # Write the opt_file, if there should be one; return a bool to say
+            # whether or not we have one (so we can correctly build the command line)
+            opt_file = self._write_options_file(
+                filename=basename, options=config.solver_options
+            )
+            # Call ipopt - passing the files via the subprocess
+            cmd = self._create_command_line(
+                basename=basename, config=config, opt_file=opt_file
+            )
+            # this seems silly, but we have to give the subprocess slightly
+            # longer to finish than ipopt
+            if config.time_limit is not None:
+                timeout = config.time_limit + min(
+                    max(1.0, 0.01 * config.time_limit), 100
+                )
+            else:
+                timeout = None
 
-        iters = None
-        nofunc_time = None
-        func_time = None
-        total_time = None
-        # parse the output stream to get the iteration count and solver time
-        for line in stream.getvalue().splitlines():
-            if line.startswith("Number of Iterations....:"):
-                tokens = line.split()
-                iters = int(tokens[-1])
-            elif line.startswith(
-                "Total seconds in IPOPT                               ="
-            ):
-                # Newer versions of IPOPT no longer separate timing into
-                # two different values. This is so we have compatibility with
-                # both new and old versions
-                tokens = line.split()
-                total_time = float(tokens[-1])
-            elif line.startswith(
-                "Total CPU secs in IPOPT (w/o function evaluations)   ="
-            ):
-                tokens = line.split()
-                nofunc_time = float(tokens[-1])
-            elif line.startswith(
-                "Total CPU secs in NLP function evaluations           ="
-            ):
-                tokens = line.split()
-                func_time = float(tokens[-1])
+            ostreams = [io.StringIO()] + config.tee
+            with TeeStream(*ostreams) as t:
+                timer.start('subprocess')
+                process = subprocess.run(
+                    cmd,
+                    timeout=timeout,
+                    env=env,
+                    universal_newlines=True,
+                    stdout=t.STDOUT,
+                    stderr=t.STDERR,
+                    check=False,
+                )
+                timer.stop('subprocess')
+                # This is the stuff we need to parse to get the iterations
+                # and time
+                parsed_output_data = self._parse_ipopt_output(ostreams[0])
 
-        return iters, nofunc_time, func_time, total_time
+        if proven_infeasible:
+            results = Results()
+            results.termination_condition = TerminationCondition.provenInfeasible
+            results.solution_loader = SolSolutionLoader(None, None)
+            results.iteration_count = 0
+            results.timing_info.total_seconds = 0
+        elif len_nl_info_vars == 0:
+            if len(nl_info.eliminated_vars) == 0:
+                results = Results()
+                results.termination_condition = TerminationCondition.emptyModel
+                results.solution_loader = SolSolutionLoader(None, None)
+            else:
+                results = Results()
+                results.termination_condition = (
+                    TerminationCondition.convergenceCriteriaSatisfied
+                )
+                results.solution_status = SolutionStatus.optimal
+                results.solution_loader = SolSolutionLoader(None, nl_info=nl_info)
+                results.iteration_count = 0
+                results.timing_info.total_seconds = 0
+        else:
+            if os.path.isfile(basename + '.sol'):
+                with open(basename + '.sol', 'r', encoding='utf-8') as sol_file:
+                    timer.start('parse_sol')
+                    results = self._parse_solution(sol_file, nl_info)
+                    timer.stop('parse_sol')
+            else:
+                results = Results()
+            if process.returncode != 0:
+                results.extra_info.return_code = process.returncode
+                results.termination_condition = TerminationCondition.error
+                results.solution_loader = SolSolutionLoader(None, None)
+            else:
+                results.iteration_count = parsed_output_data['iters']
+                parsed_output_data.pop('iters')
+                if 'total_time' in parsed_output_data['cpu_seconds']:
+                    results.timing_info.total_time = parsed_output_data['cpu_seconds'][
+                        'total_time'
+                    ]
+                if 'nofunc_time' in parsed_output_data['cpu_seconds']:
+                    results.timing_info.nofunc_time = parsed_output_data['cpu_seconds'][
+                        'nofunc_time'
+                    ]
+                    results.timing_info.func_time = parsed_output_data['cpu_seconds'][
+                        'func_time'
+                    ]
+                parsed_output_data.pop('cpu_seconds')
+            if len_nl_info_vars > 0:
+                results.solver_log = ostreams[0].getvalue()
+        # Populate high-level relevant information
+        results.solver_name = self.name
+        results.solver_version = self.version(config)
+        results.solver_config = config
+        results.extra_info = parsed_output_data
+        # Set iteration_log visibility to ADVANCED_OPTION because it's
+        # a lot to print out with `display`
+        results.extra_info.get("iteration_log")._visibility = ADVANCED_OPTION
+
+        return results
+
+    def _parse_ipopt_output(self, output):
+        parsed_data = {}
+
+        # Convert output to a string so we can parse it
+        if isinstance(output, io.StringIO):
+            output = output.getvalue()
+
+        # Extract number of iterations
+        iter_match = re.search(r'Number of Iterations\.\.\.\.:\s+(\d+)', output)
+        if iter_match:
+            parsed_data['iters'] = int(iter_match.group(1))
+
+        iter_table = re.findall(r'^(?:\s*\d+.*?)$', output, re.MULTILINE)
+        if iter_table:
+            columns = [
+                "iter",
+                "objective",
+                "inf_pr",
+                "inf_du",
+                "lg_mu",
+                "d_norm",
+                "lg_rg",
+                "alpha_du",
+                "alpha_pr",
+                "ls",
+            ]
+            all_iterations = []
+
+            for line in iter_table:
+                tokens = line.strip().split()
+                if len(tokens) == len(columns):
+                    iter_data = dict(zip(columns, tokens))
+
+                    # Extract restoration flag from 'iter'
+                    iter_val = iter_data["iter"]
+                    iter_match = re.match(r"(\d+)(r?)", iter_val)
+                    if iter_match:
+                        iter_data["restoration"] = bool(
+                            iter_match.group(2)
+                        )  # True if 'r' is present
+                    else:
+                        iter_data["restoration"] = False
+                    iter_data.pop('iter')
+
+                    # Separate alpha_pr into numeric part and optional tag
+                    alpha_pr_val = iter_data["alpha_pr"]
+                    match = re.match(r"([0-9.eE+-]+)([a-zA-Z]?)", alpha_pr_val)
+                    if match:
+                        iter_data["alpha_pr"] = match.group(1)
+                        iter_data["step_acceptance"] = (
+                            match.group(2) if match.group(2) else None
+                        )
+                    else:
+                        iter_data["step_acceptance"] = None
+
+                    # Attempt to cast all values to float where possible
+                    for key in iter_data:
+                        try:
+                            if iter_data[key] == '-':
+                                iter_data[key] = None
+                                continue
+                            if isinstance(iter_data[key], bool):
+                                continue
+                            iter_data[key] = float(iter_data[key])
+                        except (ValueError, TypeError):
+                            pass
+
+                    all_iterations.append(iter_data)
+            parsed_data['iteration_log'] = all_iterations
+
+        # Extract scaled and unscaled table
+        scaled_unscaled_match = re.findall(
+            r'Objective\.\.+:\s+([-+eE0-9.]+)\s+([-+eE0-9.]+).*?'
+            r'Dual infeasibility\.\.+:\s+([-+eE0-9.]+)\s+([-+eE0-9.]+).*?'
+            r'Constraint violation\.\.+:\s+([-+eE0-9.]+)\s+([-+eE0-9.]+).*?'
+            r'Complementarity\.\.+:\s+([-+eE0-9.]+)\s+([-+eE0-9.]+).*?'
+            r'Overall NLP error\.\.+:\s+([-+eE0-9.]+)\s+([-+eE0-9.]+)',
+            output,
+            re.DOTALL,
+        )
+        if scaled_unscaled_match:
+            scaled = {
+                "incumbent_objective": float(scaled_unscaled_match[0][0]),
+                "dual_infeasibility": float(scaled_unscaled_match[0][2]),
+                "constraint_violation": float(scaled_unscaled_match[0][4]),
+                "complementarity_error": float(scaled_unscaled_match[0][6]),
+                "overall_nlp_error": float(scaled_unscaled_match[0][8]),
+            }
+            unscaled = {
+                "incumbent_objective": float(scaled_unscaled_match[0][1]),
+                "dual_infeasibility": float(scaled_unscaled_match[0][3]),
+                "constraint_violation": float(scaled_unscaled_match[0][5]),
+                "complementarity": float(scaled_unscaled_match[0][7]),
+                "overall_nlp_error": float(scaled_unscaled_match[0][9]),
+            }
+
+            parsed_data.update(unscaled)
+            parsed_data['final_scaled_results'] = scaled
+
+        # Newer versions of IPOPT no longer separate timing into
+        # two different values. This is so we have compatibility with
+        # both new and old versions
+        cpu_match = re.findall(r'Total CPU secs in .*? =\s+([0-9.]+)', output)
+        ipopt_seconds_match = re.search(
+            r'Total seconds in IPOPT\s+=\s+([0-9.]+)', output
+        )
+        if cpu_match and len(cpu_match) >= 2:
+            parsed_data['cpu_seconds'] = {
+                'nofunc_time': float(cpu_match[0]),
+                'func_time': float(cpu_match[1]),
+            }
+        elif ipopt_seconds_match:
+            parsed_data['cpu_seconds'] = {
+                'total_time': float(ipopt_seconds_match.group(1))
+            }
+
+        return parsed_data
 
     def _parse_solution(self, instream: io.TextIOBase, nl_info: NLWriterInfo):
         results = Results()

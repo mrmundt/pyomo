@@ -2062,10 +2062,18 @@ class ConfigBase(object):
             ostream = sys.stdout
 
         for lvl, prefix, value, obj in self._data_collector(0, "", visibility):
-            _str = _value2string(prefix, value, obj)
-            _blocks[lvl:] = [' ' * indent_spacing * lvl + _str + "\n"]
             if content_filter == 'userdata' and not obj._userSet:
                 continue
+
+            if obj._visibility <= (visibility or 0):
+                _str = _value2string(prefix, value, obj)
+            elif obj._visibility == ADVANCED_OPTION:
+                _str = prefix + "..."
+            elif obj._visibility > ADVANCED_OPTION:
+                continue
+
+            _blocks[lvl:] = [' ' * indent_spacing * lvl + _str + "\n"]
+
             for i, v in enumerate(_blocks):
                 if v is not None:
                     ostream.write(v)
@@ -2264,8 +2272,6 @@ class ConfigValue(ConfigBase):
         self._userSet = True
 
     def _data_collector(self, level, prefix, visibility=None, docMode=False):
-        if visibility is not None and visibility < self._visibility:
-            return
         yield (level, prefix, self, self)
 
 
@@ -2888,7 +2894,7 @@ class ConfigDict(ConfigBase, Mapping):
                 if key in _decl_map:
                     self[key] = value[_decl_map[key]]
             # implicit data is declared at the end (in sorted order)
-            for key in sorted(_implicit):
+            for key in _implicit:
                 self.add(key, value[key])
         except:
             self.reset()
