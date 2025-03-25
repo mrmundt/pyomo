@@ -166,9 +166,16 @@ class SolverConfig(ConfigDict):
         )
 
     def display(
-        self, content_filter=None, indent_spacing=2, ostream=None, visibility=0, stub_visibility=True
+        self,
+        content_filter=None,
+        indent_spacing=2,
+        ostream=None,
+        visibility=0,
+        stub_visibility=True,
     ):
-        return super().display(content_filter, indent_spacing, ostream, visibility, stub_visibility)
+        return super().display(
+            content_filter, indent_spacing, ostream, visibility, stub_visibility
+        )
 
 
 class BranchAndBoundConfig(SolverConfig):
