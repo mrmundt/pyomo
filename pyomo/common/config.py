@@ -1435,12 +1435,16 @@ class ConfigFormatter(object):
     def _finalize(self):
         return self.out.getvalue()
 
-    def generate(self, config, indent_spacing=2, width=78, visibility=None):
+    def generate(
+        self, config, indent_spacing=2, width=78, visibility=None, stub_visibility=False
+    ):
         self._initialize(indent_spacing, width, visibility)
         level = []
         lastObj = config
         indent = ''
-        for lvl, pre, val, obj in config._data_collector(1, '', visibility, True):
+        for lvl, pre, val, obj in config._data_collector(
+            1, '', visibility, stub_visibility, True
+        ):
             if len(level) < lvl:
                 while len(level) < lvl - 1:
                     level.append(None)
@@ -1638,6 +1642,7 @@ class document_kwargs_from_configdict(object):
         indent_spacing=4,
         width=78,
         visibility=None,
+        stub_visibility=False,
         doc=None,
     ):
         if '\n' not in section:
@@ -1647,6 +1652,7 @@ class document_kwargs_from_configdict(object):
         self.indent_spacing = indent_spacing
         self.width = width
         self.visibility = visibility
+        self.stub_visibility = stub_visibility
         self.doc = doc
 
     def __call__(self, fcn):
@@ -1670,6 +1676,7 @@ class document_kwargs_from_configdict(object):
                 indent_spacing=self.indent_spacing,
                 width=self.width,
                 visibility=self.visibility,
+                stub_visibility=self.stub_visibility,
                 format='numpydoc',
             )
         )
@@ -2174,6 +2181,7 @@ class ConfigBase(object):
         indent_spacing=2,
         width=78,
         visibility=None,
+        stub_visibility=False,
         format='latex',
     ):
         if isinstance(format, str):
@@ -2213,7 +2221,9 @@ class ConfigBase(object):
                 _formatter_str_to_item_callback(item_body, formatter),
             )
 
-        return formatter.generate(self, indent_spacing, width, visibility)
+        return formatter.generate(
+            self, indent_spacing, width, visibility, stub_visibility
+        )
 
     def user_values(self):
         if self._userSet:
@@ -2559,9 +2569,12 @@ class ConfigList(ConfigBase, Sequence):
         "Append the specified value to the list, casting as necessary."
         return self.append(value)
 
-    def _data_collector(self, level, prefix, visibility=None, docMode=False):
-        if visibility is not None and visibility < self._visibility:
-            return
+    def _data_collector(
+        self, level, prefix, visibility=None, stub_visibility=False, docMode=False
+    ):
+        if not stub_visibility:
+            if visibility is not None and visibility < self._visibility:
+                return
         if docMode:
             # In documentation mode, we do NOT list the documentation
             # for any sub-data, and instead document the *domain*
@@ -2586,7 +2599,9 @@ class ConfigList(ConfigBase, Sequence):
                 if level is not None:
                     level += 1
         for value in self._data:
-            for v in value._data_collector(level, '- ', visibility, docMode):
+            for v in value._data_collector(
+                level, '- ', visibility, stub_visibility, docMode
+            ):
                 yield v
 
 
@@ -2928,15 +2943,20 @@ class ConfigDict(ConfigBase, Mapping):
         self._userAccessed = False
         self._userSet = False
 
-    def _data_collector(self, level, prefix, visibility=None, docMode=False):
-        if visibility is not None and visibility < self._visibility:
-            return
+    def _data_collector(
+        self, level, prefix, visibility=None, stub_visibility=False, docMode=False
+    ):
+        if not stub_visibility:
+            if visibility is not None and visibility < self._visibility:
+                return
         if prefix:
             yield (level, prefix, None, self)
             if level is not None:
                 level += 1
         for cfg in self._data.values():
-            yield from cfg._data_collector(level, cfg._name + ': ', visibility, docMode)
+            yield from cfg._data_collector(
+                level, cfg._name + ': ', visibility, stub_visibility, docMode
+            )
 
 
 ConfigDict._UninitializedClass = None

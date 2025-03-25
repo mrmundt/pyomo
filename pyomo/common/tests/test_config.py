@@ -1453,6 +1453,7 @@ bar:
 
     def test_display_stub_visibility_false(self):
         config = ConfigDict()
+        config.declare('common_option', ConfigValue(default=1))
         config.declare('special_option', ConfigValue(visibility=ADVANCED_OPTION))
         # Default behavior is stub_visibility=False
         test = _display(config)
@@ -1460,6 +1461,7 @@ bar:
 
     def test_display_stub_visibility_true(self):
         config = ConfigDict()
+        config.declare('common_option', ConfigValue(default=1))
         config.declare('special_option', ConfigValue(visibility=ADVANCED_OPTION))
         test = _display(config, stub_visibility=True)
         self.assertIn(": ...", test)
