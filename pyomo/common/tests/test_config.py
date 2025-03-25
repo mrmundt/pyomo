@@ -72,6 +72,7 @@ from pyomo.common.config import (
     document_kwargs_from_configdict,
     add_docstring_list,
     USER_OPTION,
+    ADVANCED_OPTION,
     DEVELOPER_OPTION,
     _UnpickleableDomain,
     _picklable,
@@ -80,9 +81,9 @@ from pyomo.common.log import LoggingIntercept
 
 
 # Utility to redirect display() to a string
-def _display(obj, *args):
+def _display(obj, *args, **kwds):
     test = StringIO()
-    obj.display(ostream=test, *args)
+    obj.display(ostream=test, *args, **kwds)
     return test.getvalue()
 
 
@@ -1449,6 +1450,19 @@ bar:
         self.config.declare("bar", ConfigDict(implicit=True)).add("baz", ConfigDict())
         test = _display(self.config, 'userdata')
         self.assertEqual(test, "bar:\n  baz:\n")
+
+    def test_display_stub_visibility_false(self):
+        config = ConfigDict()
+        config.declare('special_option', ConfigValue(visibility=ADVANCED_OPTION))
+        # Default behavior is stub_visibility=False
+        test = _display(config)
+        self.assertNotIn(": ...", test)
+
+    def test_display_stub_visibility_true(self):
+        config = ConfigDict()
+        config.declare('special_option', ConfigValue(visibility=ADVANCED_OPTION))
+        test = _display(config, stub_visibility=True)
+        self.assertIn(": ...", test)
 
     def test_unusedUserValues_default(self):
         test = '\n'.join(x.name(True) for x in self.config.unused_user_values())

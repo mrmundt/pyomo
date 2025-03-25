@@ -2050,7 +2050,7 @@ class ConfigBase(object):
         return parsed_args
 
     def display(
-        self, content_filter=None, indent_spacing=2, ostream=None, visibility=None
+        self, content_filter=None, indent_spacing=2, ostream=None, visibility=None, stub_visibility=False
     ):
         if content_filter not in ConfigDict.content_filters:
             raise ValueError(
@@ -2061,18 +2061,20 @@ class ConfigBase(object):
         if ostream is None:
             ostream = sys.stdout
 
-        for lvl, prefix, value, obj in self._data_collector(0, "", visibility):
-            if content_filter == 'userdata' and not obj._userSet:
-                continue
-
-            if obj._visibility <= (visibility or 0):
+        for lvl, prefix, value, obj in self._data_collector(0, "", visibility, stub_visibility):
+            if not stub_visibility:
                 _str = _value2string(prefix, value, obj)
-            elif obj._visibility == ADVANCED_OPTION:
-                _str = prefix + "..."
-            elif obj._visibility > ADVANCED_OPTION:
-                continue
+            else:
+                if obj._visibility <= (visibility or 0):
+                    _str = _value2string(prefix, value, obj)
+                elif obj._visibility == ADVANCED_OPTION:
+                    _str = prefix + "..."
+                elif obj._visibility > ADVANCED_OPTION:
+                    continue
 
             _blocks[lvl:] = [' ' * indent_spacing * lvl + _str + "\n"]
+            if content_filter == 'userdata' and not obj._userSet:
+                continue
 
             for i, v in enumerate(_blocks):
                 if v is not None:
@@ -2271,7 +2273,10 @@ class ConfigValue(ConfigBase):
         self._setter(value)
         self._userSet = True
 
-    def _data_collector(self, level, prefix, visibility=None, docMode=False):
+    def _data_collector(self, level, prefix, visibility=None, stub_visibility=False, docMode=False):
+        if not stub_visibility:
+            if visibility is not None and visibility < self._visibility:
+                return
         yield (level, prefix, self, self)
 
 

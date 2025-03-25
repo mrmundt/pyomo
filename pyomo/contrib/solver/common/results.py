@@ -245,9 +245,9 @@ class Results(ConfigDict):
         )
 
     def display(
-        self, content_filter=None, indent_spacing=2, ostream=None, visibility=0
+        self, content_filter=None, indent_spacing=2, ostream=None, visibility=0, stub_visibility=True
     ):
-        return super().display(content_filter, indent_spacing, ostream, visibility)
+        return super().display(content_filter, indent_spacing, ostream, visibility, stub_visibility)
 
 
 # Everything below here preserves backwards compatibility
