@@ -278,6 +278,7 @@ class TestIpoptInterface(unittest.TestCase):
             result = opt._create_command_line('myfile', opt.config, False)
 
 
+@unittest.skipIf(not ipopt_available, "The 'ipopt' command is not available")
 class TestIpopt(unittest.TestCase):
     def create_model(self):
         model = pyo.ConcreteModel()
