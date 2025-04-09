@@ -313,19 +313,22 @@ which can be manipulated similar to a standard ``dict`` in Python.
    :members:
    :undoc-members:
 
-The new interface has condensed ``LegacySolverStatus``,
-``LegacyTerminationCondition``, and ``LegacySolutionStatus`` into
-``TerminationCondition`` and ``SolutionStatus`` to reduce complexity. As a
-result, several ``LegacySolutionStatus`` values are no longer achievable.
-These are detailed in the table below.
+The new interface has condensed :py:class:`~pyomo.opt.results.solver.SolverStatus`,
+:py:class:`~pyomo.opt.results.solver.TerminationCondition`,
+and :py:class:`~pyomo.opt.results.solution.SolutionStatus` into
+:py:class:`~pyomo.contrib.solver.common.results.TerminationCondition`
+and :py:class:`~pyomo.contrib.solver.common.results.SolutionStatus` to
+reduce complexity. As a result, several legacy
+:py:class:`~pyomo.opt.results.solver.SolutionStatus` values are
+no longer achievable. These are detailed in the table below.
 
-.. list-table:: Mapping from unachievable ``LegacySolutionStatus``
+.. list-table:: Mapping from unachievable :py:class:`~pyomo.opt.results.solver.SolutionStatus`
                 to future statuses
    :header-rows: 1
 
-   * - ``LegacySolutionStatus``
-     - ``TerminationCondition``
-     - ``SolutionStatus``
+   * - Legacy :py:class:`~pyomo.opt.results.solver.SolutionStatus`
+     - :py:class:`~pyomo.contrib.solver.common.results.TerminationCondition`
+     - :py:class:`~pyomo.contrib.solver.common.results.SolutionStatus`
    * - other
      - unknown
      - noSolution
