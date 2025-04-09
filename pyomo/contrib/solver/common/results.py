@@ -23,7 +23,6 @@ from pyomo.common.config import (
     ADVANCED_OPTION,
     DEVELOPER_OPTION,
 )
-from pyomo.common.deprecation import deprecation_warning
 from pyomo.opt.results.solution import SolutionStatus as LegacySolutionStatus
 from pyomo.opt.results.solver import (
     TerminationCondition as LegacyTerminationCondition,
@@ -302,15 +301,6 @@ def legacy_solution_status_map(results):
     objects. Because we condensed results objects, some of the previous statuses
     are no longer clearly achievable.
     """
-    deprecation_warning(
-        """The new interface has condensed LegacySolverStatus,
-LegacyTerminationCondition, and LegacySolutionStatus into TerminationCondition
-and SolutionStatus to reduce complexity. As a result, several LegacySolutionStatus values
-are no longer achievable. Please refer to
-https://pyomo.readthedocs.io/en/stable/explanation/experimental/solvers.html
-""",
-        version='6.9.2.dev0',
-    )
     if results.termination_condition in set(
         [
             TerminationCondition.maxTimeLimit,
