@@ -13,7 +13,7 @@ from io import StringIO
 from typing import Sequence, Dict, Optional, Mapping, MutableMapping
 
 import pyomo.environ as pyo
-from pyomo.common.config import ConfigDict
+from pyomo.common.config import ConfigDict, ADVANCED_OPTION
 from pyomo.core.base.constraint import ConstraintData
 from pyomo.core.base.var import VarData
 from pyomo.common.collections import ComponentMap
@@ -203,6 +203,52 @@ timing_info:
   start_timestamp: None
   wall_time: None
 extra_info:
+solver_config: ...
+solver_log: ...
+"""
+        out = stream.getvalue()
+        if 'null' in out:
+            out = out.replace('null', 'None')
+        self.assertEqual(expected_print, out)
+
+    def test_display_nostubs(self):
+        res = results.Results()
+        stream = StringIO()
+        res.display(ostream=stream, stub_visibility=False)
+        expected_print = """termination_condition: TerminationCondition.unknown
+solution_status: SolutionStatus.noSolution
+incumbent_objective: None
+objective_bound: None
+solver_name: None
+solver_version: None
+iteration_count: None
+timing_info:
+  start_timestamp: None
+  wall_time: None
+extra_info:
+"""
+        out = stream.getvalue()
+        if 'null' in out:
+            out = out.replace('null', 'None')
+        self.assertEqual(expected_print, out)
+
+    def test_display_advanced_options(self):
+        res = results.Results()
+        stream = StringIO()
+        res.display(ostream=stream, visibility=ADVANCED_OPTION)
+        expected_print = """termination_condition: TerminationCondition.unknown
+solution_status: SolutionStatus.noSolution
+incumbent_objective: None
+objective_bound: None
+solver_name: None
+solver_version: None
+iteration_count: None
+timing_info:
+  start_timestamp: None
+  wall_time: None
+extra_info:
+solver_config: None
+solver_log: None
 """
         out = stream.getvalue()
         if 'null' in out:
