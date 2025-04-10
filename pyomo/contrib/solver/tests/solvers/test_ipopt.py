@@ -253,8 +253,8 @@ class TestIpoptInterface(unittest.TestCase):
                 str(opt.config.executable),
                 'myfile.nl',
                 '-AMPL',
-                'max_cpu_time=10',
                 'max_iter=4',
+                'max_cpu_time=10',
             ],
         )
         # Let's now include if we "have" an options file
@@ -266,8 +266,8 @@ class TestIpoptInterface(unittest.TestCase):
                 'myfile.nl',
                 '-AMPL',
                 'option_file_name=myfile.opt',
-                'max_cpu_time=10',
                 'max_iter=4',
+                'max_cpu_time=10',
             ],
         )
         # Finally, let's make sure it errors if someone tries to pass option_file_name
@@ -320,3 +320,4 @@ class TestIpopt(unittest.TestCase):
         results = ipopt.Ipopt().solve(model)
         timing_info = results.timing_info
         self.assertAlmostEqual(timing_info.ipopt_excluding_nlp_functions, 0.001)
+        self.assertAlmostEqual(timing_info.nlp_function_evaluations, 0.0)

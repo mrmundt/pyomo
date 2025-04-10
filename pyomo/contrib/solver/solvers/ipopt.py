@@ -245,7 +245,7 @@ class Ipopt(SolverBase):
                 version = version.split(' ')[1].strip()
                 version = tuple(int(i) for i in version.split('.'))
                 self._version_cache = (pth, version)
-        return tuple(self._version_cache[1])
+        return self._version_cache[1]
 
     def has_linear_solver(self, linear_solver):
         import pyomo.core as AML
@@ -497,16 +497,16 @@ class Ipopt(SolverBase):
                 results.iteration_count = parsed_output_data['iters']
                 parsed_output_data.pop('iters')
                 if 'total_time' in parsed_output_data['cpu_seconds']:
-                    results.timing_info.total_time = parsed_output_data['cpu_seconds'][
-                        'total_time'
-                    ]
+                    results.timing_info.total_seconds = parsed_output_data[
+                        'cpu_seconds'
+                    ]['total_time']
                 if 'nofunc_time' in parsed_output_data['cpu_seconds']:
-                    results.timing_info.nofunc_time = parsed_output_data['cpu_seconds'][
-                        'nofunc_time'
-                    ]
-                    results.timing_info.func_time = parsed_output_data['cpu_seconds'][
-                        'func_time'
-                    ]
+                    results.timing_info.ipopt_excluding_nlp_functions = (
+                        parsed_output_data['cpu_seconds']['nofunc_time']
+                    )
+                    results.timing_info.nlp_function_evaluations = parsed_output_data[
+                        'cpu_seconds'
+                    ]['func_time']
                 parsed_output_data.pop('cpu_seconds')
             if len_nl_info_vars > 0:
                 results.solver_log = ostreams[0].getvalue()
@@ -517,7 +517,10 @@ class Ipopt(SolverBase):
         results.extra_info = parsed_output_data
         # Set iteration_log visibility to ADVANCED_OPTION because it's
         # a lot to print out with `display`
-        results.extra_info.get("iteration_log")._visibility = ADVANCED_OPTION
+        try:
+            results.extra_info.get("iteration_log")._visibility = ADVANCED_OPTION
+        except AttributeError:
+            logger.log(logging.WARNING, msg="No iteration_log was captured.")
 
         return results
 
