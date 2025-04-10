@@ -358,6 +358,7 @@ class Ipopt(SolverBase):
                     proven_infeasible = False
                 except InfeasibleConstraintException:
                     proven_infeasible = True
+                    nl_info = None
                 timer.stop('write_nl_file')
 
             results = self._solve(proven_infeasible, nl_info, config, timer, basename)
@@ -418,7 +419,10 @@ class Ipopt(SolverBase):
         Run the subprocess and generate a Results object with
         relevant information
         """
-        len_nl_info_vars = len(nl_info.variables)
+        try:
+            len_nl_info_vars = len(nl_info.variables)
+        except AttributeError:
+            len_nl_info_vars = None
         if not proven_infeasible and len_nl_info_vars > 0:
             # Get a copy of the environment to pass to the subprocess
             env = os.environ.copy()
@@ -508,19 +512,16 @@ class Ipopt(SolverBase):
                         'cpu_seconds'
                     ]['func_time']
                 parsed_output_data.pop('cpu_seconds')
+                results.extra_info = parsed_output_data
+                # Set iteration_log visibility to ADVANCED_OPTION because it's
+                # a lot to print out with `display`
+                results.extra_info.get("iteration_log")._visibility = ADVANCED_OPTION
             if len_nl_info_vars > 0:
                 results.solver_log = ostreams[0].getvalue()
         # Populate high-level relevant information
         results.solver_name = self.name
         results.solver_version = self.version(config)
         results.solver_config = config
-        results.extra_info = parsed_output_data
-        # Set iteration_log visibility to ADVANCED_OPTION because it's
-        # a lot to print out with `display`
-        try:
-            results.extra_info.get("iteration_log")._visibility = ADVANCED_OPTION
-        except AttributeError:
-            logger.log(logging.WARNING, msg="No iteration_log was captured.")
 
         return results
 
