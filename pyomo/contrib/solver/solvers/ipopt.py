@@ -498,6 +498,7 @@ class Ipopt(SolverBase):
                 results.termination_condition = TerminationCondition.error
                 results.solution_loader = SolSolutionLoader(None, None)
             else:
+                print(parsed_output_data)
                 results.iteration_count = parsed_output_data['iters']
                 parsed_output_data.pop('iters')
                 if 'total_time' in parsed_output_data['cpu_seconds']:
