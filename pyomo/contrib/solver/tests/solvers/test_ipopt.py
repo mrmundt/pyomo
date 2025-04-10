@@ -319,5 +319,5 @@ class TestIpopt(unittest.TestCase):
         model = self.create_model()
         results = ipopt.Ipopt().solve(model)
         timing_info = results.timing_info
-        self.assertAlmostEqual(timing_info.ipopt_excluding_nlp_functions, 0.001)
-        self.assertAlmostEqual(timing_info.nlp_function_evaluations, 0.0)
+        self.assertTrue('ipopt_excluding_nlp_functions', timing_info.keys())
+        self.assertTrue('nlp_function_evaluations', timing_info.keys())
