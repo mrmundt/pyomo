@@ -440,8 +440,6 @@ class Ipopt(SolverBase):
             cmd = self._create_command_line(
                 basename=basename, config=config, opt_file=opt_file
             )
-            print(cmd)
-            print(nl_info)
             # this seems silly, but we have to give the subprocess slightly
             # longer to finish than ipopt
             if config.time_limit is not None:
@@ -463,11 +461,9 @@ class Ipopt(SolverBase):
                     stderr=t.STDERR,
                     check=False,
                 )
-                print(process)
                 timer.stop('subprocess')
                 # This is the stuff we need to parse to get the iterations
                 # and time
-                print(ostreams[0].getvalue())
                 parsed_output_data = self._parse_ipopt_output(ostreams[0])
 
         if proven_infeasible:
@@ -537,6 +533,11 @@ class Ipopt(SolverBase):
         if isinstance(output, io.StringIO):
             output = output.getvalue()
 
+        if not output:
+            logger.log(logging.WARNING, "Returned output was empty. "
+                       "Cannot parse for additional data.")
+            return parsed_data
+
         iter_table = re.findall(r'^(?:\s*\d+.*?)$', output, re.MULTILINE)
         if iter_table:
             columns = [
@@ -595,7 +596,7 @@ class Ipopt(SolverBase):
                     all_iterations.append(iter_data)
 
             parsed_data['iteration_log'] = all_iterations
-            parsed_data['iters'] = len(all_iterations)
+            parsed_data['iters'] = len(all_iterations) - 1
 
         # Extract scaled and unscaled table
         scaled_unscaled_match = re.findall(
@@ -647,6 +648,7 @@ class Ipopt(SolverBase):
 
     def _parse_solution(self, instream: io.TextIOBase, nl_info: NLWriterInfo):
         results = Results()
+        print("### We got here with this one - parsing a sol file.")
         res, sol_data = parse_sol_file(
             sol_file=instream, nl_info=nl_info, result=results
         )
