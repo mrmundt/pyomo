@@ -537,11 +537,6 @@ class Ipopt(SolverBase):
         if isinstance(output, io.StringIO):
             output = output.getvalue()
 
-        # Extract number of iterations
-        iter_match = re.search(r'Number of Iterations\.\.\.\.:\s+(\d+)', output)
-        if iter_match:
-            parsed_data['iters'] = int(iter_match.group(1))
-
         iter_table = re.findall(r'^(?:\s*\d+.*?)$', output, re.MULTILINE)
         if iter_table:
             columns = [
@@ -598,7 +593,9 @@ class Ipopt(SolverBase):
                             pass
 
                     all_iterations.append(iter_data)
+
             parsed_data['iteration_log'] = all_iterations
+            parsed_data['iters'] = len(all_iterations)
 
         # Extract scaled and unscaled table
         scaled_unscaled_match = re.findall(
