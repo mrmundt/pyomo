@@ -534,6 +534,7 @@ class Ipopt(SolverBase):
         if isinstance(output, io.StringIO):
             output = output.getvalue()
 
+        print(output)
         # Extract number of iterations
         iter_match = re.search(r'Number of Iterations\.\.\.\.:\s+(\d+)', output)
         if iter_match:
