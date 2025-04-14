@@ -464,6 +464,8 @@ class Ipopt(SolverBase):
                 timer.stop('subprocess')
                 # This is the stuff we need to parse to get the iterations
                 # and time
+                print(ostreams)
+                print(dir(item) for item in ostreams)
                 parsed_output_data = self._parse_ipopt_output(ostreams[0])
 
         if proven_infeasible:
@@ -499,7 +501,6 @@ class Ipopt(SolverBase):
                 results.termination_condition = TerminationCondition.error
                 results.solution_loader = SolSolutionLoader(None, None)
             else:
-                print(parsed_output_data)
                 results.iteration_count = parsed_output_data['iters']
                 parsed_output_data.pop('iters')
                 if 'total_time' in parsed_output_data['cpu_seconds']:
@@ -534,7 +535,6 @@ class Ipopt(SolverBase):
         if isinstance(output, io.StringIO):
             output = output.getvalue()
 
-        print(output)
         # Extract number of iterations
         iter_match = re.search(r'Number of Iterations\.\.\.\.:\s+(\d+)', output)
         if iter_match:
