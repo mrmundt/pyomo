@@ -659,5 +659,6 @@ class Ipopt(SolverBase):
             res.solution_loader = IpoptSolutionLoader(
                 sol_data=sol_data, nl_info=nl_info
             )
+        print(res.display())
 
         return res
