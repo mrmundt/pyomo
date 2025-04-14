@@ -358,8 +358,8 @@ class Ipopt(SolverBase):
                     )
                     proven_infeasible = False
                 except InfeasibleConstraintException:
-                    proven_infeasible = True
                     nl_info = None
+                    proven_infeasible = True
                 timer.stop('write_nl_file')
 
             results = self._solve(proven_infeasible, nl_info, config, timer, basename)
@@ -440,6 +440,8 @@ class Ipopt(SolverBase):
             cmd = self._create_command_line(
                 basename=basename, config=config, opt_file=opt_file
             )
+            print(cmd)
+            print(nl_info)
             # this seems silly, but we have to give the subprocess slightly
             # longer to finish than ipopt
             if config.time_limit is not None:
@@ -461,11 +463,11 @@ class Ipopt(SolverBase):
                     stderr=t.STDERR,
                     check=False,
                 )
+                print(process)
                 timer.stop('subprocess')
                 # This is the stuff we need to parse to get the iterations
                 # and time
-                print(ostreams)
-                print(dir(item) for item in ostreams)
+                print(ostreams[0].getvalue())
                 parsed_output_data = self._parse_ipopt_output(ostreams[0])
 
         if proven_infeasible:
