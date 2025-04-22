@@ -11,7 +11,8 @@
 
 from pyomo.common import unittest
 from pyomo.solvers.plugins.solvers import IPOPT
-import pyomo.environ
+from pyomo.common.tee import capture_output
+import pyomo.environ as pyo
 
 ipopt_available = IPOPT.IPOPT().available()
 
@@ -40,3 +41,25 @@ class TestIpoptInterface(unittest.TestCase):
             )
         )
         self.assertFalse(opt.has_linear_solver('bogus_linear_solver'))
+
+
+@unittest.skipIf(not ipopt_available, "The 'ipopt' command is not available")
+class TestIpopt(unittest.TestCase):
+    def create_model(self):
+        model = pyo.ConcreteModel()
+        model.x = pyo.Var(initialize=1.5)
+        model.y = pyo.Var(initialize=1.5)
+
+        def rosenbrock(m):
+            return (1.0 - m.x) ** 2 + 100.0 * (m.y - m.x**2) ** 2
+
+        model.obj = pyo.Objective(rule=rosenbrock, sense=pyo.minimize)
+        return model
+
+    def test_ipopt_tee_true(self):
+        model = self.create_model()
+        with capture_output() as OUT:
+            result = IPOPT.IPOPT().solve(model, tee=True)
+            output = OUT.getvalue()
+        print(output)
+        self.assertIn("Optimal Solution Found", output)
