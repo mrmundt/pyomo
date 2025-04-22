@@ -62,4 +62,5 @@ class TestIpopt(unittest.TestCase):
             result = IPOPT.IPOPT().solve(model, tee=True)
             output = OUT.getvalue()
         print(output)
+        self.assertFalse(True)
         self.assertIn("Optimal Solution Found", output)
