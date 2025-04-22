@@ -391,6 +391,8 @@ class Ipopt(SolverBase):
                         stderr=t.STDERR,
                         check=False,
                     )
+                    t.STDOUT.flush()
+                    t.STDERR.flush()
                     timer.stop('subprocess')
                     # This is the stuff we need to parse to get the iterations
                     # and time
