@@ -432,6 +432,8 @@ class Ipopt(SolverBase):
                     results.solution_loader = SolSolutionLoader(None, None)
                 else:
                     results.iteration_count = iters
+                    if iters is None:
+                        raise ValueError('Iters is none - SHOULD NOT BE.')
                     if ipopt_time_nofunc is not None:
                         results.timing_info.ipopt_excluding_nlp_functions = (
                             ipopt_time_nofunc
