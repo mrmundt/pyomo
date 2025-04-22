@@ -124,7 +124,7 @@ jobs:
           PACKAGES: cython
 
         - os: windows-latest
-          python: 3.9
+          python: 3.11
           other: /pip
           TARGET: win
           PYENV: pip
