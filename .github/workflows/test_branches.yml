@@ -237,8 +237,7 @@ jobs:
     # This is necessary for qt (UI) tests; the package utilized here does not
     # have support for OSX.
     - name: Set up UI testing infrastructure
-      if: ${{ matrix.TARGET != 'osx' }}
-      uses: pyvista/setup-headless-display-action@v3
+      uses: pyvista/setup-headless-display-action@v4
       with:
         qt: true
         pyvista: false
