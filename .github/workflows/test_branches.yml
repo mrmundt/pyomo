@@ -82,19 +82,19 @@ jobs:
 
         include:
         - os: ubuntu-latest
-          python: 3.13
+          python: 3.9
           test_docs: 1
           TARGET: linux
           PYENV: pip
 
         - os: macos-latest
-          python: 3.12
+          python: 3.9
           test_docs: 1
           TARGET: osx
           PYENV: pip
 
         - os: windows-latest
-          python: 3.11
+          python: 3.9
           test_docs: 1
           TARGET: win
           PYENV: conda
@@ -124,7 +124,7 @@ jobs:
           PACKAGES: cython
 
         - os: windows-latest
-          python: '3.10'
+          python: '3.11'
           other: /pip
           TARGET: win
           PYENV: pip
