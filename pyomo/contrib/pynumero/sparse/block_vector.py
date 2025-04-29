@@ -621,7 +621,7 @@ class BlockVector(BaseBlockVector, np.ndarray):
                 accum += nelements
             return result
         else:
-            if other.__class__.__name__ == 'MPIBlockVector':
+            if condition.__class__.__name__ == 'MPIBlockVector':
                 raise RuntimeError('Operation not supported by BlockVector')
             raise NotImplementedError()
 
@@ -1510,6 +1510,9 @@ class BlockVector(BaseBlockVector, np.ndarray):
         equal_structure: bool
             True if self and other have the same block structure (recursive). False otherwise.
         """
+        print("****** In block_vector....")
+        print(other)
+        print(type(other))
         if not isinstance(other, BlockVector):
             return False
         if self.nblocks != other.nblocks:
@@ -1528,7 +1531,8 @@ class BlockVector(BaseBlockVector, np.ndarray):
     def __getitem__(self, item):
         if not self._has_equal_structure(item):
             raise ValueError(
-                'BlockVector.__getitem__ only accepts slices in the form of BlockVectors of the same structure'
+                'BlockVector.__getitem__ only accepts slices in the form of '
+                'BlockVectors of the same structure'
             )
         res = BlockVector(self.nblocks)
         for ndx, block in self:
@@ -1540,7 +1544,8 @@ class BlockVector(BaseBlockVector, np.ndarray):
             and (self._has_equal_structure(value) or np.isscalar(value))
         ):
             raise ValueError(
-                'BlockVector.__setitem__ only accepts slices in the form of BlockVectors of the same structure'
+                'BlockVector.__setitem__ only accepts slices in the form of '
+                'BlockVectors of the same structure'
             )
         if np.isscalar(value):
             for ndx, block in enumerate(self):

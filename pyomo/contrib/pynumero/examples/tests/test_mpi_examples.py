@@ -43,8 +43,11 @@ if not SKIPTESTS:
 class TestExamples(unittest.TestCase):
     def test_parallel_vector_ops(self):
         z1_local, z2, z3 = parallel_vector_ops.main()
-        print(z1_local, type(z1_local))
+        print("****** In mpi_examples...")
+        print(z1_local)
+        print(type(z1_local))
         z1_correct = np.array([6, 6, 6, 2, 2, 2, 4, 4, 4, 2, 4, 6])
+        print(type(z1_correct))
         self.assertTrue(np.allclose(z1_local, z1_correct))
         self.assertAlmostEqual(z2, 56)
         self.assertAlmostEqual(z3, 3)
