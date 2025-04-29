@@ -9,13 +9,9 @@
 #  This software is distributed under the 3-clause BSD License.
 #  ___________________________________________________________________________
 
-from pyomo.core.base.PyomoModel import ConcreteModel
 from pyomo.solvers.plugins.solvers.xpress_direct import XpressDirect
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
-from pyomo.core.expr.numvalue import value, is_fixed
-import pyomo.core.expr as EXPR
 from pyomo.opt.base import SolverFactory
-import collections
 
 
 @SolverFactory.register(

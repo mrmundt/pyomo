@@ -34,7 +34,6 @@ from pyomo.opt.results.solution import Solution, SolutionStatus
 from pyomo.opt.results.solver import TerminationCondition, SolverStatus
 from pyomo.opt.base import SolverFactory
 from pyomo.core.base.suffix import Suffix
-import pyomo.core.base.var
 
 
 logger = logging.getLogger('pyomo.solvers')

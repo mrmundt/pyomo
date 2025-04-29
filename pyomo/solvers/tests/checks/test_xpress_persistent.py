@@ -15,7 +15,6 @@ import pyomo.environ as pyo
 import pyomo.solvers.plugins.solvers.xpress_direct as xpd
 
 from pyomo.common.log import LoggingIntercept
-from pyomo.core.expr.taylor_series import taylor_series_expansion
 from pyomo.opt.results.solver import TerminationCondition, SolverStatus
 from pyomo.solvers.plugins.solvers.xpress_persistent import XpressPersistent
 
