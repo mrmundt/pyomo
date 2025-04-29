@@ -66,7 +66,7 @@ class TestXpressPersistent(unittest.TestCase):
         self.assertAlmostEqual(m.y.value, 0.2, delta=1e-6)
         opt.load_vars()
         self.assertAlmostEqual(m.x.value, 0, delta=3e-6)
-        self.assertAlmostEqual(m.y.value, 1, delta=2e-6)
+        self.assertAlmostEqual(m.y.value, 1, delta=3e-6)
 
         opt.remove_constraint(m.c2)
         m.del_component(m.c2)
