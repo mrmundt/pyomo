@@ -172,25 +172,29 @@ class Highs(PersistentSolverMixin, PersistentSolverUtils, PersistentSolverBase):
         options = config.solver_options
         ostreams = [io.StringIO()] + config.tee
 
-        with capture_output(output=TeeStream(*ostreams), capture_fd=True):
-            self._solver_model.setOptionValue('log_to_console', True)
+        try:
+            with TeeStream(*ostreams):
+                self._solver_model.setOptionValue('log_to_console', True)
 
-            if config.threads is not None:
-                self._solver_model.setOptionValue('threads', config.threads)
-            if config.time_limit is not None:
-                self._solver_model.setOptionValue('time_limit', config.time_limit)
-            if config.rel_gap is not None:
-                self._solver_model.setOptionValue('mip_rel_gap', config.rel_gap)
-            if config.abs_gap is not None:
-                self._solver_model.setOptionValue('mip_abs_gap', config.abs_gap)
+                if config.threads is not None:
+                    self._solver_model.setOptionValue('threads', config.threads)
+                if config.time_limit is not None:
+                    self._solver_model.setOptionValue('time_limit', config.time_limit)
+                if config.rel_gap is not None:
+                    self._solver_model.setOptionValue('mip_rel_gap', config.rel_gap)
+                if config.abs_gap is not None:
+                    self._solver_model.setOptionValue('mip_abs_gap', config.abs_gap)
 
-            for key, option in options.items():
-                self._solver_model.setOptionValue(key, option)
-            timer.start('optimize')
-            if self.version()[:2] >= (1, 8):
-                self._solver_model.HandleKeyboardInterrupt = True
-            self._solver_model.run()
-            timer.stop('optimize')
+                for key, option in options.items():
+                    self._solver_model.setOptionValue(key, option)
+                timer.start('optimize')
+                if self.version()[:2] >= (1, 8):
+                    self._solver_model.HandleKeyboardInterrupt = True
+                self._solver_model.run()
+                timer.stop('optimize')
+        except Exception as e:
+            msg = f'Unexpected error occurred while attempting to solve.\nError message: {e}'
+            raise ApplicationError(msg)
 
         return self._postsolve()
 
