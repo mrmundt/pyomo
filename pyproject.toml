@@ -1,11 +1,12 @@
 [build-system]
 requires = [
-    "setuptools>=64",
+    "setuptools>=65",
     "wheel",
     # leave Cython as an optional, runtime‑selectable extra
     # setuptools will still import it from setup.py when requested
     "cython",
 ]
+backend-path = ["."]
 build-backend = "setuptools.build_meta"
 
 # project metadata
