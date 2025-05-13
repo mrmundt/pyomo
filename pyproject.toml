@@ -6,7 +6,6 @@ requires = [
     # setuptools will still import it from setup.py when requested
     "cython",
 ]
-backend-path = ["."]
 build-backend = "setuptools.build_meta"
 
 # project metadata
