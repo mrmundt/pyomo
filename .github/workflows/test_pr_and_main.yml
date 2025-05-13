@@ -843,7 +843,7 @@ jobs:
         echo ""
         echo "Install Pyomo..."
         echo ""
-        pip install -e .
+        $PYTHON_EXE -m pip install --no-build-isolation -e .
         echo ""
         echo "Set custom PYOMO_CONFIG_DIR"
         echo ""
