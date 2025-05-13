@@ -118,7 +118,7 @@ jobs:
         - os: ubuntu-latest
           python: 3.12
           other: /cython
-          setup_options: --with-cython
+          PYOMO_SETUP_ARGS: --with-cython
           TARGET: linux
           PYENV: pip
           PACKAGES: cython
@@ -661,12 +661,7 @@ jobs:
         echo ""
         echo "Install Pyomo..."
         echo ""
-        # Forward matrix.setup_options (if any) to the build backend
-        EXTRA_COMMANDS=""
-        if [ -n "${{ matrix.setup_options }}" ]; then
-            EXTRA_COMMANDS="--config-settings=--build-option=${{ matrix.setup_options }}"
-        fi
-        $PYTHON_EXE -m pip install -e . $EXTRA_COMMANDS
+        $PYTHON_EXE -m pip install -e .
         echo ""
         echo "Set custom PYOMO_CONFIG_DIR"
         echo ""
@@ -879,12 +874,7 @@ jobs:
         echo ""
         echo "Install Pyomo..."
         echo ""
-        # Forward matrix.setup_options (if any) to the build backend
-        EXTRA_COMMANDS=""
-        if [ -n "${{ matrix.setup_options }}" ]; then
-            EXTRA_COMMANDS="--config-settings=--build-option=${{ matrix.setup_options }}"
-        fi
-        $PYTHON_EXE -m pip install -e . $EXTRA_COMMANDS
+        $PYTHON_EXE -m pip install -e .
         echo ""
         echo "Set custom PYOMO_CONFIG_DIR"
         echo ""
