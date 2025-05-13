@@ -27,6 +27,7 @@ env:
   NEOS_EMAIL: tests@pyomo.org
   SRC_REF: ${{ github.head_ref || github.ref }}
   PYOMO_WORKFLOW: branch
+  PYOMO_SETUP_ARGS: --without-cython
 
 jobs:
   lint:
