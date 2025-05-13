@@ -152,7 +152,9 @@ jobs:
         PYTHON_PACKAGES="${{matrix.PACKAGES}}"
         echo "PYTHON_PACKAGES=$PYTHON_PACKAGES" \
             | tr '\n' ' ' | sed 's/ \+/ /g' >> $GITHUB_ENV
-        echo "PYOMO_SETUP_ARGS=${{matrix.setup_options}}" >> $GITHUB_ENV
+        if test -z "${{matrix.setup_option}}"; then
+            echo "PYOMO_SETUP_ARGS=${{matrix.setup_options}}" >> $GITHUB_ENV
+        fi
 
     #- name: Pip package cache
     #  uses: actions/cache@v4
