@@ -661,7 +661,12 @@ jobs:
         echo ""
         echo "Install Pyomo..."
         echo ""
-        $PYTHON_EXE setup.py develop ${{matrix.setup_options}}
+        # Forward matrix.setup_options (if any) to the build backend
+        EXTRA_COMMANDS=""
+        if [ -n "${{ matrix.setup_options }}" ]; then
+            EXTRA_COMMANDS="--config-settings=--build-option=${{ matrix.setup_options }}"
+        fi
+        $PYTHON_EXE -m pip install -e . $EXTRA_COMMANDS
         echo ""
         echo "Set custom PYOMO_CONFIG_DIR"
         echo ""
@@ -787,7 +792,6 @@ jobs:
 
     - name: Install Pyomo
       run: |
-        PYTHON_EXE=${PYTHON_EXE:-python}
         echo ""
         echo "Install Pyomo..."
         echo ""
@@ -875,7 +879,12 @@ jobs:
         echo ""
         echo "Install Pyomo..."
         echo ""
-        $PYTHON_EXE setup.py develop ${{matrix.setup_options}}
+        # Forward matrix.setup_options (if any) to the build backend
+        EXTRA_COMMANDS=""
+        if [ -n "${{ matrix.setup_options }}" ]; then
+            EXTRA_COMMANDS="--config-settings=--build-option=${{ matrix.setup_options }}"
+        fi
+        $PYTHON_EXE -m pip install -e . $EXTRA_COMMANDS
         echo ""
         echo "Set custom PYOMO_CONFIG_DIR"
         echo ""
