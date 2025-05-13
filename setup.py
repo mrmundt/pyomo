@@ -276,15 +276,6 @@ setup_kwargs = dict(
         "pyomo.contrib.simplification.ginac": ["src/*.cpp", "src/*.hpp"],
     },
     ext_modules=ext_modules,
-    entry_points={
-        # creates the `pyomo` executable on the user’s PATH
-        "console_scripts": ["pyomo = pyomo.scripting.pyomo_main:main_console_script"],
-        # extra plugin group used by Pyomo itself
-        "pyomo.command": [
-            "pyomo.help   = pyomo.scripting.driver_help",
-            "pyomo.viewer = pyomo.contrib.viewer.pyomo_viewer",
-        ],
-    },
 )
 
 

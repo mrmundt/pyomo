@@ -45,13 +45,20 @@ dynamic = [
     "version",
     "dependencies",
     "optional-dependencies",
-    "entry-points",
 ]
 
 [project.urls]
 Homepage        = "https://www.pyomo.org"
 Documentation   = "https://pyomo.readthedocs.io/en/stable/"
 Source          = "https://github.com/Pyomo/pyomo"
+
+
+[project.scripts]
+pyomo = "pyomo.scripting.pyomo_main:main_console_script"
+
+[project.entry-points."pyomo.command"]
+pyomo.help   = "pyomo.scripting.driver_help"
+pyomo.viewer = "pyomo.contrib.viewer.pyomo_viewer"
 
 [tool.setuptools.dynamic]
 version = {attr = "pyomo.version.info.__version__"}
