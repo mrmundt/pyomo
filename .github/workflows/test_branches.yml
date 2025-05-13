@@ -795,7 +795,7 @@ jobs:
         echo ""
         echo "Install Pyomo..."
         echo ""
-        $PYTHON_EXE -m pip install -e .
+        python -m pip install -e .
         echo ""
         echo "Set custom PYOMO_CONFIG_DIR"
         echo ""
