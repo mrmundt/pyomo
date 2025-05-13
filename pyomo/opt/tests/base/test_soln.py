@@ -73,9 +73,10 @@ class Test(unittest.TestCase):
         self.results.write(filename=join(currdir, "read_solution1.out"))
         if not os.path.exists(join(currdir, "read_solution1.out")):
             self.fail("test_read_solution1 - failed to write read_solution1.out")
-        with open(join(currdir, "read_solution1.out"), 'r') as out, open(
-            join(currdir, "test4_sol.txt"), 'r'
-        ) as txt:
+        with (
+            open(join(currdir, "read_solution1.out"), 'r') as out,
+            open(join(currdir, "test4_sol.txt"), 'r') as txt,
+        ):
             self.assertStructuredAlmostEqual(
                 yaml.full_load(txt), yaml.full_load(out), allow_second_superset=True
             )
@@ -90,9 +91,10 @@ class Test(unittest.TestCase):
         self.results.write(filename=join(currdir, "read_solution1.out"))
         if not os.path.exists(join(currdir, "read_solution1.out")):
             self.fail("test_read_solution1 - failed to write read_solution1.out")
-        with open(join(currdir, "read_solution1.out"), 'r') as out, open(
-            join(currdir, "test4_sol.txt"), 'r'
-        ) as txt:
+        with (
+            open(join(currdir, "read_solution1.out"), 'r') as out,
+            open(join(currdir, "test4_sol.txt"), 'r') as txt,
+        ):
             self.assertStructuredAlmostEqual(
                 yaml.full_load(txt), yaml.full_load(out), allow_second_superset=True
             )
@@ -104,9 +106,10 @@ class Test(unittest.TestCase):
         self.results.write(filename=join(currdir, "read_solution2.out"), format='json')
         if not os.path.exists(join(currdir, "read_solution2.out")):
             self.fail("test_read_solution2 - failed to write read_solution2.out")
-        with open(join(currdir, "read_solution2.out"), 'r') as out, open(
-            join(currdir, "test4_sol.jsn"), 'r'
-        ) as txt:
+        with (
+            open(join(currdir, "read_solution2.out"), 'r') as out,
+            open(join(currdir, "test4_sol.jsn"), 'r') as txt,
+        ):
             self.assertStructuredAlmostEqual(
                 json.load(txt), json.load(out), allow_second_superset=True
             )
@@ -120,9 +123,10 @@ class Test(unittest.TestCase):
         self.results.write(filename=join(currdir, "read_solution2.out"), format='json')
         if not os.path.exists(join(currdir, "read_solution2.out")):
             self.fail("test_read_solution2 - failed to write read_solution2.out")
-        with open(join(currdir, "read_solution2.out"), 'r') as out, open(
-            join(currdir, "test4_sol.jsn"), 'r'
-        ) as txt:
+        with (
+            open(join(currdir, "read_solution2.out"), 'r') as out,
+            open(join(currdir, "test4_sol.jsn"), 'r') as txt,
+        ):
             self.assertStructuredAlmostEqual(
                 json.load(txt), json.load(out), allow_second_superset=True
             )
@@ -184,9 +188,10 @@ class Test(unittest.TestCase):
         self.soln.variable[4]["Value"] = 0.0
         with open(join(currdir, 'soln_pprint2.out'), 'w') as f:
             f.write(str(self.soln))
-        with open(join(currdir, "soln_pprint2.out"), 'r') as f1, open(
-            join(currdir, "soln_pprint2.txt"), 'r'
-        ) as f2:
+        with (
+            open(join(currdir, "soln_pprint2.out"), 'r') as f1,
+            open(join(currdir, "soln_pprint2.txt"), 'r') as f2,
+        ):
             self.assertEqual(f1.read().strip(), f2.read().strip())
 
     def test_soln_suffix_getiter(self):

@@ -790,7 +790,7 @@ jobs:
         echo ""
         echo "Install Pyomo..."
         echo ""
-        python setup.py develop
+        pip install -e .
         echo ""
         echo "Set custom PYOMO_CONFIG_DIR"
         echo ""
