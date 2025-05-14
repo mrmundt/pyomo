@@ -141,11 +141,6 @@ jobs:
         else
             echo "GHA_JOBGROUP=other" >> $GITHUB_ENV
         fi
-        # Turn on cython through env vars
-        if [[ "${{ matrix.other }}" == *cython* ]]; then
-            echo "Cython requested; running extra commands"
-            echo 'PYOMO_SETUP_ARGS=--with-cython' >> $GITHUB_ENV
-        fi
         # Note: pandas 1.0.3 causes gams 29.1.0 import to fail in python 3.8
         EXTRAS=tests
         if test -z "${{matrix.slim}}"; then
@@ -658,6 +653,12 @@ jobs:
 
     - name: Install Pyomo
       run: |
+        # Turn on cython through env vars
+        if [[ "${{ matrix.other }}" == *cython* ]]; then
+            echo "Cython requested; turning on cythonization options in environment"
+            PYOMO_SETUP_ARGS=--with-cython
+            echo 'PYOMO_SETUP_ARGS=--with-cython' >> $GITHUB_ENV
+        fi
         echo ""
         echo "Clone Pyomo-model-libraries..."
         URL=https://github.com/Pyomo/pyomo-model-libraries.git
@@ -872,6 +873,12 @@ jobs:
 
     - name: Install Pyomo
       run: |
+        # Turn on cython through env vars
+        if [[ "${{ matrix.other }}" == *cython* ]]; then
+            echo "Cython requested; turning on cythonization options in environment"
+            PYOMO_SETUP_ARGS=--with-cython
+            echo 'PYOMO_SETUP_ARGS=--with-cython' >> $GITHUB_ENV
+        fi
         echo ""
         echo "Clone Pyomo-model-libraries..."
         git clone https://github.com/Pyomo/pyomo-model-libraries.git
