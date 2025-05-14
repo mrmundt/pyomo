@@ -58,7 +58,6 @@ def check_config_arg(name):
         sys.argv.remove(name)
         return True
     if name in os.getenv('PYOMO_SETUP_ARGS', '').split():
-        print(f"########### Env var is {name}")
         return True
     return False
 
@@ -75,14 +74,12 @@ elif sys.version_info[:2] < (3, 11):
 else:
     using_cython = False
 if check_config_arg('--with-cython'):
-    print("########### CYTHON HAS BEEN TURNED ON")
     using_cython = CYTHON_REQUIRED
 if check_config_arg('--without-cython'):
     using_cython = False
 
 ext_modules = []
 if using_cython:
-    print("########### WE ARE ATTEMPTING TO USE CYTHON")
     try:
         if platform.python_implementation() != "CPython":
             # break out of this try-except (disable Cython)

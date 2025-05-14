@@ -658,7 +658,6 @@ jobs:
             echo "Cython requested; turning on cythonization options in environment"
             export PYOMO_SETUP_ARGS=--with-cython
             echo 'PYOMO_SETUP_ARGS=--with-cython' >> $GITHUB_ENV
-            env | grep PYOMO
         fi
         echo ""
         echo "Clone Pyomo-model-libraries..."
@@ -879,7 +878,6 @@ jobs:
             echo "Cython requested; turning on cythonization options in environment"
             export PYOMO_SETUP_ARGS=--with-cython
             echo 'PYOMO_SETUP_ARGS=--with-cython' >> $GITHUB_ENV
-            env | grep PYOMO
         fi
         echo ""
         echo "Clone Pyomo-model-libraries..."
