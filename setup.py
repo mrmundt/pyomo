@@ -282,10 +282,16 @@ setup_kwargs = dict(
 
 try:
     # setuptools.build_meta (>=68) forbids absolute paths in the `sources=` list
-    # This resets all of the extensions to use relative paths
-    root = Path(__file__).parent
+    # This resets the extensions to use relative paths
+    ROOT = Path(__file__).parent.resolve()
     for ext in ext_modules:
-        ext.sources = [Path(src).relative_to(root).as_posix() for src in ext.sources]
+        rel_sources = []
+        for src in ext.sources:
+            p = Path(src)
+            if p.is_absolute():
+                p = p.relative_to(ROOT)
+            rel_sources.append(p.as_posix())
+        ext.sources[:] = rel_sources
     setup(**setup_kwargs)
 except SystemExit as e_info:
     # Cython can generate a SystemExit exception on Windows if the
