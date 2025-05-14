@@ -143,7 +143,7 @@ jobs:
           pip install build twine wheel setuptools pybind11
       - name: Build pure python wheel
         run: |
-          PYOMO_SETUP_ARGS=--without-cython
+          export PYOMO_SETUP_ARGS=--without-cython
           python -m build --wheel --no-isolation --outdir dist
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -175,7 +175,7 @@ jobs:
         pip install build twine wheel setuptools pybind11
     - name: Build generic tarball
       run: |
-        PYOMO_SETUP_ARGS=--without-cython
+        export PYOMO_SETUP_ARGS=--without-cython
         python -m build --sdist --no-isolation --outdir dist
     - name: Upload artifact
       uses: actions/upload-artifact@v4
