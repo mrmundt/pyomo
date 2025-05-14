@@ -657,7 +657,6 @@ jobs:
         if [[ "${{ matrix.other }}" == *cython* ]]; then
             echo "Cython requested; turning on cythonization options in environment"
             export PYOMO_SETUP_ARGS=--with-cython
-            echo 'PYOMO_SETUP_ARGS=--with-cython' >> $GITHUB_ENV
         fi
         echo ""
         echo "Clone Pyomo-model-libraries..."
@@ -666,7 +665,7 @@ jobs:
         echo ""
         echo "Install Pyomo..."
         echo ""
-        $PYTHON_EXE -m pip install -e . -v
+        $PYTHON_EXE -m pip install -e .
         echo ""
         echo "Set custom PYOMO_CONFIG_DIR"
         echo ""
@@ -877,7 +876,6 @@ jobs:
         if [[ "${{ matrix.other }}" == *cython* ]]; then
             echo "Cython requested; turning on cythonization options in environment"
             export PYOMO_SETUP_ARGS=--with-cython
-            echo 'PYOMO_SETUP_ARGS=--with-cython' >> $GITHUB_ENV
         fi
         echo ""
         echo "Clone Pyomo-model-libraries..."
@@ -885,7 +883,7 @@ jobs:
         echo ""
         echo "Install Pyomo..."
         echo ""
-        $PYTHON_EXE -m pip install -e . -v
+        $PYTHON_EXE -m pip install -e .
         echo ""
         echo "Set custom PYOMO_CONFIG_DIR"
         echo ""
