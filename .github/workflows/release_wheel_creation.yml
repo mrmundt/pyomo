@@ -144,7 +144,7 @@ jobs:
       - name: Build pure python wheel
         run: |
           export PYOMO_SETUP_ARGS=--without-cython
-          python -m build --wheel --no-isolation --outdir dist
+          python -m build --wheel --no-isolation --outdir dist --config-setting="--build-option=--without-cython"
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -176,7 +176,7 @@ jobs:
     - name: Build generic tarball
       run: |
         export PYOMO_SETUP_ARGS=--without-cython
-        python -m build --sdist --no-isolation --outdir dist
+        python -m build --sdist --no-isolation --outdir dist --config-setting="--build-option=--without-cython"
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
