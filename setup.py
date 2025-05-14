@@ -281,8 +281,9 @@ setup_kwargs = dict(
 
 
 try:
-    # setuptools.build_meta (>=68) forbids absolute paths in the `sources=` list
-    # This resets the extensions to use relative paths
+    # setuptools.build_meta (>=68) forbids absolute paths in the `sources=` list.
+    # This resets the extensions (only for those items that are absolute paths)
+    # to use relative paths
     ROOT = Path(__file__).parent.resolve()
     for ext in ext_modules:
         rel_sources = []
