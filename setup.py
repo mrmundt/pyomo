@@ -16,6 +16,7 @@ Script to generate the installer for pyomo.
 import os
 import platform
 import sys
+from pathlib import Path
 from setuptools import setup, find_packages, Command
 
 try:
@@ -280,6 +281,11 @@ setup_kwargs = dict(
 
 
 try:
+    # setuptools.build_meta (>=68) forbids absolute paths in the `sources=` list
+    # This resets all of the extensions to use relative paths
+    root = Path(__file__).parent
+    for ext in ext_modules:
+        ext.sources = [Path(src).relative_to(root).as_posix() for src in ext.sources]
     setup(**setup_kwargs)
 except SystemExit as e_info:
     # Cython can generate a SystemExit exception on Windows if the
