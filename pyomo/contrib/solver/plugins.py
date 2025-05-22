@@ -35,6 +35,6 @@ def load():
     SolverFactory.register(
         name='highs', legacy_name='highs', doc='Persistent interface to HiGHS'
     )(Highs)
-    SolverFactory.register(
-        name='baron', legacy_name='baron_v2', doc='The BARON MINLP solver'
-    )(Baron)
+    # SolverFactory.register(
+    #     name='baron', legacy_name='baron_v2', doc='The BARON MINLP solver'
+    # )(Baron)

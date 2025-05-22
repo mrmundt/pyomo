@@ -136,12 +136,11 @@ class Baron(SolverBase):
                         universal_newlines=True,
                         check=False,
                     )
-                    if results.returncode == 0:
-                        match = re.search(
-                            r'BARON version (\d+)\.(\d+)\.(\d+)', results.stdout
-                        )
-                        if match:
-                            self._version_cache = (pth, tuple(map(int, match.groups())))
+                    match = re.search(
+                        r'BARON version (\d+)\.(\d+)\.(\d+)', results.stdout
+                    )
+                    if match:
+                        self._version_cache = (pth, tuple(map(int, match.groups())))
                     else:
                         self._version_cache = (None, None)
                         logger.warning(
