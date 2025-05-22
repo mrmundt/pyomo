@@ -12,9 +12,11 @@
 import logging
 import datetime
 import os
+import io
 import subprocess
 import re
-from typing import Mapping, Optional, Sequence
+import sys
+from typing import Optional, Tuple
 
 from pyomo.common import Executable
 from pyomo.common.config import ConfigValue, document_kwargs_from_configdict, ConfigDict
@@ -48,6 +50,9 @@ NOTES
   - Baron has its own file type (`bar`)
   - You can't run `./baron --version`; you need a dummy input file
   - License status can be checked by passing in something with 11 vars (<=10 is demo mode)
+  - Baron takes the input of `bar` and outputs (at least) two files: res.lst and tim.lst
+    - res.lst - results, has the actual solution stuff
+    - tim.lst - supposedly has timing information?
 
 """
 
@@ -82,14 +87,15 @@ class BaronConfig(SolverConfig):
 class Baron(SolverBase):
     CONFIG = BaronConfig()
 
-    def __init__(self, **kwds):
+    def __init__(self, **kwds) -> None:
         super().__init__(**kwds)
+        self._writer = None
         self._available_cache = None
         self._version_cache = None
         self._version_timeout = 2
         self._license_cache = None
 
-    def available(self):
+    def available(self) -> Availability:
         if self._available_cache is None:
             pth = self.config.executable.path()
             if self._available_cache is None or self._available_cache[0] != pth:
@@ -99,7 +105,7 @@ class Baron(SolverBase):
                     self._available_cache = (pth, Availability.Installed)
             return self._available_cache[1]
 
-    def version(self):
+    def version(self) -> Optional[Tuple[int, int, int]]:
         pth = self.config.executable.path()
         if self._version_cache is None or self._version_cache[0] != pth:
             if pth is None:
@@ -144,7 +150,7 @@ class Baron(SolverBase):
                         )
             return self._version_cache[1]
 
-    def license_is_valid(self):
+    def license_is_valid(self) -> Optional[bool]:
         pth = self.config.executable.path()
         if self._license_cache is None or self._license_cache[0] != pth:
             if pth is None:
@@ -196,5 +202,76 @@ class Baron(SolverBase):
                 logger.warning(f"BARON (from {str(pth)}) is not available.")
             return self._license_cache[1]
 
-    def solve(self):
+    @document_kwargs_from_configdict(CONFIG)
+    def solve(self, model, **kwds) -> Results:
+        # Begin time tracking
         start_timestamp = datetime.datetime.now(datetime.timezone.utc)
+        # Update configuration options, based on keywords passed to solve
+        config: BaronConfig = self.config(value=kwds, preserve_implicit=True)
+        # Check if solver is available
+        avail = self.available(config)
+        if not avail:
+            raise ApplicationError(
+                f'Solver {self.__class__} is not available ({avail}).'
+            )
+        if config.threads:
+            logger.log(
+                logging.WARNING,
+                msg="The `threads` option was specified, "
+                f"but this is not used by {self.__class__}.",
+            )
+        if config.timer is None:
+            timer = HierarchicalTimer()
+        else:
+            timer = config.timer
+        with TempfileManager.new_context() as tempfile:
+            if config.working_dir is None:
+                dname = tempfile.mkdtemp()
+            else:
+                dname = config.working_dir
+            if not os.path.exists(dname):
+                os.mkdir(dname)
+            basename = os.path.join(dname, model.name)
+            if os.path.exists(basename + '.bar'):
+                raise RuntimeError(
+                    f"BARON file with the same name {basename + '.bar'} already exists!"
+                )
+            with open(basename + '.bar', 'w') as f:
+                # Not sure what to do after this point. There isn't a nice writer
+                # interface for BARON like there is for nl on ipopt. I'm guessing
+                # this is in the backlog?
+                pass
+            # this seems silly, but we have to give the subprocess slightly
+            # longer to finish than baron
+            if config.time_limit is not None:
+                timeout = config.time_limit + min(
+                    max(1.0, 0.01 * config.time_limit), 100
+                )
+            else:
+                timeout = None
+
+            ostreams = [io.StringIO()] + config.tee
+            timer.start('subprocess')
+            cmd = [str(config.executable), f.name]
+            try:
+                with TeeStream(*ostreams) as t:
+                    process = subprocess.run(
+                        cmd,
+                        timeout=timeout,
+                        universal_newlines=True,
+                        stdout=t.STDOUT,
+                        stderr=t.STDERR,
+                        check=False,
+                    )
+            except OSError:
+                err = sys.exc_info()[1]
+                msg = 'Could not execute the command: %s\tError message: %s'
+                raise ApplicationError(msg % (cmd, err))
+            finally:
+                timer.stop('subprocess')
+
+    def _parse_time_file(self, filename):
+        "Parse the tim.lst file"
+
+    def _parse_soln_file(self, filename):
+        "Parse the res.lst file"
