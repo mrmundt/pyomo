@@ -45,8 +45,9 @@ class Availability(IntEnum):
     order to record its availability for use.
     """
 
-    FullLicense = 2
-    LimitedLicense = 1
+    FullLicense = 3
+    LimitedLicense = 2
+    Installed = 1
     NotFound = 0
     BadVersion = -1
     BadLicense = -2

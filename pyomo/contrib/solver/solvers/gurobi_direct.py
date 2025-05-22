@@ -14,6 +14,7 @@ import io
 import math
 import operator
 import os
+import logging
 
 from pyomo.common.collections import ComponentMap, ComponentSet
 from pyomo.common.config import ConfigValue
@@ -44,6 +45,7 @@ from pyomo.contrib.solver.common.results import (
 from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
 
 
+logger = logging.getLogger(__name__)
 gurobipy, gurobipy_available = attempt_import('gurobipy')
 
 
@@ -176,25 +178,25 @@ class GurobiSolverMixin:
 
     _num_gurobipy_env_clients = 0
     _gurobipy_env = None
-    _available = None
+    _available_cache = None
     _gurobipy_available = gurobipy_available
 
     def available(self):
-        if self._available is None:
+        if self._available_cache is None:
             # this triggers the deferred import, and for the persistent
-            # interface, may update the _available flag
+            # interface, may update the _available_cache flag
             #
-            # Note that we set the _available flag on the *most derived
+            # Note that we set the _available_cache flag on the *most derived
             # class* and not on the instance, or on the base class.  That
             # allows different derived interfaces to have different
             # availability (e.g., persistent has a minimum version
             # requirement that the direct interface doesn't)
             if not self._gurobipy_available:
-                if self._available is None:
+                if self._available_cache is None:
                     self.__class__._available = Availability.NotFound
             else:
                 self.__class__._available = self._check_license()
-        return self._available
+        return self._available_cache
 
     @staticmethod
     def release_license():

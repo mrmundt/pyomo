@@ -217,7 +217,7 @@ class Ipopt(SolverBase):
             if pth is None:
                 self._available_cache = (None, Availability.NotFound)
             else:
-                self._available_cache = (pth, Availability.FullLicense)
+                self._available_cache = (pth, Availability.Installed)
         return self._available_cache[1]
 
     def version(self, config=None):
