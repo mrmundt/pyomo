@@ -701,6 +701,8 @@ jobs:
     - name: Download and install extensions
       if: ${{ ! matrix.slim && matrix.category != 'notests' }}
       run: |
+        # Does it have ssl?
+        python -c "import ssl" && echo "SSL available"
         echo ""
         echo "Pyomo download-extensions"
         echo ""
