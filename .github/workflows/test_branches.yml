@@ -94,7 +94,7 @@ jobs:
           PYENV: pip
 
         - os: windows-latest
-          python: 3.14
+          python: 3.13
           test_docs: 1
           TARGET: win
           PYENV: conda
@@ -313,6 +313,8 @@ jobs:
         conda config --remove channels defaults
         conda config --append channels nodefaults
         conda config --append channels conda-forge
+        # Does it have ssl?
+        python -c "import ssl"
         # Try to install mamba
         CONDA_VER=$(conda --version | cut -d\  -f2)
         if test 23.10 = "`echo -e "23.10\n$CONDA_VER" | sort -V | tail -1`"; then
