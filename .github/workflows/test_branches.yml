@@ -464,6 +464,8 @@ jobs:
                 | tr ":" "\\n" | grep runner | tr "\n" ":"`:`echo "$PATH" \
                 | tr ":" "\\n" | grep -v runner | tr "\n" ":"`' >> $profile
         done
+        # Does it have ssl?
+        python -c "import ssl" && echo "SSL available"
         echo ""
         echo "Final conda environment:"
         conda list | sed 's/^/    /'
