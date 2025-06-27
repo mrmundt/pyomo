@@ -103,36 +103,50 @@ class kestrelAMPL(object):
                 pass
 
     def setup_connection(self):
-        import http.client
+        import http.client, ssl, xmlrpc.client as xrc
 
-        # on *NIX, the proxy can show up either upper or lowercase.
-        # Prefer lower case, and prefer HTTPS over HTTP if the
-        # NEOS.scheme is https.
-        proxy = os.environ.get('http_proxy', os.environ.get('HTTP_PROXY', ''))
-        if NEOS.scheme == 'https':
-            proxy = os.environ.get('https_proxy', os.environ.get('HTTPS_PROXY', proxy))
-        if proxy:
-            self.transport = ProxiedTransport()
-            self.transport.set_proxy(proxy)
-        elif NEOS.scheme == 'https':
-            self.transport = xmlrpclib.SafeTransport()
-        else:
-            self.transport = xmlrpclib.Transport()
+        primary_scheme, primary_port = 'https', '3333'
+        fallback_scheme, fallback_port = 'http', '3332'
 
-        self.neos = xmlrpclib.ServerProxy(
-            "%s://%s:%s" % (NEOS.scheme, NEOS.host, NEOS.port), transport=self.transport
+        proxy = (
+            os.environ.get('https_proxy')
+            or os.environ.get('HTTPS_PROXY')
+            or os.environ.get('http_proxy')
+            or os.environ.get('HTTP_PROXY')
+            or ''
         )
 
-        logger.info("Connecting to the NEOS server ... ")
-        try:
-            result = self.neos.ping()
-            logger.info("OK.")
-        except (socket.error,
-                xmlrpclib.ProtocolError,
-                http.client.BadStatusLine) as e:
-            self.neos = None
-            logger.info("Fail: %s" % (e,))
-            logger.warning("NEOS is temporarily unavailable:\n\t(%s)" % (e,))
+        def _make_proxy_transport():
+            t = ProxiedTransport()
+            t.set_proxy(proxy)
+            t.context = ssl.create_default_context()
+            return t
+
+        def _connect(scheme, port):
+            if proxy:
+                transport = _make_proxy_transport()
+            elif scheme == 'https':
+                transport = xrc.SafeTransport(context=ssl.create_default_context())
+            else:
+                transport = xrc.Transport()
+
+            url = f"{scheme}://{NEOS.host}:{port}"
+            return xrc.ServerProxy(url, transport=transport, allow_none=True)
+
+        for scheme, port in [
+            (primary_scheme, primary_port),
+            (fallback_scheme, fallback_port),
+        ]:
+            try:
+                self.neos = _connect(scheme, port)
+                self.neos.ping()
+                logger.info("Connected to NEOS over %s", scheme.upper())
+                return
+            except (http.client.BadStatusLine, socket.error, xrc.ProtocolError) as err:
+                logger.warning("NEOS %s connection failed: %s", scheme, err)
+
+        self.neos = None
+        logger.warning("NEOS is temporarily unavailable.")
 
     def tempfile(self):
         ampl_id = os.getenv('ampl_id', 'unknown')
