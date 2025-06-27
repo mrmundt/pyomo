@@ -94,19 +94,14 @@ class kestrelAMPL(object):
         # Note that this is only to suppress warnings, as __del__ is not
         # guaranteed to be called (especially for any objects that still
         # exist when the Python process terminates)
-        if getattr(self, 'neos', None) is not None:
-            try:
-                if hasattr(self, 'transport') and hasattr(self.transport, 'close'):
-                    self.transport.close()
-            except Exception:
-                # never raise from a destructor
-                pass
+        if self.neos is not None:
+            self.transport.close()
 
     def setup_connection(self):
         import http.client, ssl, xmlrpc.client as xrc
 
-        primary_scheme, primary_port = 'https', '3333'
-        fallback_scheme, fallback_port = 'http', '3332'
+        primary_urlscheme, primary_port = 'https', '3333'
+        fallback_urlscheme, fallback_port = 'http', '3332'
 
         proxy = (
             os.environ.get('https_proxy')
@@ -134,8 +129,8 @@ class kestrelAMPL(object):
             return xrc.ServerProxy(url, transport=transport, allow_none=True)
 
         for scheme, port in [
-            (primary_scheme, primary_port),
-            (fallback_scheme, fallback_port),
+            (primary_urlscheme, primary_port),
+            (fallback_urlscheme, fallback_port),
         ]:
             try:
                 self.neos = _connect(scheme, port)
@@ -149,8 +144,7 @@ class kestrelAMPL(object):
         logger.warning("NEOS is temporarily unavailable.")
 
     def tempfile(self):
-        ampl_id = os.getenv('ampl_id', 'unknown')
-        return os.path.join(tempfile.gettempdir(), f'at{ampl_id}.jobs')
+        return os.path.join(tempfile.gettempdir(), 'at%s.jobs' % os.getenv('ampl_id'))
 
     def kill(self, jobNumber, password):
         response = self.neos.killJob(jobNumber, password)
@@ -164,7 +158,7 @@ class kestrelAMPL(object):
             while attempt < 3:
                 try:
                     return self.neos.listSolversInCategory("kestrel")
-                except (socket.timeout, Exception):
+                except socket.timeout:
                     attempt += 1
             return []
 
@@ -173,14 +167,13 @@ class kestrelAMPL(object):
         results = self.neos.getFinalResults(jobNumber, password)
         if isinstance(results, xmlrpclib.Binary):
             results = results.data
-        if isinstance(results, str):
-            results = results.encode()
         # decode results to kestrel.sol; well try to anyway, any errors
         # will result in error strings in .sol file instead of solution.
         if stub[-4:] == '.sol':
             stub = stub[:-4]
-        with open(stub + ".sol", "wb") as solfile:
-            solfile.write(results)
+        solfile = open(stub + ".sol", "wb")
+        solfile.write(results)
+        solfile.close()
 
     def submit(self, xml):
         # LOGNAME and USER should map to the effective user (i.e., the
@@ -231,13 +224,7 @@ class kestrelAMPL(object):
 
     def getAvailableSolvers(self):
         """Return a list of all NEOS solvers that this interface supports"""
-        if self.neos is None:
-            return []
-        try:
-            allKestrelSolvers = self.neos.listSolversInCategory("kestrel")
-        except Exception as e:
-            logger.warning("Failed to retrieve solver list from NEOS: %s", e)
-            return []
+        allKestrelSolvers = self.neos.listSolversInCategory("kestrel")
         _ampl = ':AMPL'
         return sorted(s[: -len(_ampl)] for s in allKestrelSolvers if s.endswith(_ampl))
 
@@ -249,37 +236,34 @@ class kestrelAMPL(object):
 
           - we don't want to be case sensitive, but NEOS is.
           - we need to read in options variable
+
         """
         # Get a list of available kestrel solvers from NEOS
         kestrelAmplSolvers = self.getAvailableSolvers()
-
-        NEOS_solver_name = None
-        solver_name = "<unspecified>"
-        m = None
-
+        self.options = None
         # Read kestrel_options to get solver name
         if "kestrel_options" in os.environ:
             self.options = os.getenv("kestrel_options")
         elif "KESTREL_OPTIONS" in os.environ:
             self.options = os.getenv("KESTREL_OPTIONS")
-        else:
-            self.options = None
-
+        #
         if self.options is not None:
             m = re.search(r'solver\s*=*\s*(\S+)', self.options, re.IGNORECASE)
+            NEOS_solver_name = None
             if m:
                 solver_name = m.groups()[0]
                 for s in kestrelAmplSolvers:
                     if s.upper() == solver_name.upper():
                         NEOS_solver_name = s
                         break
+                #
                 if not NEOS_solver_name:
                     raise RuntimeError(
                         "%s is not available on NEOS.  Choose from:\n\t%s"
                         % (solver_name, "\n\t".join(kestrelAmplSolvers))
                     )
-
-        if NEOS_solver_name is None:
+        #
+        if self.options is None or m is None:
             raise RuntimeError(
                 "%s is not available on NEOS.  Choose from:\n\t%s"
                 % (solver_name, "\n\t".join(kestrelAmplSolvers))
@@ -300,16 +284,19 @@ class kestrelAMPL(object):
         ampl_files = {}
         for key in ['adj', 'col', 'env', 'fix', 'spc', 'row', 'slc', 'unv']:
             if os.access(stub + "." + key, os.R_OK):
-                with open(stub + "." + key, "r") as f:
-                    ampl_files[key] = f.read()
-
+                f = open(stub + "." + key, "r")
+                val = ""
+                buf = f.read()
+                while buf:
+                    val += buf
+                    buf = f.read()
+                f.close()
+                ampl_files[key] = val
         # Get priority
         priority = ""
-        if self.options:
-            m = re.search(r'priority[\s=]+(\S+)', self.options)
-            if m:
-                priority = "<priority>%s</priority>\n" % (m.groups()[0])
-
+        m = re.search(r'priority[\s=]+(\S+)', self.options)
+        if m:
+            priority = "<priority>%s</priority>\n" % (m.groups()[0])
         # Add any AMPL-created environment variables to dictionary
         solver_options = "kestrel_options:solver=%s\n" % solver.lower()
         solver_options_key = "%s_options" % solver
@@ -321,7 +308,7 @@ class kestrelAMPL(object):
             solver_options_value = os.getenv(solver_options_key.lower())
         elif solver_options_key.upper() in os.environ:
             solver_options_value = os.getenv(solver_options_key.upper())
-        if solver_options_value:
+        if not solver_options_value == "":
             solver_options += "%s_options:%s\n" % (solver.lower(), solver_options_value)
         #
         nl_string = (base64.encodebytes(zipped_nl_file.getvalue())).decode('utf-8')
