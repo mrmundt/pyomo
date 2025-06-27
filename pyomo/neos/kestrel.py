@@ -100,6 +100,8 @@ class kestrelAMPL(object):
     def setup_connection(self):
         import http.client, ssl, xmlrpc.client as xrc
 
+        self.neos = None
+
         primary_urlscheme, primary_port = 'https', '3333'
         fallback_urlscheme, fallback_port = 'http', '3332'
 
@@ -137,10 +139,16 @@ class kestrelAMPL(object):
                 self.neos.ping()
                 logger.info("Connected to NEOS over %s", scheme.upper())
                 return
-            except (http.client.BadStatusLine, socket.error, xrc.ProtocolError) as err:
-                logger.warning("NEOS %s connection failed: %s", scheme, err)
+            except (
+                socket.error,
+                xmlrpclib.ProtocolError,
+                http.client.BadStatusLine,
+            ) as e:
+                logger.warning(
+                    "NEOS connection (%s scheme) failed: %s", scheme.upper(), e
+                )
 
-        self.neos = None
+        # If we get here, everything else has failed
         logger.warning("NEOS is temporarily unavailable.")
 
     def tempfile(self):
