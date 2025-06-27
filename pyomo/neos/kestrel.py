@@ -128,6 +128,7 @@ class kestrelAMPL(object):
                 transport = xrc.Transport()
 
             url = f"{scheme}://{NEOS.host}:{port}"
+            logger.info("Attempting to connect to NEOS: %s", url)
             return xrc.ServerProxy(url, transport=transport, allow_none=True)
 
         for scheme, port in [
