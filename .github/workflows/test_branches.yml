@@ -98,7 +98,7 @@ jobs:
           TARGET: osx
           PYENV: pip
 
-        - os: windows-latest
+        - os: windows-2025
           python: 3.11
           test_docs: 1
           TARGET: win
@@ -128,7 +128,7 @@ jobs:
           PYENV: pip
           PACKAGES: cython
 
-        - os: windows-latest
+        - os: windows-2025
           python: 3.9
           other: /pip
           TARGET: win
