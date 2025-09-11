@@ -448,9 +448,13 @@ jobs:
         echo ""
         echo "Installing packages only available on PyPI"
         if test -n "$PYPI_DEPENDENCIES"; then
-            touch ./pip-empty.ini
+            # pip gets irritated on some systems when looking for a
+            # default config file (and can't find it).
+            # This makes an empty config file so pip won't get upset,
+            # but it changes no default behavior
+            echo "" > pip-empty.ini
             export PIP_CONFIG_FILE="$(pwd)/pip-empty.ini"
-            python -m pip debug
+            python -m pip --isolated debug
             python -m pip install --cache-dir cache/pip $PYPI_DEPENDENCIES
         fi
         # remember this python interpreter
