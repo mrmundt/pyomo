@@ -448,7 +448,9 @@ jobs:
         echo ""
         echo "Installing packages only available on PyPI"
         if test -n "$PYPI_DEPENDENCIES"; then
-            conda install -q -y -c conda-forge pip
+            if [[ "${{matrix.TARGET}}" == win && "${{matrix.python}}" == 3.13* ]]; then
+              conda install -q -y -c conda-forge "pip<24.3"
+            fi
 
             python -m pip debug
             python -m pip install --cache-dir cache/pip $PYPI_DEPENDENCIES
