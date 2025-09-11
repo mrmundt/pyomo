@@ -448,12 +448,15 @@ jobs:
         echo ""
         echo "Installing packages only available on PyPI"
         if test -n "$PYPI_DEPENDENCIES"; then
+            echo "Environment:"
+            env | sort | sed -r 's/^/    /'
             if [[ "${{matrix.TARGET}}" == win ]]; then
                 # There started to be an issue on win/3.13 that pip is
                 # grepping for some specific registry value and cannot
                 # find it. This is to bypass that behavior.
-                export PROGRAMDATA='C:\ProgramData'                # CSIDL_COMMON_APPDATA
-                export APPDATA="${USERPROFILE}\\AppData\\Roaming"  # CSIDL_APPDATA
+                # Ensure platformdirs uses env, not registry
+                export ALLUSERSPROFILE='C:\ProgramData' # CSIDL_COMMON_APPDATA
+                export APPDATA="${USERPROFILE}\\AppData\\Roaming" # CSIDL_APPDATA
                 export LOCALAPPDATA="${USERPROFILE}\\AppData\\Local" # CSIDL_LOCAL_APPDATA
             fi
 
