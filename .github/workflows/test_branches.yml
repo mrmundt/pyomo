@@ -341,8 +341,9 @@ jobs:
         conda list --show-channel-urls
         which python
         python --version
-        echo "Pip configuration"
+        echo "Pip debug info..."
         python -m pip config list
+        python -m pip debug
         # Note: some pypi packages are not available through conda
         PYOMO_DEPENDENCIES=`python setup.py dependencies \
             --extras "$EXTRAS" | tail -1`
@@ -358,6 +359,9 @@ jobs:
             # As of Nov 7, 2024, qtconsole is not compatible with python 3.13 on win
             EXCLUDE="qtconsole $EXCLUDE"
         fi
+        echo "Pip debug info..."
+        python -m pip config list
+        python -m pip debug
         EXCLUDE=`echo "$EXCLUDE" | xargs`
         if test -n "$EXCLUDE"; then
             for WORD in $EXCLUDE; do
@@ -446,6 +450,9 @@ jobs:
                 fi
             done
         fi
+        echo "Pip debug info..."
+        python -m pip config list
+        python -m pip debug
         # Re-try Pyomo (optional) dependencies with pip
         echo ""
         echo "Installing packages only available on PyPI"
