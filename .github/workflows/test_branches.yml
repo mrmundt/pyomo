@@ -451,7 +451,7 @@ jobs:
         if test -n "$PYPI_DEPENDENCIES"; then
             echo "Environment:"
             env | sort | sed -r 's/^/    /'
-            python -m pip install --upgrade pip platformdirs
+            conda install -q -y pip platformdirs || conda update -q -y pip platformdirs
             python -m pip --isolated install --cache-dir cache/pip $PYPI_DEPENDENCIES
         fi
         # remember this python interpreter
