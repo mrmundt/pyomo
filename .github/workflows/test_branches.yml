@@ -223,6 +223,7 @@ jobs:
       if: matrix.TARGET == 'win'
       run: |
         echo "SETUPTOOLS_USE_DISTUTILS=local" >> $GITHUB_ENV
+        echo "PIP_CONFIG_FILE=NUL" >> $GITHUB_ENV
         choco install pkgconfiglite
 
     - name: Set up Python ${{ matrix.python }}
@@ -448,7 +449,9 @@ jobs:
         echo ""
         echo "Installing packages only available on PyPI"
         if test -n "$PYPI_DEPENDENCIES"; then
-            python -m pip install --cache-dir cache/pip $PYPI_DEPENDENCIES
+            echo "Environment:"
+            env | sort | sed -r 's/^/    /'
+            python -m pip --isolated install --cache-dir cache/pip $PYPI_DEPENDENCIES
         fi
         # remember this python interpreter
         python -c 'import sys; print("PYTHON_EXE=%s" \
