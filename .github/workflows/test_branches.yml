@@ -376,7 +376,7 @@ jobs:
         fi
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
-        conda install --update-deps -q -y python="${{matrix.python}}" $CONDA_DEPENDENCIES
+        conda install --update-deps -q -y $CONDA_DEPENDENCIES
         echo "Pip debug info..."
         python -m pip config list
         python -m pip debug
