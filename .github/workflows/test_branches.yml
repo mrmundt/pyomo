@@ -374,6 +374,9 @@ jobs:
         if test "${{matrix.TARGET}}" == 'win'; then
             CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES setuptools<74.0.0"
         fi
+        # Note: this will fail the build if any installation fails (or
+        # possibly if it outputs messages to stderr)
+        conda install -q -y python="${{matrix.python}}" $CONDA_DEPENDENCIES
         echo "Pip debug info..."
         python -m pip config list
         python -m pip debug
@@ -393,7 +396,7 @@ jobs:
             TIMEOUT_MSG="TIMEOUT: killing conda install process"
             PYVER=$(echo "py${{matrix.python}}" | sed 's/\.//g')
             echo "Installing for $PYVER"
-            for PKG in 'cplex>=12.10' docplex gurobi "$XPRESS" cyipopt pymumps scip; do
+            for PKG in 'cplex>=12.10' docplex gurobi "$XPRESS" cyipopt pymumps; do
                 echo ""
                 echo "*** Install $PKG ***"
                 echo ""
@@ -446,9 +449,6 @@ jobs:
                 python -m pip debug
             done
         fi
-        # Note: this will fail the build if any installation fails (or
-        # possibly if it outputs messages to stderr)
-        conda install -q -y python="${{matrix.python}}" $CONDA_DEPENDENCIES
         echo "Pip debug info..."
         python -m pip config list
         python -m pip debug
