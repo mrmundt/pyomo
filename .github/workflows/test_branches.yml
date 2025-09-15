@@ -99,7 +99,7 @@ jobs:
           PYENV: pip
 
         - os: windows-latest
-          python: '3.13'
+          python: '3.13.5'
           test_docs: 1
           TARGET: win
           PYENV: conda
@@ -341,9 +341,6 @@ jobs:
         conda list --show-channel-urls
         which python
         python --version
-        echo "Pip debug info..."
-        python -m pip config list
-        python -m pip debug
         # Note: some pypi packages are not available through conda
         PYOMO_DEPENDENCIES=`python setup.py dependencies \
             --extras "$EXTRAS" | tail -1`
@@ -376,10 +373,7 @@ jobs:
         fi
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
-        conda install -q -y python="${{matrix.python}}" $CONDA_DEPENDENCIES
-        echo "Pip debug info..."
-        python -m pip config list
-        python -m pip debug
+        conda install --update-deps -q -y python="${{matrix.python}}" $CONDA_DEPENDENCIES
         if test -z "${{matrix.slim}}"; then
             # xpress.init() (xpress 9.5.1 from conda) hangs indefinitely
             # on GHA/Windows under Python 3.10 and 3.11.  Exclude that
@@ -396,7 +390,7 @@ jobs:
             TIMEOUT_MSG="TIMEOUT: killing conda install process"
             PYVER=$(echo "py${{matrix.python}}" | sed 's/\.//g')
             echo "Installing for $PYVER"
-            for PKG in scip 'cplex>=12.10' docplex gurobi "$XPRESS" cyipopt pymumps; do
+            for PKG in 'cplex>=12.10' docplex gurobi "$XPRESS" cyipopt pymumps scip; do
                 echo ""
                 echo "*** Install $PKG ***"
                 echo ""
@@ -444,14 +438,8 @@ jobs:
                 if test -z "$_BUILDS"; then
                     echo "WARNING: $PKG is not available"
                 fi
-                echo "Pip debug info..."
-                python -m pip config list
-                python -m pip debug
             done
         fi
-        echo "Pip debug info..."
-        python -m pip config list
-        python -m pip debug
         # Re-try Pyomo (optional) dependencies with pip
         echo ""
         echo "Installing packages only available on PyPI"
@@ -834,12 +822,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-13, windows-latest]
 
         include:
         - os: ubuntu-latest
           TARGET: linux
-        - os: macos-latest
+        - os: macos-13
           TARGET: osx
         - os: windows-latest
           TARGET: win
