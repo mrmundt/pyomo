@@ -424,7 +424,7 @@ class GurobiPersistent(
         else:
             self._labeler = NumericLabeler('x')
 
-        env = type(self)._gurobipy_env
+        env = type(self)._ensure_env()
         self._solver_model = gurobipy.Model(name=model.name or '', env=env)
 
         self.add_block(model)
