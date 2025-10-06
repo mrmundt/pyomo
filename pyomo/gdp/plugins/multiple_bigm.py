@@ -955,18 +955,42 @@ def _setup_spawn(model, solver_class_path, solver_options, use_primal_bound):
     # ensure necessary plugins are registered (even if the main process
     # has already registered them).
     import pyomo.environ
-    from importlib import import_module
 
     global _thread_local
 
-    # Reconstruct the model and solver in the new process
     _thread_local.model = dill.loads(model)
-
-    module_path, _, class_name = solver_class_path.partition(":")
-    solver_cls = getattr(import_module(module_path), class_name)
-
-    _thread_local.solver = solver_cls(options=solver_options)
+    _thread_local.solver = _LazySolverProxyAttemptImport(
+        solver_class_path, solver_options
+    )
     _thread_local.config_use_primal_bound = use_primal_bound
+
+
+class _LazySolverProxyAttemptImport:
+    """
+    Defers importing and constructing the real solver until the first
+    attribute access, using Pyomo's attempt_import to keep imports safe.
+    """
+
+    def __init__(self, class_path: str, options: dict):
+        self._class_path = class_path
+        self._options = options
+        self._real = None
+
+    def _materialize(self):
+        if self._real is None:
+            from pyomo.common.dependencies import attempt_import
+
+            module_path, _, cls_name = self._class_path.partition(":")
+            mod, _ = attempt_import(module_path)
+            solver_cls = getattr(mod, cls_name)
+            self._real = solver_cls(options=self._options)
+        return self._real
+
+    def __getattr__(self, name):
+        return getattr(self._materialize(), name)
+
+    def __call__(self, *args, **kwargs):
+        return self._materialize()(*args, **kwargs)
 
 
 def _setup_fork():
