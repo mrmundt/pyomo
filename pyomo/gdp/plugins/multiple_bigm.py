@@ -26,7 +26,12 @@ from pyomo.common.config import (
 )
 from pyomo.common.gc_manager import PauseGC
 from pyomo.common.modeling import unique_component_name
-from pyomo.common.dependencies import dill, dill_available, multiprocessing
+from pyomo.common.dependencies import (
+    dill,
+    dill_available,
+    multiprocessing,
+    attempt_import,
+)
 from pyomo.common.enums import SolverAPIVersion
 
 from pyomo.core import (
@@ -853,15 +858,17 @@ class MultipleBigMTransformation(GDP_to_MIP_Transformation, _BigM_MixIn):
                     "methods 'spawn' or 'forkserver', but it could "
                     "not be imported."
                 )
+            solver_cls_path = (
+                f"{self._config.solver.__class__.__module__}:"
+                f"{self._config.solver.__class__.__name__}"
+            )
+            solver_opts = dict(self._config.solver.options)
+            use_pb = bool(self._config.use_primal_bound)
+
             pool = multiprocessing.get_context(method.value).Pool(
                 processes=threads,
                 initializer=_setup_spawn,
-                initargs=(
-                    dill.dumps(instance),
-                    dill.dumps(self._config.solver.__class__),
-                    dill.dumps(self._config.solver.options),
-                    self._config.use_primal_bound,
-                ),
+                initargs=(dill.dumps(instance), solver_cls_path, solver_opts, use_pb),
             )
         elif method == ProcessStartMethod.fork:
             _thread_local.model = instance
@@ -948,16 +955,47 @@ class MultipleBigMTransformation(GDP_to_MIP_Transformation, _BigM_MixIn):
 
 # Things we call in subprocesses. These can't be member functions, or
 # else we'd have to pickle `self`, which is problematic.
-def _setup_spawn(model, solver_class, solver_options, use_primal_bound):
+def _setup_spawn(serialized_model, solver_cls_path, solver_opts, use_primal_bound):
     # When using 'spawn' or 'forkserver', Python starts in a new
     # environment and executes only this file, so we need to manually
     # ensure necessary plugins are registered (even if the main process
     # has already registered them).
     import pyomo.environ
 
-    _thread_local.model = dill.loads(model)
-    _thread_local.solver = dill.loads(solver_class)(options=dill.loads(solver_options))
-    _thread_local.config_use_primal_bound = use_primal_bound
+    _thread_local.model = dill.loads(serialized_model)
+
+    mod_name, sep, attr = solver_cls_path.partition(":")
+    if not sep or not attr:
+        raise ValueError(
+            f"Bad entrypoint '{solver_cls_path}' (expected 'module:Class')"
+        )
+
+    module, available = attempt_import(mod_name)
+    if not available:
+        raise ImportError(
+            f"Could not import module '{mod_name}' for '{solver_cls_path}'"
+        )
+
+    SolverCls = getattr(module, attr)
+
+    # Construct the solver and apply options (works across V1 solvers)
+    try:
+        solver = SolverCls(options=solver_opts or {})
+    except TypeError:
+        solver = SolverCls()
+        if hasattr(solver, "set_options") and callable(solver.set_options):
+            solver.set_options(solver_opts or {})
+        elif hasattr(solver, "options") and isinstance(solver.options, dict):
+            solver.options.update(solver_opts or {})
+        elif solver_opts:
+            for k, v in solver_opts.items():
+                try:
+                    solver.options[k] = v
+                except Exception:
+                    pass
+
+    _thread_local.solver = solver
+    _thread_local.config_use_primal_bound = bool(use_primal_bound)
 
 
 def _setup_fork():
