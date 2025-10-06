@@ -50,6 +50,15 @@ from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
 logger = logging.getLogger(__name__)
 
 gurobipy, gurobipy_available = attempt_import('gurobipy')
+
+# Historically, we stored a live gurobipy.Env object on the class as a shared
+# singleton (per-process) for all solver instances. That made dill/pickle of
+# the class fail, because gurobipy.Env is a Cython type with a non-trivial
+# __cinit__ and no pickling support.
+#
+# To keep classes picklable (e.g., for multiprocessing),
+# we store only a small, picklable key on the class, and put the
+# real Env object in this module-global registry.
 _GUROBI_ENV_REGISTRY = {}
 
 
@@ -177,6 +186,13 @@ class _GurobiLicenseManager:
     """
     License handler for Gurobi instances. Handles checkout, locking,
     and release.
+
+    The manager:
+        - creates the Env on first use (or reuses a live one)
+        - increments a per-class client count
+        - and decrements it on exit, closing the Env when the last client leaves
+
+    The actual Env object lives in _GUROBI_ENV_REGISTRY, keyed by class
     """
 
     def __init__(self, owner_cls):
@@ -185,6 +201,7 @@ class _GurobiLicenseManager:
     def acquire(self, timeout: Optional[float] = None) -> None:
         """Acquire (or reuse) a shared gurobipy.Env."""
         cls = self._cls
+        # Try to reuse an existing Env; recreate if it was closed
         env = cls._ensure_env()
         if env is not None:
             cls._register_env_client()
@@ -246,45 +263,11 @@ class GurobiSolverMixin:
     """
 
     _num_gurobipy_env_clients = 0
+    # Instead of storing the Env directly on the class (which breaks pickling),
+    # we store a small key into the process-local registry above
     _gurobipy_env_key = None
-
     _available_cache = None
     _version_cache = None
-
-    @classmethod
-    def _get_env(cls):
-        if cls._gurobipy_env_key is None:
-            return None
-        return _GUROBI_ENV_REGISTRY.get(cls._gurobipy_env_key)
-
-    @classmethod
-    def _set_env(cls, env):
-        if env is None:
-            if cls._gurobipy_env_key is not None:
-                _GUROBI_ENV_REGISTRY.pop(cls._gurobipy_env_key, None)
-            cls._gurobipy_env_key = None
-        else:
-            if cls._gurobipy_env_key is None:
-                cls._gurobipy_env_key = id(cls)
-            _GUROBI_ENV_REGISTRY[cls._gurobipy_env_key] = env
-
-    @classmethod
-    def _ensure_env(cls):
-        """
-        Return a live gurobipy.Env. If current env exists but is closed,
-        recreate it.
-        """
-        env = cls._get_env()
-        if env is None:
-            return None
-        if not hasattr(env, "_cenv"):
-            try:
-                env.close()
-            except Exception:
-                pass
-            env = gurobipy.Env()
-            cls._set_env(env)
-        return env
 
     def _is_gp_available(self) -> bool:
         try:
@@ -323,6 +306,20 @@ class GurobiSolverMixin:
 
             self.__class__._available_cache = status
         return self._available_cache
+
+    def version(self, recheck: bool = False) -> Optional[Tuple[int, int, int]]:
+        if not recheck and self._version_cache is not None:
+            return self._version_cache
+
+        if not self._is_gp_available():
+            return None
+
+        self.__class__._version_cache = (
+            gurobipy.GRB.VERSION_MAJOR,
+            gurobipy.GRB.VERSION_MINOR,
+            gurobipy.GRB.VERSION_TECHNICAL,
+        )
+        return self._version_cache
 
     def _check_license_status(self) -> Availability:
         """
@@ -368,20 +365,6 @@ class GurobiSolverMixin:
             except Exception:
                 pass
 
-    def version(self, recheck: bool = False) -> Optional[Tuple[int, int, int]]:
-        if not recheck and self._version_cache is not None:
-            return self._version_cache
-
-        if not self._is_gp_available():
-            return None
-
-        self.__class__._version_cache = (
-            gurobipy.GRB.VERSION_MAJOR,
-            gurobipy.GRB.VERSION_MINOR,
-            gurobipy.GRB.VERSION_TECHNICAL,
-        )
-        return self._version_cache
-
     @classmethod
     def _register_env_client(cls):
         cls._num_gurobipy_env_clients += 1
@@ -405,6 +388,43 @@ class GurobiSolverMixin:
                 logger.warning(f"Exception while closing Gurobi environment: {err!r}")
             finally:
                 cls._set_env(None)
+
+    @classmethod
+    def _get_env(cls):
+        """Return the current shared Env (or None)"""
+        if cls._gurobipy_env_key is None:
+            return None
+        return _GUROBI_ENV_REGISTRY.get(cls._gurobipy_env_key)
+
+    @classmethod
+    def _set_env(cls, env):
+        """Install or clear the current process-local Env"""
+        if env is None:
+            if cls._gurobipy_env_key is not None:
+                _GUROBI_ENV_REGISTRY.pop(cls._gurobipy_env_key, None)
+            cls._gurobipy_env_key = None
+        else:
+            if cls._gurobipy_env_key is None:
+                cls._gurobipy_env_key = id(cls)
+            _GUROBI_ENV_REGISTRY[cls._gurobipy_env_key] = env
+
+    @classmethod
+    def _ensure_env(cls):
+        """
+        Return a live gurobipy.Env. If current env exists but is closed,
+        recreate it.
+        """
+        env = cls._get_env()
+        if env is None:
+            return None
+        if not hasattr(env, "_cenv"):
+            try:
+                env.close()
+            except Exception:
+                pass
+            env = gurobipy.Env()
+            cls._set_env(env)
+        return env
 
 
 class GurobiDirect(GurobiSolverMixin, SolverBase):
