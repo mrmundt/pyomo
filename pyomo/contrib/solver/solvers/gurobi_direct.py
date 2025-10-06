@@ -185,7 +185,8 @@ class _GurobiLicenseManager:
     def acquire(self, timeout: Optional[float] = None) -> None:
         """Acquire (or reuse) a shared gurobipy.Env."""
         cls = self._cls
-        if cls._get_env() is not None:
+        env = cls._ensure_env()
+        if env is not None:
             cls._register_env_client()
             return
 
@@ -264,9 +265,26 @@ class GurobiSolverMixin:
             cls._gurobipy_env_key = None
         else:
             if cls._gurobipy_env_key is None:
-                # Stable per-process key; using id(cls) suffices here.
                 cls._gurobipy_env_key = id(cls)
             _GUROBI_ENV_REGISTRY[cls._gurobipy_env_key] = env
+
+    @classmethod
+    def _ensure_env(cls):
+        """
+        Return a live gurobipy.Env. If current env exists but is closed,
+        recreate it.
+        """
+        env = cls._get_env()
+        if env is None:
+            return None
+        if not hasattr(env, "_cenv"):
+            try:
+                env.close()
+            except Exception:
+                pass
+            env = gurobipy.Env()
+            cls._set_env(env)
+        return env
 
     def _is_gp_available(self) -> bool:
         try:
@@ -454,7 +472,7 @@ class GurobiDirect(GurobiSolverMixin, SolverBase):
 
             # Acquire a Gurobi env for the duration of solve (opt + postsolve):
             with self.license():
-                env = type(self)._get_env()
+                env = type(self)._ensure_env()
 
                 with capture_output(TeeStream(*ostreams), capture_fd=False):
                     gurobi_model = gurobipy.Model(env=env)

@@ -185,12 +185,21 @@ class TestGurobiMixin(unittest.TestCase):
         opt = GurobiDirect()
         mock_gp = self.mocked_gurobipy()
         with unittest.mock.patch(f"{self.MODULE_PATH}.gurobipy", mock_gp):
-            # Explicit acquire/release should set and clear the shared Env
-            self.assertIsNone(GurobiDirect._gurobipy_env)
+            cls = GurobiDirect
+            # Before acquire - nothing locked
+            self.assertIsNone(cls._get_env())
+            self.assertIsNone(cls._gurobipy_env_key)
+            # Acquire - creates and registers env
             opt.license.acquire()
-            self.assertIsNotNone(GurobiDirect._gurobipy_env)
-            opt.license.release()
-            self.assertIsNone(GurobiDirect._gurobipy_env)
+            try:
+                env_inst = mock_gp.Env.return_value
+                self.assertIsNotNone(cls._gurobipy_env_key)
+                self.assertIs(cls._get_env(), env_inst)
+            finally:
+                # Client count hits zero -> env closed and cleared
+                opt.license.release()
+            self.assertIsNone(cls._get_env())
+            self.assertIsNone(cls._gurobipy_env_key)
 
 
 class TestGurobiDirectInterface(unittest.TestCase):
