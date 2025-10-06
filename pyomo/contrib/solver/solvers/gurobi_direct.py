@@ -50,6 +50,7 @@ from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
 logger = logging.getLogger(__name__)
 
 gurobipy, gurobipy_available = attempt_import('gurobipy')
+_GUROBI_ENV_REGISTRY = {}
 
 
 class GurobiConfigMixin:
@@ -184,12 +185,12 @@ class _GurobiLicenseManager:
     def acquire(self, timeout: Optional[float] = None) -> None:
         """Acquire (or reuse) a shared gurobipy.Env."""
         cls = self._cls
-        if cls._gurobipy_env is not None:
+        if cls._get_env() is not None:
             cls._register_env_client()
             return
 
         if not timeout:
-            cls._gurobipy_env = gurobipy.Env()
+            cls._set_env(gurobipy.Env())
             cls._register_env_client()
             return
 
@@ -198,7 +199,7 @@ class _GurobiLicenseManager:
         sleep_for = 0.1
         while time.time() - start < timeout:
             try:
-                cls._gurobipy_env = gurobipy.Env()
+                cls._set_env(gurobipy.Env())
                 cls._register_env_client()
                 return
             except Exception as e:
@@ -244,10 +245,28 @@ class GurobiSolverMixin:
     """
 
     _num_gurobipy_env_clients = 0
-    _gurobipy_env = None
+    _gurobipy_env_key = None
 
     _available_cache = None
     _version_cache = None
+
+    @classmethod
+    def _get_env(cls):
+        if cls._gurobipy_env_key is None:
+            return None
+        return _GUROBI_ENV_REGISTRY.get(cls._gurobipy_env_key)
+
+    @classmethod
+    def _set_env(cls, env):
+        if env is None:
+            if cls._gurobipy_env_key is not None:
+                _GUROBI_ENV_REGISTRY.pop(cls._gurobipy_env_key, None)
+            cls._gurobipy_env_key = None
+        else:
+            if cls._gurobipy_env_key is None:
+                # Stable per-process key; using id(cls) suffices here.
+                cls._gurobipy_env_key = id(cls)
+            _GUROBI_ENV_REGISTRY[cls._gurobipy_env_key] = env
 
     def _is_gp_available(self) -> bool:
         try:
@@ -353,7 +372,8 @@ class GurobiSolverMixin:
     def _release_env_client(cls):
         if cls._num_gurobipy_env_clients > 0:
             cls._num_gurobipy_env_clients -= 1
-        if cls._num_gurobipy_env_clients <= 0 and cls._gurobipy_env is not None:
+        env = cls._get_env()
+        if cls._num_gurobipy_env_clients <= 0 and env is not None:
             if cls._num_gurobipy_env_clients < 0:
                 logger.warning(
                     "Gurobi env client refcount went negative "
@@ -362,11 +382,11 @@ class GurobiSolverMixin:
                     "Pyomo development team."
                 )
             try:
-                cls._gurobipy_env.close()
+                env.close()
             except Exception as err:
                 logger.warning(f"Exception while closing Gurobi environment: {err!r}")
             finally:
-                cls._gurobipy_env = None
+                cls._set_env(None)
 
 
 class GurobiDirect(GurobiSolverMixin, SolverBase):
@@ -434,7 +454,7 @@ class GurobiDirect(GurobiSolverMixin, SolverBase):
 
             # Acquire a Gurobi env for the duration of solve (opt + postsolve):
             with self.license():
-                env = type(self)._gurobipy_env
+                env = type(self)._get_env()
 
                 with capture_output(TeeStream(*ostreams), capture_fd=False):
                     gurobi_model = gurobipy.Model(env=env)
