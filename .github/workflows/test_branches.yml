@@ -81,39 +81,39 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python: ['3.14.0-rc.2']
+        python: ['3.14.0']
         other: [""]
         category: [""]
 
         include:
         - os: ubuntu-latest
-          python: '3.14.0-rc.2'
+          python: '3.14.0'
           test_docs: 1
           TARGET: linux
           PYENV: pip
 
         - os: macos-latest
-          python: '3.14.0-rc.2'
+          python: '3.14.0'
           test_docs: 1
           TARGET: osx
           PYENV: pip
 
         - os: windows-latest
-          python: '3.14.0-rc.2'
+          python: '3.14.0'
           test_docs: 1
           TARGET: win
           PYENV: conda
           PACKAGES: glpk pytest-qt filelock
 
         - os: ubuntu-latest
-          python: '3.14.0-rc.2'
+          python: '3.14.0'
           other: /conda
           TARGET: linux
           PYENV: conda
           PACKAGES: pytest-qt
 
         - os: ubuntu-latest
-          python: '3.14.0-rc.2'
+          python: '3.14.0'
           other: /mpi
           mpi: 3
           TARGET: linux
@@ -121,7 +121,7 @@ jobs:
           PACKAGES: openmpi mpi4py
 
         - os: ubuntu-latest
-          python: '3.14.0-rc.2'
+          python: '3.14.0'
           other: /cython
           setup_options: --with-cython
           TARGET: linux
@@ -129,7 +129,7 @@ jobs:
           PACKAGES: cython
 
         - os: windows-latest
-          python: '3.14.0-rc.2'
+          python: '3.14.0'
           other: /pip
           TARGET: win
           PYENV: pip
