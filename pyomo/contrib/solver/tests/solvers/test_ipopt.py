@@ -17,7 +17,7 @@ import pyomo.environ as pyo
 from pyomo.common.envvar import is_windows
 from pyomo.common.fileutils import ExecutableData
 from pyomo.common.config import ConfigDict, ADVANCED_OPTION
-from pyomo.common.errors import DeveloperError
+from pyomo.common.errors import DeveloperError, ApplicationError
 from pyomo.common.tee import capture_output
 import pyomo.contrib.solver.solvers.ipopt as ipopt
 from pyomo.contrib.solver.common.util import NoSolutionError
@@ -126,6 +126,7 @@ class TestIpoptInterface(unittest.TestCase):
             'available',
             'has_linear_solver',
             'is_persistent',
+            'license',
             'solve',
             'version',
             'name',
@@ -154,10 +155,9 @@ class TestIpoptInterface(unittest.TestCase):
         opt.available()
         self.assertTrue(opt._available_cache[1])
         self.assertIsNotNone(opt._available_cache[0])
-        # Now we will try with a custom config that has a fake path
-        config = ipopt.IpoptConfig()
-        config.executable = Executable('/a/bogus/path')
-        opt.available(config=config)
+        # Now we will change the executable to a fake path
+        opt.config.executable = Executable('/a/bogus/path')
+        opt.available(recheck=True)
         self.assertFalse(opt._available_cache[1])
         self.assertIsNone(opt._available_cache[0])
 
@@ -166,10 +166,9 @@ class TestIpoptInterface(unittest.TestCase):
         opt.version()
         self.assertIsNotNone(opt._version_cache[0])
         self.assertIsNotNone(opt._version_cache[1])
-        # Now we will try with a custom config that has a fake path
-        config = ipopt.IpoptConfig()
-        config.executable = Executable('/a/bogus/path')
-        opt.version(config=config)
+        # Now we will change the executable to a fake path
+        opt.config.executable = Executable('/a/bogus/path')
+        opt.version(recheck=True)
         self.assertIsNone(opt._version_cache[0])
         self.assertIsNone(opt._version_cache[1])
 
@@ -588,6 +587,13 @@ class TestIpopt(unittest.TestCase):
         ipopt.Ipopt().solve(model)
         self.assertAlmostEqual(model.x.value, 1)
         self.assertAlmostEqual(model.y.value, 1)
+
+    def test_ipopt_solve_not_available(self):
+        model = self.create_model()
+        opt = ipopt.Ipopt()
+        opt.config.executable = Executable('/a/bogus/path')
+        with self.assertRaises(ApplicationError):
+            opt.solve(model)
 
     def test_ipopt_quiet_print_level(self):
         model = self.create_model()
