@@ -1075,42 +1075,32 @@ class PyomoUnitsContainer:
         """
         # since __getattr__ was called, we must not have this field yet
         # try to build a unit from the requested item
-        # Never synthesize internal/private attrs; prevents recursion on PyPy
-        if item.startswith('_'):
-            raise AttributeError(f'Attribute {item} not found.')
-
-        # Bypass __getattr__ to avoid recursion if _pint_registry is missing
-        try:
-            pint_registry = object.__getattribute__(self, '_pint_registry')
-        except AttributeError:
-            # If the visitor hasn't been initialized, fail fast
-            raise AttributeError('Attribute _pint_registry not found.')
-        # Try to get/construct the pint unit from the registry
+        pint_registry = self._pint_registry
         try:
             pint_unit = getattr(pint_registry, item)
-        except (AttributeError, pint_module.errors.UndefinedUnitError):
+
+            if pint_unit is not None:
+                # check if the unit is an offset unit and throw an exception if necessary
+                # TODO: should we prevent delta versions: delta_degC and delta_degF as well?
+                pint_unit_container = pint_module.util.to_units_container(
+                    pint_unit, pint_registry
+                )
+                for u, e in pint_unit_container.items():
+                    if not pint_registry._units[u].is_multiplicative:
+                        raise UnitsError(
+                            'Pyomo units system does not support the offset '
+                            f'units "{item}". Use absolute units '
+                            '(e.g. kelvin instead of degC) instead.'
+                        )
+
+                unit = _PyomoUnit(pint_unit, pint_registry)
+                setattr(self, item, unit)
+                return unit
+        except pint_module.errors.UndefinedUnitError as exc:
             pint_unit = None
 
         if pint_unit is None:
-            # Match the test expectation exactly:
             raise AttributeError(f'Attribute {item} not found.')
-
-        # Reject offset units
-        pint_unit_container = pint_module.util.to_units_container(
-            pint_unit, pint_registry
-        )
-        for u, e in pint_unit_container.items():
-            if not pint_registry._units[u].is_multiplicative:
-                raise UnitsError(
-                    'Pyomo units system does not support the offset '
-                    f'units "{item}". Use absolute units '
-                    '(e.g. kelvin instead of degC) instead.'
-                )
-
-        unit = _PyomoUnit(pint_unit, pint_registry)
-        # Avoid any custom __setattr__ pitfalls too (if present)
-        object.__setattr__(self, item, unit)
-        return unit
 
     # We added support to specify a units definition file instead of this programmatic interface
     # def create_new_base_dimension(self, dimension_name, base_unit_name):
