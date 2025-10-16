@@ -253,7 +253,6 @@ class GurobiPersistent(
         PersistentSolverUtils.__init__(
             self, treat_fixed_vars_as_params=treat_fixed_vars_as_params
         )
-        self.license = _GurobiLicenseManager(type(self))
         self._solver_model = None
         self._symbol_map = SymbolMap()
         self._labeler = None
@@ -424,7 +423,7 @@ class GurobiPersistent(
         else:
             self._labeler = NumericLabeler('x')
 
-        env = type(self)._ensure_env()
+        env = self.license._get_env()
         self._solver_model = gurobipy.Model(name=model.name or '', env=env)
 
         self.add_block(model)

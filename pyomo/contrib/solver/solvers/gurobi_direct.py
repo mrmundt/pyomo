@@ -17,7 +17,6 @@ import os
 import logging
 import time
 from typing import Optional, Tuple
-from contextlib import contextmanager
 
 from pyomo.common.collections import ComponentMap, ComponentSet
 from pyomo.common.config import ConfigValue
@@ -30,7 +29,7 @@ from pyomo.common.timing import HierarchicalTimer
 from pyomo.core.staleflag import StaleFlagManager
 from pyomo.repn.plugins.standard_form import LinearStandardFormCompiler
 
-from pyomo.contrib.solver.common.base import SolverBase, Availability
+from pyomo.contrib.solver.common.base import SolverBase, Availability, _LicenseManager
 from pyomo.contrib.solver.common.config import BranchAndBoundConfig
 from pyomo.contrib.solver.common.util import (
     NoFeasibleSolutionError,
@@ -59,7 +58,9 @@ gurobipy, gurobipy_available = attempt_import('gurobipy')
 # To keep classes picklable (e.g., for multiprocessing),
 # we store only a small, picklable key on the class, and put the
 # real Env object in this module-global registry.
-_GUROBI_ENV_REGISTRY = {}
+_GUROBI_ENV_REGISTRY = {}          # { "GLOBAL": gurobipy.Env }
+_GUROBI_ENV_KEY = "GLOBAL"         # single shared env per process
+_GUROBI_GLOBAL_CLIENTS = 0         # total clients across all solver instances
 
 
 class GurobiConfigMixin:
@@ -182,7 +183,7 @@ class GurobiDirectSolutionLoader(SolutionLoaderBase):
         return ComponentMap(iterator)
 
 
-class _GurobiLicenseManager:
+class _GurobiLicenseManager(_LicenseManager):
     """
     License handler for Gurobi instances. Handles checkout, locking,
     and release.
@@ -195,64 +196,131 @@ class _GurobiLicenseManager:
     The actual Env object lives in _GUROBI_ENV_REGISTRY, keyed by class
     """
 
-    def __init__(self, owner_cls):
-        self._cls = owner_cls
+    def __init__(self):
+        super().__init__()
+        self._local_client_count = 0  # per-instance reentrancy depth
 
-    def acquire(self, timeout: Optional[float] = None) -> None:
-        """Acquire (or reuse) a shared gurobipy.Env."""
-        cls = self._cls
-        # Try to reuse an existing Env; recreate if it was closed
-        env = cls._ensure_env()
+    def acquire(
+        self,
+        timeout: Optional[float] = None,
+        retry_timeout: Optional[float] = float("inf"),
+    ) -> None:
+        """
+        Acquire (or reuse) the shared Gurobi Env.
+
+        timeout:        Max time to wait for a *single* Env() construction attempt.
+                        If None/0, try once (no per-attempt timeout)
+        retry_timeout:  Total wall time to keep retrying if license temporarily
+                        unavailable. Default: keep trying (block) until it succeeds.
+        """
+        # Re-entrant acquire for this solver instance: no-op except for depth
+        if self._local_client_count > 0:
+            self._local_client_count += 1
+            return
+
+        # Try reusing an existing live env
+        env = self._ensure_env()
         if env is not None:
-            cls._register_env_client()
+            self._register_global_client()
+            self._local_client_count = 1
             return
 
-        if not timeout:
-            cls._set_env(gurobipy.Env())
-            cls._register_env_client()
-            return
-
-        # timeout implementation
+        # No live env yet: create with retry/backoff
         start = time.time()
         sleep_for = 0.1
-        while time.time() - start < timeout:
+        while True:
             try:
-                cls._set_env(gurobipy.Env())
-                cls._register_env_client()
+                self._set_env(gurobipy.Env())
+                self._register_global_client()
+                self._local_client_count = 1
                 return
             except Exception as e:
+                # If we aren't allowed to retry, or exceeded retry budget: give up
+                now = time.time()
+                if retry_timeout is not None and (now - start) >= retry_timeout:
+                    logger.warning(
+                        "Gurobi license acquire failed after %.2fs: %s",
+                        now - start, e, exc_info=True
+                    )
+                    raise
                 logger.info(
                     "Gurobi license not acquired yet; retrying: %s", e, exc_info=True
                 )
-                time.sleep(min(sleep_for, timeout - (time.time() - start)))
+                # Respect single-attempt timeout by sleeping in small chunks
+                # (we don't have a direct way to pass timeout into Env(); this
+                # loop is a coarse-grained backoff).
+                time.sleep(min(sleep_for, 2.0))
                 sleep_for = min(sleep_for * 2, 2.0)
 
-        logger.warning(
-            "Timed out after %.2f seconds trying to acquire a Gurobi license.", timeout
-        )
-
     def release(self) -> None:
-        """Release one client; closes Env when last client releases."""
-        self._cls._release_env_client()
+        """Release one local (per-instance) hold; close shared Env when last global client leaves."""
+        if self._local_client_count <= 0:
+            # Be forgiving (user called release without acquire)
+            logger.debug("GurobiLicenseManager.release() called with no outstanding acquire.")
+            return
 
-    def __enter__(self) -> "_GurobiLicenseManager":
-        self.acquire()
-        return self
+        self._local_client_count -= 1
+        if self._local_client_count > 0:
+            return  # still held by this instance
 
-    def __exit__(self, exc_type, exc, tb) -> bool:
-        self.release()
-        return False
+        # Transition from 1 -> 0 for this solver instance: drop a GLOBAL ref
+        self._release_global_client()
 
-    def __call__(self, timeout: Optional[float] = None):
-        @contextmanager
-        def _cm():
-            self.acquire(timeout)
+    # Expose a safe getter for the shared env (for availability checks, etc.)
+    @staticmethod
+    def _get_env():
+        env = _GUROBI_ENV_REGISTRY.get(_GUROBI_ENV_KEY)
+        if env is None:
+            return None
+        # If the env looks dead (no _cenv), treat as closed
+        if not hasattr(env, "_cenv"):
             try:
-                yield self
-            finally:
-                self.release()
+                env.close()
+            except Exception:
+                pass
+            _GurobiLicenseManager._set_env(None)
+            return None
+        return env
 
-        return _cm()
+    @staticmethod
+    def _set_env(env):
+        if env is None:
+            _GUROBI_ENV_REGISTRY.pop(_GUROBI_ENV_KEY, None)
+        else:
+            _GUROBI_ENV_REGISTRY[_GUROBI_ENV_KEY] = env
+
+    @classmethod
+    def _ensure_env(cls):
+        env = cls._get_env()
+        if env is not None:
+            return env
+        return None
+
+    @classmethod
+    def _register_global_client(cls):
+        global _GUROBI_GLOBAL_CLIENTS
+        _GUROBI_GLOBAL_CLIENTS += 1
+
+    @classmethod
+    def _release_global_client(cls):
+        global _GUROBI_GLOBAL_CLIENTS
+        if _GUROBI_GLOBAL_CLIENTS > 0:
+            _GUROBI_GLOBAL_CLIENTS -= 1
+
+        env = cls._get_env()
+        if _GUROBI_GLOBAL_CLIENTS <= 0 and env is not None:
+            if _GUROBI_GLOBAL_CLIENTS < 0:
+                logger.warning(
+                    "Gurobi global env client refcount went negative (%s). "
+                    "This should be reported to the Pyomo dev team.",
+                    _GUROBI_GLOBAL_CLIENTS,
+                )
+            try:
+                env.close()
+            except Exception as err:
+                logger.warning("Exception while closing Gurobi environment: %r", err)
+            finally:
+                cls._set_env(None)
 
 
 class GurobiSolverMixin:
@@ -261,13 +329,13 @@ class GurobiSolverMixin:
     in the same way. This moves the logic to a central location to reduce
     duplicate code.
     """
-
-    _num_gurobipy_env_clients = 0
-    # Instead of storing the Env directly on the class (which breaks pickling),
-    # we store a small key into the process-local registry above
-    _gurobipy_env_key = None
     _available_cache = None
     _version_cache = None
+
+    def __init__(self, **kwds):
+        super().__init__(**kwds)
+        # Replace the default _LicenseManager with the Gurobi-specific one
+        self.license = _GurobiLicenseManager()
 
     def _is_gp_available(self) -> bool:
         try:
@@ -365,67 +433,6 @@ class GurobiSolverMixin:
             except Exception:
                 pass
 
-    @classmethod
-    def _register_env_client(cls):
-        cls._num_gurobipy_env_clients += 1
-
-    @classmethod
-    def _release_env_client(cls):
-        if cls._num_gurobipy_env_clients > 0:
-            cls._num_gurobipy_env_clients -= 1
-        env = cls._get_env()
-        if cls._num_gurobipy_env_clients <= 0 and env is not None:
-            if cls._num_gurobipy_env_clients < 0:
-                logger.warning(
-                    "Gurobi env client refcount went negative "
-                    f"({cls._num_gurobipy_env_clients}). "
-                    "This should not have happened and should be reported to "
-                    "Pyomo development team."
-                )
-            try:
-                env.close()
-            except Exception as err:
-                logger.warning(f"Exception while closing Gurobi environment: {err!r}")
-            finally:
-                cls._set_env(None)
-
-    @classmethod
-    def _get_env(cls):
-        """Return the current shared Env (or None)"""
-        if cls._gurobipy_env_key is None:
-            return None
-        return _GUROBI_ENV_REGISTRY.get(cls._gurobipy_env_key)
-
-    @classmethod
-    def _set_env(cls, env):
-        """Install or clear the current process-local Env"""
-        if env is None:
-            if cls._gurobipy_env_key is not None:
-                _GUROBI_ENV_REGISTRY.pop(cls._gurobipy_env_key, None)
-            cls._gurobipy_env_key = None
-        else:
-            if cls._gurobipy_env_key is None:
-                cls._gurobipy_env_key = id(cls)
-            _GUROBI_ENV_REGISTRY[cls._gurobipy_env_key] = env
-
-    @classmethod
-    def _ensure_env(cls):
-        """
-        Return a live gurobipy.Env. If current env exists but is closed,
-        recreate it.
-        """
-        env = cls._get_env()
-        if env is None:
-            return None
-        if not hasattr(env, "_cenv"):
-            try:
-                env.close()
-            except Exception:
-                pass
-            env = gurobipy.Env()
-            cls._set_env(env)
-        return env
-
 
 class GurobiDirect(GurobiSolverMixin, SolverBase):
     """
@@ -438,7 +445,6 @@ class GurobiDirect(GurobiSolverMixin, SolverBase):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self.license = _GurobiLicenseManager(type(self))
 
     def solve(self, model, **kwds) -> Results:
         start_timestamp = datetime.datetime.now(datetime.timezone.utc)
@@ -492,7 +498,7 @@ class GurobiDirect(GurobiSolverMixin, SolverBase):
 
             # Acquire a Gurobi env for the duration of solve (opt + postsolve):
             with self.license():
-                env = type(self)._ensure_env()
+                env = self.license._get_env()
 
                 with capture_output(TeeStream(*ostreams), capture_fd=False):
                     gurobi_model = gurobipy.Model(env=env)

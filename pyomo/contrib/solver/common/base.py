@@ -79,10 +79,62 @@ class Availability(IntEnum):
 
 
 class _LicenseManager:
-    def acquire(self, timeout: Optional[float] = None) -> None:
-        """Acquire and lock a license. Default behavior is to simply return
+    """
+    Internal helper for managing solver license acquisition and release.
+
+    This class manages license access for solver instances that
+    require a license, either through file or server. It is not
+    intended to be used directly by end users. Instead, solvers expose
+    a ``license`` attribute that wraps a ``_LicenseManager`` instance.
+
+    When a solver requires a license, its ``license`` manager ensures that
+    licenses are properly acquired. Solvers that do not require a license
+    simply use the default implementation of this class.
+
+    Solvers will generally manage the license acquisition as part of the
+    underlying ``solve`` method:
+
+        >>> solver = pyo.SolverFactory("ipopt")
+        >>> solver.solve(model) # license acquired and released automatically
+
+    A user can optionally manually acquire a license either using
+    a context manager:
+
+        >>> with solver.license():
+        ...     # The context manager will acquire and release the license
+        ...     solver.solve(model)
+
+    or equivalently:
+
+        >>> solver.license.acquire()
+        >>> solver.solve(model)
+        >>> solver.license.release()
+    """
+
+    def acquire(
+        self,
+        timeout: Optional[float] = NOTSET,
+        retry_timeout: Optional[float] = float("inf"),
+    ) -> None:
+        """
+        Acquire and lock a license. Default behavior is to simply return
         because we assume, unless otherwise noted, that a solver does NOT
-        require a license."""
+        require a license.
+
+        Parameters
+        ----------
+        timeout : float, optional
+            Maximum time (in seconds) to wait for a single license acquisition
+            attempt (e.g., waiting for the license server to respond).
+            We will use the solver's default value, if it exists.
+
+        retry_timeout : float, optional
+            Total time (in seconds) to keep retrying license acquisition if
+            the license is temporarily unavailable. This allows temporary
+            statuses (e.g., all licenses in use) to resolve before giving up.
+            By default, acquire is a fully blocking operation and will keep
+            trying until a license is acquired.
+        """
         return
 
     def release(self) -> None:
