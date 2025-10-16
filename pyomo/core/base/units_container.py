@@ -1075,7 +1075,16 @@ class PyomoUnitsContainer:
         """
         # since __getattr__ was called, we must not have this field yet
         # try to build a unit from the requested item
-        pint_registry = self._pint_registry
+        # Never synthesize internal/private attrs; prevents recursion on PyPy
+        if item.startswith('_'):
+            raise AttributeError(f'Attribute {item} not found.')
+
+        # Bypass __getattr__ to avoid recursion if _pint_registry is missing
+        try:
+            pint_registry = object.__getattribute__(self, '_pint_registry')
+        except AttributeError:
+            # If the visitor hasn't been initialized, fail fast
+            raise AttributeError('Attribute _pint_registry not found.')
         try:
             pint_unit = getattr(pint_registry, item)
 
