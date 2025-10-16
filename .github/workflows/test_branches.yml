@@ -135,7 +135,7 @@ jobs:
           PYENV: pip
 
         - os: ubuntu-latest
-          python: 'pypy-3.12'
+          python: 'pypy-3.11'
           TARGET: linux
           PYENV: pip
 
