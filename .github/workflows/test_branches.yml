@@ -367,7 +367,6 @@ jobs:
         if test "${{matrix.TARGET}}" == 'win'; then
             CONDA_DEPENDENCIES="$CONDA_DEPENDENCIES setuptools<74.0.0"
         fi
-        echo "Dependencies: $CONDA_DEPENDENCIES"
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
         for DEP in $CONDA_DEPENDENCIES; do
