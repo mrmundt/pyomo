@@ -381,6 +381,7 @@ jobs:
         # Note: this will fail the build if any installation fails (or
         # possibly if it outputs messages to stderr)
         conda install --update-deps -q -y $CONDA_DEPENDENCIES
+        pip debug
         if test -z "${{matrix.slim}}"; then
             # xpress.init() (xpress 9.5.1 from conda) hangs indefinitely
             # on GHA/Windows under Python 3.10 and 3.11.  Exclude that
