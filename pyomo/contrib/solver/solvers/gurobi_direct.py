@@ -58,9 +58,9 @@ gurobipy, gurobipy_available = attempt_import('gurobipy')
 # To keep classes picklable (e.g., for multiprocessing),
 # we store only a small, picklable key on the class, and put the
 # real Env object in this module-global registry.
-_GUROBI_ENV_REGISTRY = {}          # { "GLOBAL": gurobipy.Env }
-_GUROBI_ENV_KEY = "GLOBAL"         # single shared env per process
-_GUROBI_GLOBAL_CLIENTS = 0         # total clients across all solver instances
+_GUROBI_ENV_REGISTRY = {}  # { "GLOBAL": gurobipy.Env }
+_GUROBI_ENV_KEY = "GLOBAL"  # single shared env per process
+_GUROBI_GLOBAL_CLIENTS = 0  # total clients across all solver instances
 
 
 class GurobiConfigMixin:
@@ -242,7 +242,9 @@ class _GurobiLicenseManager(_LicenseManager):
                 if retry_timeout is not None and (now - start) >= retry_timeout:
                     logger.warning(
                         "Gurobi license acquire failed after %.2fs: %s",
-                        now - start, e, exc_info=True
+                        now - start,
+                        e,
+                        exc_info=True,
                     )
                     raise
                 logger.info(
@@ -258,7 +260,9 @@ class _GurobiLicenseManager(_LicenseManager):
         """Release one local (per-instance) hold; close shared Env when last global client leaves."""
         if self._local_client_count <= 0:
             # Be forgiving (user called release without acquire)
-            logger.debug("GurobiLicenseManager.release() called with no outstanding acquire.")
+            logger.debug(
+                "GurobiLicenseManager.release() called with no outstanding acquire."
+            )
             return
 
         self._local_client_count -= 1
@@ -331,6 +335,7 @@ class GurobiSolverMixin:
     in the same way. This moves the logic to a central location to reduce
     duplicate code.
     """
+
     _available_cache = None
     _version_cache = None
 
