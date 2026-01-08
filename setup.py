@@ -212,7 +212,15 @@ setup_kwargs = dict(
         # There are certain tests that also require pytest-qt, but because those
         # tests are so environment/machine specific, we are leaving these out of
         # the dependencies.
-        'tests': ['coverage', 'parameterized', 'pybind11', 'pytest', 'pytest-parallel'],
+        'tests': [
+            'coverage',
+            'parameterized',
+            'pybind11',
+            # 9.0.0 breaks skipping individual tests; see
+            # https://github.com/pytest-dev/pytest/issues/13895
+            'pytest!=9.0.0',
+            'pytest-parallel',
+        ],
         'docs': [
             'Sphinx>4,!=8.2.0',
             'sphinx-copybutton',
@@ -240,7 +248,8 @@ setup_kwargs = dict(
             'openpyxl',  # dataportals
             'packaging',  # for checking other dependency versions
             #'pathos',   # requested for #963, but PR currently closed
-            'pint',  # units
+            # pint causes a segfault only for one test (test_bad_units) on pypy
+            'pint; implementation_name!="pypy"',  # units
             'plotly',  # incidence_analysis
             'python-louvain',  # community_detection
             'pyyaml',  # core

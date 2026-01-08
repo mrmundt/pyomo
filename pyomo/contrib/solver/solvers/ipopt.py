@@ -469,7 +469,7 @@ class Ipopt(SolverBase):
                 results = Results()
                 results.termination_condition = TerminationCondition.provenInfeasible
                 results.solution_loader = SolSolutionLoader(None, None)
-                results.iteration_count = 0
+                results.extra_info.iteration_count = 0
                 results.timing_info.total_seconds = 0
             elif len(nl_info.variables) == 0:
                 if len(nl_info.eliminated_vars) == 0:
@@ -483,7 +483,7 @@ class Ipopt(SolverBase):
                     )
                     results.solution_status = SolutionStatus.optimal
                     results.solution_loader = SolSolutionLoader(None, nl_info=nl_info)
-                    results.iteration_count = 0
+                    results.extra_info.iteration_count = 0
                     results.timing_info.total_seconds = 0
             else:
                 if os.path.isfile(basename + '.sol'):
@@ -499,7 +499,9 @@ class Ipopt(SolverBase):
                     results.solution_loader = SolSolutionLoader(None, None)
                 else:
                     try:
-                        results.iteration_count = parsed_output_data.pop('iters')
+                        results.extra_info.iteration_count = parsed_output_data.pop(
+                            'iters'
+                        )
                         cpu_seconds = parsed_output_data.pop('cpu_seconds')
                         for k, v in cpu_seconds.items():
                             results.timing_info[k] = v
