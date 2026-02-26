@@ -1974,7 +1974,7 @@ class TestIpopt(unittest.TestCase):
         ipopt_instance = ipopt.Ipopt()
         results = ipopt_instance.solve(model)
         timing_info = results.timing_info
-        if ipopt_instance.version()[0:2] <= (3, 13):
+        if ipopt_instance.version()[:2] <= (3, 13):
             # We are running an older version of IPOPT (<= 3.13)
             self.assertIn('IPOPT (w/o function evaluations)', timing_info.keys())
             self.assertIn('NLP function evaluations', timing_info.keys())
