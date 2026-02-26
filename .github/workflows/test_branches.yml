@@ -470,47 +470,69 @@ jobs:
         # getting the right PATH at the end
         echo "PYOMO_PATH=$PATH" >> $GITHUB_ENV
 
-    - name: Install Ipopt
+    - name: Install IDAES Extensions
       if: ${{ ! matrix.slim }}
       run: |
-        IPOPT_DIR=$TPL_DIR/ipopt
-        echo "$IPOPT_DIR" >> $GITHUB_PATH
-        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$IPOPT_DIR" >> $GITHUB_ENV
-        echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$IPOPT_DIR" >> $GITHUB_ENV
+        IDAES_EXT_DIR=$TPL_DIR/idaes-ext
+        echo "$IDAES_EXT_DIR/bin" >> $GITHUB_PATH
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$IDAES_EXT_DIR/lib" >> $GITHUB_ENV
+        echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$IDAES_EXT_DIR/lib" >> $GITHUB_ENV
         NEW_PYOMO_PATH="$IPOPT_DIR:$PYOMO_PATH"
         echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $GITHUB_ENV
-        mkdir -p $IPOPT_DIR
-        IPOPT_TAR=${DOWNLOAD_DIR}/ipopt.tar.gz
-        if test ! -e $IPOPT_TAR; then
-            echo "...downloading Ipopt"
-            URL=https://github.com/IDAES/idaes-ext
+        mkdir -p $IDAES_EXT_DIR
+        IDAES_SOLVERS_TAR=${DOWNLOAD_DIR}/idaes-solvers.tar.gz
+        IDAES_FUNCS_TAR=${DOWNLOAD_DIR}/idaes-functions.tar.gz
+        if test ! -e $IDAES_SOLVERS_TAR; then
+            echo "...downloading IDAES extensions"
+            URL=https://github.com/mrmundt/idaes-ext
             RELEASE=$(curl --max-time 150 --retry 8 \
                 -L -s -H 'Accept: application/json' ${URL}/releases/latest)
-            VER=$(echo $RELEASE | sed -e 's/.*"tag_name":"\([^"]*\)".*/\1/')
+            VER="5.0.0rc1"
             URL=${URL}/releases/download/$VER
             if test "${{matrix.TARGET}}" == linux; then
                 curl --max-time 150 --retry 8 \
-                    -L $URL/idaes-solvers-ubuntu2204-x86_64.tar.gz \
-                    -o $IPOPT_TAR
+                    -L $URL/idaes-solvers-ubuntu2404-x86_64.tar.gz \
+                    -o $IDAES_SOLVERS_TAR
             elif test "${{matrix.TARGET}}" == osx; then
                 curl --max-time 150 --retry 8 \
-                    -L $URL/idaes-solvers-darwin-aarch64.tar.gz \
-                    -o $IPOPT_TAR
+                    -L $URL/idaes-solvers-darwin-arm64.tar.gz \
+                    -o $IDAES_SOLVERS_TAR
             else
                 curl --max-time 150 --retry 8 \
-                    -L $URL/idaes-solvers-windows-x86_64.tar.gz \
-                    $URL/idaes-lib-windows-x86_64.tar.gz > $IPOPT_TAR
+                    -L $URL/idaes-solvers-windows-x86_64.tar.gz > $IDAES_SOLVERS_TAR
             fi
         fi
-        cd $IPOPT_DIR
+        if test ! -e $IDAES_FUNCS_TAR; then
+            echo "...downloading IDAES extensions"
+            URL=https://github.com/mrmundt/idaes-ext
+            RELEASE=$(curl --max-time 150 --retry 8 \
+                -L -s -H 'Accept: application/json' ${URL}/releases/latest)
+            VER="5.0.0rc1"
+            URL=${URL}/releases/download/$VER
+            if test "${{matrix.TARGET}}" == linux; then
+                curl --max-time 150 --retry 8 \
+                    -L $URL/idaes-functions-ubuntu2404-x86_64.tar.gz \
+                    -o $IDAES_FUNCS_TAR
+            elif test "${{matrix.TARGET}}" == osx; then
+                curl --max-time 150 --retry 8 \
+                    -L $URL/idaes-functions-darwin-arm64.tar.gz \
+                    -o $IDAES_FUNCS_TAR
+            else
+                curl --max-time 150 --retry 8 \
+                    -L $URL/idaes-functions-windows-x86_64.tar.gz > $IDAES_FUNCS_TAR
+            fi
+        fi
+        cd $IDAES_EXT_DIR
         if test "${{matrix.TARGET}}" == win; then
-            tar -xzi < $IPOPT_TAR
+            tar -xzi < $IDAES_SOLVERS_TAR
+            tar -xzi < $IDAES_FUNCS_TAR
         else
-            tar -xzf $IPOPT_TAR
+            tar -xzf $IDAES_SOLVERS_TAR
+            tar -xzf $IDAES_FUNCS_TAR
         fi
         echo ""
-        echo "$IPOPT_DIR"
-        ls -l $IPOPT_DIR
+        echo "$IDAES_EXT_DIR"
+        ls -l $IDAES_EXT_DIR
 
     - name: Install GAMS
       if: ${{ ! matrix.slim }}
