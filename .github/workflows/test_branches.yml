@@ -479,6 +479,7 @@ jobs:
         echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$IDAES_EXT_DIR/lib" >> $GITHUB_ENV
         NEW_PYOMO_PATH="$IDAES_EXT_DIR/bin:$PYOMO_PATH"
         echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $GITHUB_ENV
+        rm -rf $IDAES_EXT_DIR
         mkdir -p $IDAES_EXT_DIR
         IDAES_SOLVERS_TAR=${DOWNLOAD_DIR}/idaes-solvers.tar.gz
         IDAES_FUNCS_TAR=${DOWNLOAD_DIR}/idaes-functions.tar.gz
