@@ -533,6 +533,7 @@ jobs:
             ls -l $IDAES_EXT_DIR/lib
             rm -rf $IDAES_EXT_DIR/bin/libipopt-3.dll
             rm -rf $IDAES_EXT_DIR/bin/libsipopt-3.dll
+            $IDAES_EXT_DIR/bin/ipopt.exe --version
         else
             tar -xzf $IDAES_SOLVERS_TAR
             tar -xzf $IDAES_FUNCS_TAR
