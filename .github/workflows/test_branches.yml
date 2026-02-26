@@ -477,7 +477,7 @@ jobs:
         echo "$IDAES_EXT_DIR/bin" >> $GITHUB_PATH
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$IDAES_EXT_DIR/lib" >> $GITHUB_ENV
         echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$IDAES_EXT_DIR/lib" >> $GITHUB_ENV
-        NEW_PYOMO_PATH="$IPOPT_DIR:$PYOMO_PATH"
+        NEW_PYOMO_PATH="$IDAES_EXT_DIR/bin:$PYOMO_PATH"
         echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $GITHUB_ENV
         mkdir -p $IDAES_EXT_DIR
         IDAES_SOLVERS_TAR=${DOWNLOAD_DIR}/idaes-solvers.tar.gz
@@ -533,6 +533,8 @@ jobs:
         echo ""
         echo "$IDAES_EXT_DIR"
         ls -l $IDAES_EXT_DIR
+        ls -l $IDAES_EXT_DIR/bin
+        ls -l $IDAES_EXT_DIR/lib
 
     - name: Install GAMS
       if: ${{ ! matrix.slim }}
