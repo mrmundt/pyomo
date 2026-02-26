@@ -527,6 +527,7 @@ jobs:
         if test "${{matrix.TARGET}}" == win; then
             tar -xzi < $IDAES_SOLVERS_TAR
             tar -xzi < $IDAES_FUNCS_TAR
+            rm -rf $IDAES_EXT_DIR/bin/*.dll
         else
             tar -xzf $IDAES_SOLVERS_TAR
             tar -xzf $IDAES_FUNCS_TAR
