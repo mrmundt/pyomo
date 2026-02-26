@@ -526,8 +526,13 @@ jobs:
         cd $IDAES_EXT_DIR
         if test "${{matrix.TARGET}}" == win; then
             tar -xzi < $IDAES_SOLVERS_TAR
+            ls -l $IDAES_EXT_DIR/bin
+            ls -l $IDAES_EXT_DIR/lib
             tar -xzi < $IDAES_FUNCS_TAR
-            rm -rf $IDAES_EXT_DIR/bin/*.dll
+            ls -l $IDAES_EXT_DIR/bin
+            ls -l $IDAES_EXT_DIR/lib
+            rm -rf $IDAES_EXT_DIR/bin/libipopt-3.dll
+            rm -rf $IDAES_EXT_DIR/bin/libsipopt-3.dll
         else
             tar -xzf $IDAES_SOLVERS_TAR
             tar -xzf $IDAES_FUNCS_TAR
