@@ -134,6 +134,7 @@ class TestIpoptInterface(unittest.TestCase):
             'solve',
             'version',
             'name',
+            'license',
         ]
         method_list = [method for method in dir(opt) if not method.startswith('_')]
         self.assertEqual(sorted(expected_list), sorted(method_list))
@@ -1909,6 +1910,13 @@ class TestIpopt(unittest.TestCase):
         ipopt.Ipopt().solve(model)
         self.assertAlmostEqual(model.x.value, 1)
         self.assertAlmostEqual(model.y.value, 1)
+
+    def test_ipopt_solve_not_available(self):
+        model = self.create_model()
+        opt = ipopt.Ipopt()
+        opt.config.executable = Executable('/a/bogus/path')
+        with self.assertRaises(ApplicationError):
+            opt.solve(model)
 
     def test_ipopt_quiet_print_level(self):
         model = self.create_model()

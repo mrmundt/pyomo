@@ -14,7 +14,6 @@ import pyomo.environ as pyo
 from pyomo.common import unittest
 from pyomo.common.log import LogStream
 from pyomo.common.tee import capture_output
-from pyomo.common.dependencies import attempt_import
 from pyomo.contrib.solver.common.config import (
     SolverConfig,
     BranchAndBoundConfig,
@@ -23,7 +22,7 @@ from pyomo.contrib.solver.common.config import (
     TextIO_or_Logger,
 )
 
-ipopt, ipopt_available = attempt_import('ipopt')
+ipopt_available = pyo.SolverFactory('ipopt_v2').available()
 
 
 class TestTextIO_or_LoggerValidator(unittest.TestCase):

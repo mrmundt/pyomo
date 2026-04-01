@@ -16,7 +16,6 @@ from io import StringIO
 import sys
 import struct
 import re
-import pathlib
 
 from pyomo.common.dependencies import attempt_import
 from pyomo.common.fileutils import Executable, ExecutableData
@@ -31,7 +30,7 @@ from pyomo.common.tempfiles import TempfileManager
 from pyomo.common.timing import HierarchicalTimer
 from pyomo.core.base import value, Objective
 from pyomo.core.staleflag import StaleFlagManager
-from pyomo.contrib.solver.common.base import SolverBase, Availability
+from pyomo.contrib.solver.common.base import SolverBase, Availability, _LicenseManagerBase
 from pyomo.contrib.solver.common.config import SolverConfig
 from pyomo.contrib.solver.common.results import (
     Results,
@@ -108,6 +107,22 @@ class GAMSConfig(SolverConfig):
         )
 
 
+class _GAMSLicenseManager(_LicenseManagerBase):
+    def __init__(self, solver):
+        self._solver = solver
+
+    def acquire(self):
+        pass
+
+    def release(self):
+        pass
+
+    def _probe(self):
+        """
+        A little helper to check the type of license, if one is found.
+        """
+
+
 @document_class_CONFIG(methods=['solve'])
 class GAMS(SolverBase):
     #: Global class configuration;
@@ -179,6 +194,7 @@ class GAMS(SolverBase):
         #: Instance configuration;
         #: see :ref:`pyomo.contrib.solver.solvers.gams.GAMS::CONFIG`.
         self.config = self.config
+        self.license = _GAMSLicenseManager(self)
 
     def available(self) -> Availability:
         ver, avail = self._get_version(self.config.executable.path())
@@ -307,13 +323,13 @@ class GAMS(SolverBase):
             output_filename = basename + '.gms'
             lst_filename = os.path.join(dname, lst)
 
-            timer.start(f'write_gms_file')
+            timer.start('write_gms_file')
             with open(output_filename, 'w', newline='\n', encoding='utf-8') as gms_file:
                 gms_info = GAMSWriter().write(
                     model, gms_file, config=config.writer_config
                 )
                 # NOTE: omit InfeasibleConstraintException for now
-            timer.stop(f'write_gms_file')
+            timer.stop('write_gms_file')
 
             if config.writer_config.put_results_format == 'gdx':
                 results_filename = os.path.join(dname, "GAMS_MODEL_p.gdx")

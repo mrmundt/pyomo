@@ -11,13 +11,10 @@ import logging
 import os
 import subprocess
 import datetime
-import time
 import io
 import re
 import sys
-import time
-import threading
-from typing import Optional, Tuple, Union, Mapping, List, Dict, Any, Sequence
+from typing import Optional, Mapping, Dict, Any, Sequence
 
 from pyomo.common import Executable
 from pyomo.common.config import (
@@ -254,26 +251,29 @@ class Ipopt(SolverBase):
         #: see :ref:`pyomo.contrib.solver.solvers.ipopt.Ipopt::CONFIG`.
         self.config = self.config
 
-    def available(self) -> Availability:
+    def available(self, recheck: bool = False) -> Availability:
         return (
             Availability.NotFound
-            if self.version() is None
-            else Availability.FullLicense
+            if self.version(recheck=recheck) is None
+            else Availability.NoLicenseRequired
         )
 
-    def version(self) -> tuple[int, int, int] | None:
-        return self._get_version(self.config.executable.path())
+    def version(self, recheck: bool = False) -> tuple[int, int, int] | None:
+        return self._get_version(self.config.executable.path(), recheck=recheck)
 
-    def _get_version(self, exe):
-        try:
-            return self._exe_cache[exe]
-        except KeyError:
-            pass
+    def _get_version(self, exe, recheck: bool = False):
+        if not recheck:
+            try:
+                return self._exe_cache[exe]
+            except KeyError:
+                pass
+
         if exe is None:
             # No executable (either we couldn't find a matching file, or
             # the file is not executable)
             self._exe_cache[None] = None
             return None
+
         # Run the executable and look for the version
         results = subprocess.run(
             [str(exe), '--version'],
@@ -283,6 +283,7 @@ class Ipopt(SolverBase):
             universal_newlines=True,
             check=False,
         )
+
         # Note that we expect the command to run without error, AND that
         # it returns a string starting "ipopt <version>".  That prevents
         # us from trying to use other (even ASL) executables as if they
@@ -297,10 +298,12 @@ class Ipopt(SolverBase):
                 ver = tuple(int(i) for i in fields[1].split('.'))
             except (ValueError, TypeError):
                 ver = None
+
         if ver is None:
             logger.warning(
                 f"Failed parsing Ipopt version: '{exe} --version':\n\n{results.stdout}"
             )
+
         self._exe_cache[exe] = ver
         return ver
 
