@@ -542,7 +542,10 @@ jobs:
         echo ""
         echo "$IDAES_EXT_DIR"
         ls -l $IDAES_EXT_DIR
-        $IDAES_EXT_DIR/bin/ipopt -v
+
+    - name: Does ipopt run?
+      if: ${{ ! matrix.slim }}
+      run: ipopt --version
 
     - name: Install GAMS
       if: ${{ ! matrix.slim && matrix.TARGET != 'osx' }}
