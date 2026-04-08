@@ -736,6 +736,8 @@ jobs:
         # Issue: https://github.com/actions/runner-images/issues/11328
         export PATH=$PYOMO_PATH
         echo "$PATH"
+        echo "Does ipopt show up?"
+        ipopt --version
         pyomo help --solvers || exit 1
         pyomo help --transformations || exit 1
         pyomo help --writers || exit 1
