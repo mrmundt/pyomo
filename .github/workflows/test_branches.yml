@@ -440,6 +440,10 @@ jobs:
                 fi
             done
         fi
+        if [[ "${{matrix.TARGET}}" == win ]]; then
+            # cyipopt installs its own ipopt, and we don't want that
+            conda remove --force ipopt
+        fi
         # Re-try Pyomo (optional) dependencies with pip
         echo ""
         echo "Installing packages only available on PyPI"
@@ -540,12 +544,14 @@ jobs:
             tar -xzf $IDAES_FUNCS_TAR
         fi
         echo ""
-        echo "$IDAES_EXT_DIR"
-        ls -l $IDAES_EXT_DIR
+        echo "$IDAES_EXT_DIR/bin"
+        ls -l $IDAES_EXT_DIR/bin
+        echo "$IDAES_EXT_DIR/lib"
+        ls -l $IDAES_EXT_DIR/lib
 
     - name: Does ipopt run?
       if: ${{ ! matrix.slim }}
-      run: ipopt --version
+      run: export PATH=$PYOMO_PATH && ipopt --version
 
     - name: Install GAMS
       if: ${{ ! matrix.slim && matrix.TARGET != 'osx' }}
