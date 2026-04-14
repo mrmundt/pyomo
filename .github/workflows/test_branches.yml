@@ -489,7 +489,16 @@ jobs:
         echo "$IDAES_EXT_DIR/bin" >> $GITHUB_PATH
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$IDAES_EXT_DIR/lib" >> $GITHUB_ENV
         echo "DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$IDAES_EXT_DIR/lib" >> $GITHUB_ENV
-        NEW_PYOMO_PATH="$IDAES_EXT_DIR/bin:$PYOMO_PATH"
+        if test "${{matrix.TARGET}}" == win; then
+            # On Windows, the DLL's have to be in the PATH, too.
+            # With the change to the idaes extension organization,
+            # they are in the `lib` directory now. So we need to add that
+            # to the PATH on Windows.
+            NEW_PYOMO_PATH="$IDAES_EXT_DIR/bin:$IDAES_EXT_DIR/lib:$PYOMO_PATH"
+            echo "$IDAES_EXT_DIR/lib" >> $GITHUB_PATH
+        else
+            NEW_PYOMO_PATH="$IDAES_EXT_DIR/bin:$PYOMO_PATH"
+        fi
         echo "PYOMO_PATH=$NEW_PYOMO_PATH" >> $GITHUB_ENV
         rm -rf $IDAES_EXT_DIR
         mkdir -p $IDAES_EXT_DIR
