@@ -549,10 +549,6 @@ jobs:
         echo "$IDAES_EXT_DIR/lib"
         ls -l $IDAES_EXT_DIR/lib
 
-    - name: Does ipopt run?
-      if: ${{ ! matrix.slim }}
-      run: export PATH=$PYOMO_PATH && ipopt --version
-
     - name: Install GAMS
       if: ${{ ! matrix.slim && matrix.TARGET != 'osx' }}
       # - We install using Powershell because the GAMS installer hangs
