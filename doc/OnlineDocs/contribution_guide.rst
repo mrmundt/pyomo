@@ -414,6 +414,21 @@ Smaller, focused PRs are preferred and are generally reviewed more quickly.
 Larger PRs require more review effort and may take significantly longer.
 In addition, PRs might not be reviewed in the order in which they are opened.
 
+The development team makes use of the "`Draft
+<https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request>`_"
+PR status for communication between the PR author and reviewers.
+Reviewers will convert PRs that are waiting for input from the PR author
+(e.g., due to test failures, insufficient coverage, or requested
+changes) back to "Draft" state.  Once the author has addressed the
+issues, they should mark the PR as "ready to review" to signal the
+reviewers and request updated reviews.
+
+.. note::
+   Reviewers will *not* monitor or review PRs still marked "Draft".
+
+.. note::
+   PRs left in "Draft" state for an extended period of time may be
+   proposed for closure to reduce impact on the testing infrastructure.
 
 Where to put contributed code 
 ----------------------------- 
