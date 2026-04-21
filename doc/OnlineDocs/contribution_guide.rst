@@ -5,6 +5,9 @@ We welcome all contributions including bug fixes, feature enhancements,
 and documentation improvements. Pyomo manages source code contributions
 via GitHub pull requests (PRs).
 
+.. contents::
+   :local:
+
 Contribution Requirements
 -------------------------
 
