@@ -506,8 +506,8 @@ unexpected changes in stable areas of the codebase.
      - Core Pyomo modeling framework
      - Fully supported and versioned
 
-Submitting a Contributed Package
---------------------------------
+Submitting a new Contributed Package
+------------------------------------
 
 Including contributed packages in the Pyomo source tree provides a
 convenient mechanism for defining new functionality that can be
@@ -540,7 +540,7 @@ When submitting a new package (under either ``addons`` or
 * The contribution passes all standard style and formatting checks.
 
 Example: Structure of a Contributed Package
--------------------------------------------
++++++++++++++++++++++++++++++++++++++++++++
 
 This section illustrates a minimal example of how a contributed package
 may be structured within the ``pyomo.devel`` or ``pyomo.addons``
@@ -548,7 +548,7 @@ namespaces. This example is provided for documentation purposes only
 and is not included as source code in the Pyomo repository.
 
 Minimal Directory Layout
-++++++++++++++++++++++++
+************************
 
 At a minimum, a contributed package should follow a structure similar
 to the following::
@@ -561,7 +561,7 @@ to the following::
        └── test_example_package.py
 
 Package Initialization
-++++++++++++++++++++++
+**********************
 
 The package ``__init__.py`` file should expose the primary public
 interfaces of the package and avoid unnecessary imports. Contributed
@@ -574,7 +574,7 @@ For example::
    from pyomo.devel.example_package.core import example_function
 
 Core Functionality
-++++++++++++++++++
+******************
 
 The main functionality of the contributed package should be implemented
 in one or more modules within the package directory (for example,
@@ -582,7 +582,7 @@ in one or more modules within the package directory (for example,
 documentation requirements, and dependency management policies.
 
 Tests
-+++++
+*****
 
 All contributed packages must include tests. Tests should be placed in a
 ``tests`` subpackage and use the Pyomo test harness provided by
