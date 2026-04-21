@@ -3,7 +3,7 @@ Contributing to Pyomo
 
 We welcome all contributions including bug fixes, feature enhancements,
 and documentation improvements. Pyomo manages source code contributions
-via GitHub pull requests (PRs). 
+via GitHub pull requests (PRs).
 
 Contribution Requirements
 -------------------------
@@ -14,15 +14,15 @@ separated from functional changes. This simplifies the review process
 and ensures that functional changes aren't obscured by large amounts of
 non-functional changes.
 
-We do not squash and merge PRs so all commits in your branch will appear 
+We do not squash and merge PRs so all commits in your branch will appear
 in the main history. In addition to well-documented PR descriptions,
 we encourage modular/targeted commits with descriptive commit messages.
 
 Coding Standards
 ++++++++++++++++
-    
+
     * Required: `black <https://black.readthedocs.io/en/stable/>`_
-    * No use of ``__author__`` 
+    * No use of ``__author__``
     * Inside ``pyomo.contrib``: Contact information for the contribution
       maintainer (such as a Github ID) should be included in the Sphinx
       documentation
@@ -41,7 +41,7 @@ run:
    # Find typos in files
    conda install typos
    typos --config .github/workflows/typos.toml <path>
-   
+
 If the spell-checker returns a failure for a word that is spelled
 correctly, please add the word to the ``.github/workflows/typos.toml``
 file. Note also that ``black`` reads from ``pyproject.toml`` to
@@ -50,10 +50,10 @@ indirectly (for example, using an IDE integration), please ensure you
 are not overriding the project-level configuration set in that file.
 
 Online Pyomo documentation is generated using `Sphinx <https://www.sphinx-doc.org/en/master/>`_
-with the ``napoleon`` extension enabled. For API documentation we use of one of these 
-`supported styles for docstrings <https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html>`_, 
+with the ``napoleon`` extension enabled. For API documentation we use of one of these
+`supported styles for docstrings <https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html>`_,
 but we prefer the NumPy standard. Whichever you choose, we require compliant docstrings for:
-    
+
     * Modules
     * Public and Private Classes
     * Public and Private Functions
@@ -68,11 +68,11 @@ Pyomo uses `unittest <https://docs.python.org/3/library/unittest.html>`_,
 `pytest <https://docs.pytest.org/>`_,
 `GitHub Actions <https://docs.github.com/en/free-pro-team@latest/actions>`_,
 and Jenkins
-for testing and continuous integration. Submitted code should include 
-tests to establish the validity of its results and/or effects. Unit 
-tests are preferred but we also accept integration tests. We require 
-at least 70% coverage of the lines modified in the PR and prefer coverage 
-closer to 90%. We also require that all tests pass before a PR will be 
+for testing and continuous integration. Submitted code should include
+tests to establish the validity of its results and/or effects. Unit
+tests are preferred but we also accept integration tests. We require
+at least 70% coverage of the lines modified in the PR and prefer coverage
+closer to 90%. We also require that all tests pass before a PR will be
 merged.
 
 Tests must import the Pyomo test harness from
@@ -276,7 +276,7 @@ The following commands show how to clone your fork and setup
 two remotes, one for your fork, and one for the head Pyomo repository.
 
 ::
-   
+
    git clone https://github.com/<username>/pyomo.git
    git remote rename origin my-fork
    git remote add head-pyomo https://github.com/pyomo/pyomo.git
@@ -342,7 +342,7 @@ You may change the environment name from ``pyomodev`` as you see fit.
 Then activate the environment:
 
 ::
-   
+
    conda activate pyomodev
 
 Step 2 (optional): Install PyUtilib
@@ -430,8 +430,9 @@ reviewers and request updated reviews.
    PRs left in "Draft" state for an extended period of time may be
    proposed for closure to reduce impact on the testing infrastructure.
 
-Where to put contributed code 
------------------------------ 
+
+Where to put contributed code
+-----------------------------
 
 In order to contribute to Pyomo, you must first make a fork of the Pyomo
 git repository. Next, you should create a branch on your fork dedicated
