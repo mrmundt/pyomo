@@ -364,15 +364,15 @@ Then in the directory containing the clone of PyUtilib run:
 
 ::
 
-   python setup.py develop
-   
+   python -m pip install -e .
+
 Step 3: Install Pyomo
 
 Finally, move to the directory containing the clone of your Pyomo fork and run:
 
 ::
 
-  pip install -e .[tests,docs,optional]
+  python -m pip install -e .[tests,docs,optional]
 
 This command registers the cloned code with the active Python environment
 (``pyomodev``) and installs all possible optional dependencies.
