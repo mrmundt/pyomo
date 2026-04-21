@@ -24,7 +24,9 @@ we encourage modular/targeted commits with descriptive commit messages.
 Coding Standards
 ++++++++++++++++
 
-    * Required: `black <https://black.readthedocs.io/en/stable/>`_
+    * Formatted using `black <https://black.readthedocs.io/en/stable/>`_
+    * Passes spell checks using `typos <https://github.com/crate-ci/typos>`_
+    * Adhere to Pyomo's :ref:`development_principles`
     * No use of ``__author__``
     * Inside ``pyomo.contrib``: Contact information for the contribution
       maintainer (such as a Github ID) should be included in the Sphinx
@@ -38,7 +40,7 @@ run:
 
 ::
 
-    # Auto-apply correct formatting
+   # Auto-apply correct formatting
    pip install black
    black <path>
    # Find typos in files
@@ -52,10 +54,13 @@ determine correct configuration, so if you are running ``black``
 indirectly (for example, using an IDE integration), please ensure you
 are not overriding the project-level configuration set in that file.
 
-Online Pyomo documentation is generated using `Sphinx <https://www.sphinx-doc.org/en/master/>`_
-with the ``napoleon`` extension enabled. For API documentation we use of one of these
-`supported styles for docstrings <https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html>`_,
-but we prefer the NumPy standard. Whichever you choose, we require compliant docstrings for:
+Online Pyomo documentation is generated using `Sphinx
+<https://www.sphinx-doc.org/en/master/>`_ with the ``napoleon``
+extension enabled. For API documentation we use of one of these
+`supported styles for docstrings
+<https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html>`_,
+but we prefer the NumPy standard. Whichever you choose, we require
+compliant docstrings for:
 
     * Modules
     * Public and Private Classes
