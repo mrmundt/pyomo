@@ -398,12 +398,17 @@ think a PR should be merged or if more changes are necessary.
 
 Reviewers look for:
 
-* **Core and Addons:** Code rigor, standards compliance, test coverage above
+**Core** and **Addons:**
+  Code rigor, standards compliance, test coverage above
   a threshold, and avoidance of unintended side effects (e.g., regressions
   or backwards incompatibilities)
-* **Devel:** Basic code correctness and clarity, with an understanding that
+
+**Devel:**
+  Basic code correctness and clarity, with an understanding that
   these areas are experimental and evolving
-* **All areas:** Code formatting (using ``black``), documentation, and tests
+
+**All areas:**
+  Code formatting (using ``black``), documentation, and tests
 
 .. note::
 
