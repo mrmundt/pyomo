@@ -39,10 +39,7 @@ from pyomo.contrib.solver.common.results import (
     SolutionStatus,
     TerminationCondition,
 )
-from pyomo.contrib.solver.common.solution_loader import (
-    SolutionLoaderBase,
-    load_import_suffixes,
-)
+from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
 import time
 
 logger = logging.getLogger(__name__)
@@ -222,11 +219,6 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
                     duals[c] = gurobi_con.Pi
 
         return duals
-
-    def load_import_suffixes(self, solution_id=None):
-        load_import_suffixes(
-            pyomo_model=self._pyomo_model, solution_loader=self, solution_id=solution_id
-        )
 
 
 class GurobiDirectBase(SolverBase):

@@ -93,10 +93,11 @@ class TestIpoptSolutionLoader(unittest.TestCase):
         )
         with LoggingIntercept() as LOG:
             loader.get_reduced_costs()
-        self.assertRegex(
+        self.assertEqual(
             LOG.getvalue(),
             "Reduced costs may not be correct when variables have been "
-            "presolved from the model.  Turn presolve off",
+            "presolved from the model.  Turn presolve off "
+            "(solver.config.writer_config.linear_presolve=False) to be safe.\n",
         )
 
     def test_get_duals_error(self):
@@ -105,10 +106,11 @@ class TestIpoptSolutionLoader(unittest.TestCase):
         )
         with LoggingIntercept() as LOG:
             loader.get_duals()
-        self.assertRegex(
+        self.assertEqual(
             LOG.getvalue(),
             "Duals may not be correct when variables have been "
-            "presolved from the model.  Turn presolve off",
+            "presolved from the model.  Turn presolve off "
+            "(solver.config.writer_config.linear_presolve=False) to be safe.\n",
         )
 
 

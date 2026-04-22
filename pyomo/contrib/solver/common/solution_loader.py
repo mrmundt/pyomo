@@ -12,29 +12,10 @@ from __future__ import annotations
 from typing import Sequence, Mapping, Any
 
 from pyomo.core.base.constraint import ConstraintData
+from pyomo.core.base.enums import TraversalStrategy
 from pyomo.core.base.var import VarData
 from pyomo.core.staleflag import StaleFlagManager
 from pyomo.core.base.suffix import Suffix
-
-
-def load_import_suffixes(
-    pyomo_model, solution_loader: SolutionLoaderBase, solution_id=None
-):
-    dual_suffix = None
-    rc_suffix = None
-    for suffix in pyomo_model.component_objects(Suffix, descend_into=True, active=True):
-        if not suffix.import_enabled():
-            continue
-        if suffix.local_name == 'dual':
-            dual_suffix = suffix
-        elif suffix.local_name == 'rc':
-            rc_suffix = suffix
-    if dual_suffix is not None:
-        dual_suffix.clear()
-        dual_suffix.update(solution_loader.get_duals(solution_id=solution_id))
-    if rc_suffix is not None:
-        rc_suffix.clear()
-        rc_suffix.update(solution_loader.get_reduced_costs(solution_id=solution_id))
 
 
 class SolutionLoaderBase:
@@ -175,14 +156,47 @@ class SolutionLoaderBase:
         return NotImplemented
 
     def load_import_suffixes(self, solution_id=None):
-        """
+        """Clear import suffixes on the model and load data returned by the solver.
+
         Parameters
         ----------
         solution_id: Any
             If there are multiple solutions, this specifies which solution
             should be loaded. If None, the default solution will be used.
         """
-        return NotImplemented
+        suffixes = self._collect_and_clear_import_suffixes()
+        if 'dual' in suffixes:
+            suffixes['dual'].update(self.get_duals(solution_id=solution_id))
+        if 'rc' in suffixes:
+            suffixes['rc'].update(self.get_reduced_costs(solution_id=solution_id))
+
+    def _collect_and_clear_import_suffixes(self):
+        """Clear and return all import suffixes on the model.
+
+        This walks the Pyomo model and clears all :class:`Suffix`
+        components that are flagged to import values from the solver
+        (this includes :attr:`Suffix.IMPORT` and
+        :attr:`Suffix.IMPORT_EXPORT`).  It returns a :class:`dict`
+        mapping the :attr:`Suffix.local_name` to the :class:`Suffix`
+        closest to the root block.
+
+        Returns
+        -------
+        import_suffixes : dict[str, Suffix]
+
+        """
+        import_suffixes = {}
+        for suffix in self._pyomo_model.component_objects(
+            Suffix,
+            active=True,
+            descend_into=True,
+            descent_order=TraversalStrategy.BreadthFirstSearch,
+        ):
+            if not suffix.import_enabled():
+                continue
+            suffix.clear()
+            import_suffixes.setdefault(suffix.local_name, suffix)
+        return import_suffixes
 
 
 class PersistentSolutionLoader(SolutionLoaderBase):
@@ -224,9 +238,6 @@ class PersistentSolutionLoader(SolutionLoaderBase):
     ) -> Mapping[VarData, float]:
         self._assert_solution_still_valid()
         return self._solver._get_reduced_costs(vars_to_load=vars_to_load)
-
-    def load_import_suffixes(self, solution_id=None):
-        load_import_suffixes(self._pyomo_model, self, solution_id=solution_id)
 
     def invalidate(self):
         self._valid = False

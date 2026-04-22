@@ -631,10 +631,15 @@ class TestSolFileSolutionLoader(unittest.TestCase):
 
         loader = ASLSolFileSolutionLoader(sol_data, nl_info, m)
 
-        pattern = re.compile(r".*General suffixes .*Turn scaling off.*", re.DOTALL)
         with LoggingIntercept() as LOG:
             loader.load_import_suffixes()
-        self.assertRegex(LOG.getvalue(), pattern)
+        self.assertEqual(
+            LOG.getvalue(),
+            "Suffixes ('test_var_suffix', 'test_con_suffix', 'test_obj_suffix') "
+            "may not be correct when the model has been scaled.  "
+            "Turn scaling off in the NL writer "
+            "(solver.config.writer_config.scale_model=False) to be safe.\n",
+        )
 
     def test_suffixes_eliminated_vars_error(self):
         m = pyo.ConcreteModel()
@@ -658,11 +663,12 @@ class TestSolFileSolutionLoader(unittest.TestCase):
 
         loader = ASLSolFileSolutionLoader(sol_data, nl_info, m)
 
-        pattern = re.compile(
-            r".*Suffixes may not be correct when variables have been "
-            r"presolved from the model. Turn presolve off",
-            re.DOTALL,
-        )
         with LoggingIntercept() as LOG:
             loader.load_import_suffixes()
-        self.assertRegex(LOG.getvalue(), pattern)
+        self.assertEqual(
+            LOG.getvalue(),
+            "Suffixes ('test_var_suffix', 'test_con_suffix') may not be correct "
+            "when variables have been presolved from the model.  "
+            "Turn presolve off in the NL writer "
+            "(solver.config.writer_config.linear_presolve=False) to be safe.\n",
+        )

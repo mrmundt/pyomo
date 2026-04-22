@@ -16,10 +16,7 @@ from pyomo.core.base.var import VarData
 from pyomo.common.collections import ComponentMap
 from pyomo.core.staleflag import StaleFlagManager
 from pyomo.repn.plugins.gams_writer_v2 import GAMSWriterInfo
-from pyomo.contrib.solver.common.solution_loader import (
-    SolutionLoaderBase,
-    load_import_suffixes,
-)
+from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
 from pyomo.contrib.solver.common.util import (
     NoDualsError,
     NoSolutionError,
@@ -152,4 +149,4 @@ class GMSSolutionLoader(SolutionLoaderBase):
     def load_import_suffixes(self, solution_id=None):
         if solution_id is not None:
             raise ValueError(f"{self.__class__.__name__} does not support solution_id")
-        load_import_suffixes(self._pyomo_model, self, solution_id)
+        super().load_import_suffixes(solution_id)
