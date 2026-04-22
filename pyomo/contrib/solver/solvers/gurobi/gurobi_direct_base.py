@@ -12,7 +12,7 @@ import io
 import math
 import os
 import logging
-from typing import Mapping, Optional, Sequence, Dict, Tuple, List
+from typing import Mapping, Sequence
 
 from pyomo.common.collections import ComponentMap
 from pyomo.common.config import ConfigValue
@@ -88,7 +88,7 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
     def get_number_of_solutions(self) -> int:
         return self._solver_model.SolCount
 
-    def get_solution_ids(self) -> List:
+    def get_solution_ids(self) -> list:
         return list(range(self.get_number_of_solutions()))
 
     def _get_var_lists(self):
@@ -110,8 +110,8 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         GurobiDirectBase._release_env_client()
 
     def _get_primals(
-        self, vars_to_load: Optional[Sequence[VarData]] = None, solution_id=0
-    ) -> Tuple[List[VarData], List[float]]:
+        self, vars_to_load: Sequence[VarData] | None = None, solution_id=0
+    ) -> tuple[list[VarData], list[float]]:
         if self._solver_model.SolCount == 0:
             raise NoSolutionError()
         if vars_to_load is None:
@@ -142,7 +142,7 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         return pvars, vals
 
     def load_vars(
-        self, vars_to_load: Optional[Sequence[VarData]] = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
     ) -> None:
         pvars, vals = self._get_primals(
             vars_to_load=vars_to_load, solution_id=solution_id
@@ -152,7 +152,7 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         StaleFlagManager.mark_all_as_stale(delayed=True)
 
     def get_vars(
-        self, vars_to_load: Optional[Sequence[VarData]] = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
     ) -> Mapping[VarData, float]:
         pvars, vals = self._get_primals(
             vars_to_load=vars_to_load, solution_id=solution_id
@@ -172,7 +172,7 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         return ComponentMap(zip(vars_to_load, vals))
 
     def get_reduced_costs(
-        self, vars_to_load: Optional[Sequence[VarData]] = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
     ) -> Mapping[VarData, float]:
         if solution_id is not None and solution_id != 0:
             raise NoReducedCostsError('Can only get reduced costs for solution_id = 0')
@@ -188,8 +188,8 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         return res
 
     def get_duals(
-        self, cons_to_load: Optional[Sequence[ConstraintData]] = None, solution_id=None
-    ) -> Dict[ConstraintData, float]:
+        self, cons_to_load: Sequence[ConstraintData] | None = None, solution_id=None
+    ) -> dict[ConstraintData, float]:
         if solution_id is not None and solution_id != 0:
             raise NoDualsError('Can only get duals for solution_id = 0')
         if self._solver_model.Status != gurobipy.GRB.OPTIMAL:

@@ -8,7 +8,7 @@
 # ____________________________________________________________________________________
 
 
-from typing import Dict, Any, List, Sequence, Optional, Mapping, NoReturn
+from typing import Any, Sequence, Optional, Mapping, NoReturn
 
 from pyomo.core.base import Var
 from pyomo.core.base.constraint import ConstraintData
@@ -33,13 +33,13 @@ class GDXFileData:
     """
 
     def __init__(self) -> None:
-        self.primals: List[float] = []
-        self.duals: List[float] = []
-        self.var_suffixes: Dict[str, Dict[int, Any]] = {}
-        self.con_suffixes: Dict[str, Dict[Any]] = {}
-        self.obj_suffixes: Dict[str, Dict[int, Any]] = {}
-        self.problem_suffixes: Dict[str, List[Any]] = {}
-        self.other: List[str] = []
+        self.primals: list[float] = []
+        self.duals: list[float] = []
+        self.var_suffixes: dict[str, dict[int, Any]] = {}
+        self.con_suffixes: dict[str, dict[Any]] = {}
+        self.obj_suffixes: dict[str, dict[int, Any]] = {}
+        self.problem_suffixes: dict[str, list[Any]] = {}
+        self.other: list[str] = []
 
 
 class GMSSolutionLoader(SolutionLoaderBase):
@@ -54,7 +54,7 @@ class GMSSolutionLoader(SolutionLoaderBase):
         self._gms_info = gms_info
         self._pyomo_model = pyomo_model
 
-    def get_solution_ids(self) -> List[Any]:
+    def get_solution_ids(self) -> list[Any]:
         return [None]
 
     def get_number_of_solutions(self) -> int:
@@ -103,7 +103,7 @@ class GMSSolutionLoader(SolutionLoaderBase):
 
     def get_duals(
         self, cons_to_load: Optional[Sequence[ConstraintData]] = None, solution_id=None
-    ) -> Dict[ConstraintData, float]:
+    ) -> dict[ConstraintData, float]:
         if solution_id is not None:
             raise ValueError(f"{self.__class__.__name__} does not support solution_id")
         if self._gms_info is None:

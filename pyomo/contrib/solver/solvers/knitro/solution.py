@@ -8,7 +8,7 @@
 # ____________________________________________________________________________________
 
 from collections.abc import Mapping, Sequence
-from typing import Any, List, Protocol
+from typing import Any, Protocol
 
 from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
 from pyomo.contrib.solver.solvers.knitro.typing import ItemType, ValueType
@@ -50,7 +50,7 @@ class SolutionLoader(SolutionLoaderBase):
         self.has_reduced_costs = has_reduced_costs
         self.has_duals = has_duals
 
-    def get_solution_ids(self) -> List[Any]:
+    def get_solution_ids(self) -> list[Any]:
         if self.get_number_of_solutions() == 0:
             return []
         return [None]

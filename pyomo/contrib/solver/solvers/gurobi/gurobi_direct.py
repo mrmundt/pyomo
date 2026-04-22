@@ -8,7 +8,7 @@
 # ____________________________________________________________________________________
 
 import operator
-from typing import List, Any
+from typing import Any
 
 from pyomo.common.collections import ComponentMap, ComponentSet
 from pyomo.common.shutdown import python_is_shutting_down

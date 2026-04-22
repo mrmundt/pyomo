@@ -8,7 +8,7 @@
 # ____________________________________________________________________________________
 
 import io
-from typing import Sequence, Optional, Mapping, List, Any
+from typing import Sequence, Mapping, Any
 
 from pyomo.common.collections import ComponentMap
 from pyomo.common.errors import MouseTrap
@@ -72,7 +72,7 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
             return 0
         return 1
 
-    def get_solution_ids(self) -> List[Any]:
+    def get_solution_ids(self) -> list[Any]:
         if self._nl_info is None:
             return []
         return [None]
@@ -127,7 +127,7 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
             suffix[None] = val
 
     def load_vars(
-        self, vars_to_load: Optional[Sequence[VarData]] = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
     ) -> None:
         if solution_id is not None:
             raise ValueError(f"{self.__class__.__name__} does not support solution_id")
@@ -164,7 +164,7 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
         StaleFlagManager.mark_all_as_stale(delayed=True)
 
     def get_vars(
-        self, vars_to_load: Optional[Sequence[VarData]] = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
     ) -> Mapping[VarData, float]:
         if solution_id is not None:
             raise ValueError(f"{self.__class__.__name__} does not support solution_id")
@@ -212,7 +212,7 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
         return result
 
     def get_duals(
-        self, cons_to_load: Optional[Sequence[ConstraintData]] = None, solution_id=None
+        self, cons_to_load: Sequence[ConstraintData] | None = None, solution_id=None
     ) -> dict[ConstraintData, float]:
         if solution_id is not None:
             raise ValueError(f"{self.__class__.__name__} does not support solution_id")
