@@ -13,8 +13,8 @@ import re
 import pyomo.environ as pyo
 from pyomo.common import unittest
 from pyomo.common.collections import ComponentMap
-from pyomo.common.errors import MouseTrap
 from pyomo.common.fileutils import this_file_dir
+from pyomo.common.log import LoggingIntercept
 from pyomo.contrib.solver.solvers.asl_sol_reader import (
     ASLSolFileSolutionLoader,
     ASLSolFileData,
@@ -632,8 +632,9 @@ class TestSolFileSolutionLoader(unittest.TestCase):
         loader = ASLSolFileSolutionLoader(sol_data, nl_info, m)
 
         pattern = re.compile(r".*General suffixes .*Turn scaling off.*", re.DOTALL)
-        with self.assertRaisesRegex(MouseTrap, pattern):
+        with LoggingIntercept() as LOG:
             loader.load_import_suffixes()
+        self.assertRegex(LOG.getvalue(), pattern)
 
     def test_suffixes_eliminated_vars_error(self):
         m = pyo.ConcreteModel()
@@ -658,7 +659,10 @@ class TestSolFileSolutionLoader(unittest.TestCase):
         loader = ASLSolFileSolutionLoader(sol_data, nl_info, m)
 
         pattern = re.compile(
-            r".*Suffixes are not available.* Turn presolve off.*", re.DOTALL
+            r".*Suffixes may not be correct when variables have been "
+            r"presolved from the model. Turn presolve off",
+            re.DOTALL,
         )
-        with self.assertRaisesRegex(MouseTrap, pattern):
+        with LoggingIntercept() as LOG:
             loader.load_import_suffixes()
+        self.assertRegex(LOG.getvalue(), pattern)

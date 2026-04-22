@@ -17,7 +17,7 @@ from contextlib import contextmanager
 import pyomo.environ as pyo
 from pyomo.common.fileutils import ExecutableData
 from pyomo.common.config import ConfigDict, ADVANCED_OPTION
-from pyomo.common.errors import ApplicationError, MouseTrap
+from pyomo.common.errors import ApplicationError
 from pyomo.common.log import LoggingIntercept
 from pyomo.common.tee import capture_output
 from pyomo.common.timing import HierarchicalTimer
@@ -91,17 +91,25 @@ class TestIpoptSolutionLoader(unittest.TestCase):
         loader = ipopt.IpoptSolutionLoader(
             ipopt.ASLSolFileData(), NLWriterInfo(eliminated_vars=[1]), None
         )
-        with self.assertRaisesRegex(
-            MouseTrap, "Complete reduced costs are not available"
-        ):
+        with LoggingIntercept() as LOG:
             loader.get_reduced_costs()
+        self.assertRegex(
+            LOG.getvalue(),
+            "Reduced costs may not be correct when variables have been "
+            "presolved from the model.  Turn presolve off",
+        )
 
     def test_get_duals_error(self):
         loader = ipopt.IpoptSolutionLoader(
             ipopt.ASLSolFileData(), NLWriterInfo(eliminated_vars=[1]), None
         )
-        with self.assertRaisesRegex(MouseTrap, "Complete duals are not available"):
+        with LoggingIntercept() as LOG:
             loader.get_duals()
+        self.assertRegex(
+            LOG.getvalue(),
+            "Duals may not be correct when variables have been "
+            "presolved from the model.  Turn presolve off",
+        )
 
 
 @unittest.pytest.mark.solver("ipopt")

@@ -224,6 +224,9 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
                 'be safe.'
             )
 
+        if not self._nl_info.constraints:
+            return {}
+
         scaling = self._nl_info.scaling
         if scaling:
             _iter = zip(
