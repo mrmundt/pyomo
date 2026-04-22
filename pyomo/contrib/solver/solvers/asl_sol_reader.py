@@ -32,7 +32,6 @@ from pyomo.contrib.solver.common.solution_loader import (
 )
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 
