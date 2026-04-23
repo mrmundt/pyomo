@@ -11,7 +11,7 @@ import inspect
 
 
 def copy_docstrings(reference_class: type, methods: list[str] | None = None):
-    """Copy docstrings from a reference class to this class.
+    """Decorator to copy docstrings from a reference class to the decorated class.
 
     Note that only docstrings for methods, generators, and functions are
     copied.
@@ -22,9 +22,9 @@ def copy_docstrings(reference_class: type, methods: list[str] | None = None):
         The source class to copy docstrings from
 
     methods: list[str] | None
-        The list of attributes from the `reference_class` to copy
-        docstrings from.  If empty or None, then all method docstrings
-        are checked / copied.
+        The list of methods from the `reference_class` to copy
+        docstrings from.  If empty or ``None``, then all method
+        docstrings are checked / copied.
 
     """
     if not methods:
