@@ -108,17 +108,18 @@ class SolutionLoader:
         return []
 
     def get_number_of_solutions(self) -> int:
-        """
+        """The number of solutions available through this :class:`SolutionLoader`
+
         Returns
         -------
         num_solutions: int
             Indicates the number of solutions found
+
         """
         return NotImplemented
 
-    def load_solution(self):
-        """
-        Load the solution (everything that can be) back into the model
+    def load_solution(self) -> None:
+        """Load the solution (everything that can be) back into the model
 
         """
         # this should load everything it can
@@ -126,17 +127,18 @@ class SolutionLoader:
         self.load_import_suffixes()
 
     def load_vars(self, vars_to_load: Sequence[VarData] | None = None) -> None:
-        """
-        Load the solution of the primal variables into the value attribute
-        of the variables.
+        """Load the primal variable values at the solution into the Pyomo model
+        :class:`Var` objects
 
         Parameters
         ----------
-        vars_to_load: list
-            The minimum set of variables whose solution should be loaded. If
-            vars_to_load is None, then the solution to all primal variables
-            will be loaded. Even if vars_to_load is specified, the values of
-            other variables may also be loaded depending on the interface.
+        vars_to_load: Sequence[VarData]
+            A list of the minimum set of Pyomo variables whose solution
+            should be loaded.  If `vars_to_load` is ``None``, then the
+            solution to all primal variables will be loaded. Even if
+            `vars_to_load` is specified, the values of other variables
+            may also be loaded depending on the interface.
+
         """
         for var, val in self.get_vars(vars_to_load=vars_to_load).items():
             var.set_value(val, skip_validation=True)
@@ -145,63 +147,67 @@ class SolutionLoader:
     def get_vars(
         self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
-        """
-        Returns a ComponentMap mapping variable to var value.
+        """Returns a ComponentMap mapping variable to var value.
 
         Parameters
         ----------
-        vars_to_load: list
-            A list of the variables whose solution value should be retrieved. If vars_to_load
-            is None, then the values for all variables will be retrieved.
+        vars_to_load: Sequence[VarData]
+            A list of the Pyomo variables whose solution value should be
+            retrieved. If `vars_to_load` is ``None``, then the values
+            for all variables will be retrieved.
 
         Returns
         -------
-        primals: ComponentMap
+        primals: ComponentMap[VarData, float]
             Maps variables to solution values
+
         """
         raise NotImplementedError(
-            f"Derived class {self.__class__.__name__} failed to implement required method 'get_vars'."
+            f"Derived class {self.__class__.__name__} failed to implement "
+            "required method 'get_vars'."
         )
 
     def get_duals(
         self, cons_to_load: Sequence[ConstraintData] | None = None
     ) -> dict[ConstraintData, float]:
-        """
-        Returns a dictionary mapping constraint to dual value.
+        """Returns a dictionary mapping constraint to dual value.
 
         Parameters
         ----------
-        cons_to_load: list
-            A list of the constraints whose duals should be retrieved. If cons_to_load
-            is None, then the duals for all constraints will be retrieved.
+        cons_to_load: Sequence[ConstraintData]
+            A list of the constraints whose duals should be
+            retrieved. If `cons_to_load` is ``None``, then the duals for all
+            constraints will be retrieved.
 
         Returns
         -------
-        duals: dict
+        duals: dict[ConstraintData, float]
             Maps constraints to dual values
+
         """
         return NotImplemented
 
     def get_reduced_costs(
         self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
-        """
-        Returns a ComponentMap mapping variable to reduced cost.
+        """Returns a ComponentMap mapping variable to reduced cost.
 
         Parameters
         ----------
-        vars_to_load: list
-            A list of the variables whose reduced cost should be retrieved. If vars_to_load
-            is None, then the reduced costs for all variables will be loaded.
+        vars_to_load: Sequence[VarData]
+            A list of the variables whose reduced cost should be
+            retrieved. If `vars_to_load` is ``None``, then the reduced
+            costs for all variables will be retrieved.
 
         Returns
         -------
-        reduced_costs: ComponentMap
+        reduced_costs: ComponentMap[VarData, float]
             Maps variables to reduced costs
+
         """
         return NotImplemented
 
-    def load_import_suffixes(self):
+    def load_import_suffixes(self) -> None:
         """Clear import suffixes on the model and load data returned by the solver."""
         suffixes = self._collect_and_clear_import_suffixes()
         if 'dual' in suffixes:
@@ -209,7 +215,7 @@ class SolutionLoader:
         if 'rc' in suffixes:
             suffixes['rc'].update(self.get_reduced_costs())
 
-    def _collect_and_clear_import_suffixes(self):
+    def _collect_and_clear_import_suffixes(self) -> dict[str, Suffix]:
         """Clear and return all import suffixes on the model.
 
         This walks the Pyomo model and clears all :class:`Suffix`
