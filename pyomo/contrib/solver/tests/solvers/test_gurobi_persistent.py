@@ -551,7 +551,7 @@ class TestGurobiPersistent(unittest.TestCase):
             rc = soln.get_reduced_costs()
         self.assertEqual(m.rc, {})
 
-        # Fix teh binaries, relax to reals -> LP should have duals
+        # Fix the binaries, relax to reals -> LP should have duals
         m.y.fix()
         m.y[...].domain = pyo.Reals
         res = opt.solve(m, load_solutions=False)
