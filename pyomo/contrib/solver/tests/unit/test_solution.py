@@ -80,11 +80,37 @@ class TestSolutionLoader(unittest.TestCase):
         self.assertEqual(sorted(expected_list), sorted(method_list))
 
     def test_solution_loader_base(self):
-        self.instance = SolutionLoader()
+        loader = SolutionLoader()
         with self.assertRaises(NotImplementedError):
-            self.instance.get_vars()
-        self.assertEqual(self.instance.get_duals(), NotImplemented)
-        self.assertEqual(self.instance.get_reduced_costs(), NotImplemented)
+            loader.get_vars()
+        self.assertEqual(loader.get_duals(), NotImplemented)
+        self.assertEqual(loader.get_reduced_costs(), NotImplemented)
+
+    def test_set_invalid_solutionid(self):
+        # The base implementation supports solvers that only return a
+        # single solution
+        class MockSolutionLoader(SolutionLoader):
+            def __init__(self, n):
+                self.n = n
+                self._pyomo_model = m = pyo.ConcreteModel()
+                m.x = pyo.Var()
+
+            def get_number_of_solutions(self):
+                return self.n
+
+            def get_vars(self, vars_to_load=None):
+                return cm(self._pyomo_model.x, 1)
+
+        loader = MockSolutionLoader(1)
+        m = loader._pyomo_model
+        self.assertEqual(loader.get_number_of_solutions(), 1)
+        self.assertEqual(loader.get_solution_ids(), [None])
+        self.assertEqual(loader.get_vars(), cm(m.x, 1))
+        self.assertEqual(loader.solution(None).get_vars(), cm(m.x, 1))
+        with self.assertRaisesRegex(
+            ValueError, "MockSolutionLoader does not support multiple solutions"
+        ):
+            loader.solution(1).get_vars()
 
 
 class TestPersistentSolutionLoader(unittest.TestCase):

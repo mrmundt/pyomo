@@ -113,6 +113,23 @@ class TestIpoptSolutionLoader(unittest.TestCase):
             "(solver.config.writer_config.linear_presolve=False) to be safe.\n",
         )
 
+    def test_num_solutions(self):
+        asl_data = ipopt.ASLSolFileData()
+        nl_info = NLWriterInfo()
+
+        loader = ipopt.IpoptSolutionLoader(asl_data, nl_info, None)
+        self.assertEqual(loader.get_number_of_solutions(), 0)
+        self.assertEqual(loader.get_solution_ids(), [])
+
+        nl_info.eliminated_vars.append(1)
+        self.assertEqual(loader.get_number_of_solutions(), 1)
+        self.assertEqual(loader.get_solution_ids(), [None])
+
+        nl_info.eliminated_vars.pop()
+        asl_data.primals = [0]
+        self.assertEqual(loader.get_number_of_solutions(), 1)
+        self.assertEqual(loader.get_solution_ids(), [None])
+
 
 @unittest.pytest.mark.solver("ipopt")
 class TestIpoptInterface(unittest.TestCase):
@@ -1708,6 +1725,8 @@ else:
         del results.timing_info.start_timestamp
         del results.extra_info.base_file_name
         self.assertIsNotNone(results.solution_loader)
+        self.assertEqual(results.solution_loader.get_number_of_solutions(), 1)
+        self.assertEqual(results.solution_loader.get_solution_ids(), [None])
         del results.solution_loader
         self.assertEqual(
             {
