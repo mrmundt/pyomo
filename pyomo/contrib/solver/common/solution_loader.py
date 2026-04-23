@@ -22,7 +22,7 @@ from pyomo.core.base.suffix import Suffix
 
 
 class SolutionLoader:
-    """Base class for all SolutionLoader classes.
+    """Base class for all Solution Loader classes.
 
     The intent of this class and its children is to facilitate the
     retrieval of solver results in the context of the Pyomo model,
