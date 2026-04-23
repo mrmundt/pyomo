@@ -81,10 +81,28 @@ class TestSolutionLoader(unittest.TestCase):
 
     def test_solution_loader_base(self):
         loader = SolutionLoader()
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            "SolutionLoader class failed to implement required method "
+            "'get_number_of_solutions'.",
+        ):
+            loader.get_number_of_solutions()
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            "SolutionLoader class failed to implement required method 'get_vars'.",
+        ):
             loader.get_vars()
-        self.assertEqual(loader.get_duals(), NotImplemented)
-        self.assertEqual(loader.get_reduced_costs(), NotImplemented)
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            "SolutionLoader class failed to implement required method 'get_duals'.",
+        ):
+            loader.get_duals()
+        with self.assertRaisesRegex(
+            NotImplementedError,
+            "SolutionLoader class failed to implement required method "
+            "'get_reduced_costs'.",
+        ):
+            loader.get_reduced_costs()
 
     def test_set_invalid_solutionid(self):
         # The base implementation supports solvers that only return a

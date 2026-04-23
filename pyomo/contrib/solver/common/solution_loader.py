@@ -116,7 +116,10 @@ class SolutionLoader:
             Indicates the number of solutions found
 
         """
-        return NotImplemented
+        raise NotImplementedError(
+            f"{self.__class__.__name__} class failed to implement "
+            "required method 'get_number_of_solutions'."
+        )
 
     def load_solution(self) -> None:
         """Load the solution (everything that can be) back into the model"""
@@ -161,7 +164,7 @@ class SolutionLoader:
 
         """
         raise NotImplementedError(
-            f"Derived class {self.__class__.__name__} failed to implement "
+            f"{self.__class__.__name__} class failed to implement "
             "required method 'get_vars'."
         )
 
@@ -183,7 +186,10 @@ class SolutionLoader:
             Maps constraints to dual values
 
         """
-        return NotImplemented
+        raise NotImplementedError(
+            f"{self.__class__.__name__} class failed to implement "
+            "required method 'get_duals'."
+        )
 
     def get_reduced_costs(
         self, vars_to_load: Sequence[VarData] | None = None
@@ -203,7 +209,10 @@ class SolutionLoader:
             Maps variables to reduced costs
 
         """
-        return NotImplemented
+        raise NotImplementedError(
+            f"{self.__class__.__name__} class failed to implement "
+            "required method 'get_reduced_costs'."
+        )
 
     def load_import_suffixes(self) -> None:
         """Clear import suffixes on the model and load data returned by the solver."""
