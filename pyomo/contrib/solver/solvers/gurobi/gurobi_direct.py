@@ -21,7 +21,6 @@ from pyomo.contrib.solver.common.util import (
     NoSolutionError,
     IncompatibleModelError,
 )
-from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
 from .gurobi_direct_base import (
     GurobiDirectBase,
     gurobipy,

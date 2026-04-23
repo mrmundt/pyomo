@@ -10,7 +10,7 @@
 from collections.abc import Mapping, Sequence
 from typing import Any, Protocol
 
-from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
+from pyomo.contrib.solver.common.solution_loader import SolutionLoader
 from pyomo.contrib.solver.solvers.knitro.typing import ItemType, ValueType
 from pyomo.core.base.constraint import ConstraintData
 from pyomo.core.base.var import VarData
@@ -30,7 +30,7 @@ class SolutionProvider(Protocol):
     ) -> Mapping[ItemType, float]: ...
 
 
-class SolutionLoader(SolutionLoaderBase):
+class KnitroSolutionLoader(SolutionLoader):
     _provider: SolutionProvider
     has_primals: bool
     has_reduced_costs: bool

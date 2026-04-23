@@ -16,7 +16,7 @@ from pyomo.core.base.var import VarData
 from pyomo.common.collections import ComponentMap
 from pyomo.core.staleflag import StaleFlagManager
 from pyomo.repn.plugins.gams_writer_v2 import GAMSWriterInfo
-from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
+from pyomo.contrib.solver.common.solution_loader import SolutionLoader
 from pyomo.contrib.solver.common.util import (
     NoDualsError,
     NoSolutionError,
@@ -39,7 +39,7 @@ class GDXFileData:
         self.other: list[str] = []
 
 
-class GMSSolutionLoader(SolutionLoaderBase):
+class GMSSolutionLoader(SolutionLoader):
     """
     Loader for solvers that create .gms files (e.g., gams)
     """

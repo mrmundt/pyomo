@@ -9,12 +9,12 @@
 
 from pyomo.common import unittest
 from pyomo.contrib.solver.common.solution_loader import (
-    SolutionLoaderBase,
+    SolutionLoader,
     PersistentSolutionLoader,
 )
 
 
-class TestSolutionLoaderBase(unittest.TestCase):
+class TestSolutionLoader(unittest.TestCase):
     def test_member_list(self):
         expected_list = [
             'load_vars',
@@ -29,13 +29,13 @@ class TestSolutionLoaderBase(unittest.TestCase):
         ]
         method_list = [
             method
-            for method in dir(SolutionLoaderBase)
+            for method in dir(SolutionLoader)
             if method.startswith('_') is False
         ]
         self.assertEqual(sorted(expected_list), sorted(method_list))
 
     def test_solution_loader_base(self):
-        self.instance = SolutionLoaderBase()
+        self.instance = SolutionLoader()
         with self.assertRaises(NotImplementedError):
             self.instance.get_vars()
         self.assertEqual(self.instance.get_duals(), NotImplemented)

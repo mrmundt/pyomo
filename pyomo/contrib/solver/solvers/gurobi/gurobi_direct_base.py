@@ -39,7 +39,7 @@ from pyomo.contrib.solver.common.results import (
     SolutionStatus,
     TerminationCondition,
 )
-from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
+from pyomo.contrib.solver.common.solution_loader import SolutionLoader
 import time
 
 logger = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ class GurobiConfig(BranchAndBoundConfig):
         )
 
 
-class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
+class GurobiDirectSolutionLoaderBase(SolutionLoader):
     def __init__(self, solver_model, pyomo_model) -> None:
         super().__init__()
         self._solver_model = solver_model

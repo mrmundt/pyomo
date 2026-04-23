@@ -21,7 +21,7 @@ from pyomo.core.staleflag import StaleFlagManager
 from pyomo.core.base.suffix import Suffix
 
 
-class SolutionLoaderBase:
+class SolutionLoader:
     """Base class for all SolutionLoader classes.
 
     The intent of this class and its children is to facilitate the
@@ -238,15 +238,15 @@ class SolutionLoaderBase:
         return import_suffixes
 
 
-@copy_docstrings(SolutionLoaderBase)
+@copy_docstrings(SolutionLoader)
 class SolutionLoaderView:
-    """A view onto a specific `solution_id` from a :class:`SolutionLoaderBase`
+    """A view onto a specific `solution_id` from a :class:`SolutionLoader`
 
-    This implements :class:`SolutionLoaderBase` API for accessing a
-    specific `solution_id` from a :class:`SolutionLoaderBase` instance.
+    This implements :class:`SolutionLoader` API for accessing a
+    specific `solution_id` from a :class:`SolutionLoader` instance.
     You can use instances of this class in two ways:
 
-    As a :class:`SolutionLoaderBase` object:
+    As a :class:`SolutionLoader` object:
         Accessing the public methods on this view will activate the
         corresponding `solution_id` and return the result from the
         underlying loader object.
@@ -255,21 +255,21 @@ class SolutionLoaderView:
         If you use this object as a context manager, then the
         `solution_id` is activated upon entry and deactivated upon exit.
         Within the context, you can access either the
-        :class:`SolutionLoaderBase` API methods on this context manager,
+        :class:`SolutionLoader` API methods on this context manager,
         or on the underlying loader object to query or access the
         result.
 
     Parameters
     ----------
-    loader : SolutionLoaderBase
+    loader : SolutionLoader
         The underlying loader object that this is a view into
 
     solution_id : Any
         The solution identifier to activate before accessing results.
     """
 
-    def __init__(self, loader: SolutionLoaderBase, solution_id: Any):
-        self._loader: SolutionLoaderBase = loader
+    def __init__(self, loader: SolutionLoader, solution_id: Any):
+        self._loader: SolutionLoader = loader
         self._solution_id: Any = solution_id
         self._previous_id: Any = NOTSET
 
@@ -318,7 +318,7 @@ class SolutionLoaderView:
             return self._loader.load_import_suffixes()
 
 
-class PersistentSolutionLoader(SolutionLoaderBase):
+class PersistentSolutionLoader(SolutionLoader):
     """
     Loader for persistent solvers
     """

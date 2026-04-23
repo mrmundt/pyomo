@@ -26,7 +26,7 @@ from pyomo.contrib.solver.common.results import (
     SolutionStatus,
     TerminationCondition,
 )
-from pyomo.contrib.solver.common.solution_loader import SolutionLoaderBase
+from pyomo.contrib.solver.common.solution_loader import SolutionLoader
 import logging
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class ASLSolFileData:
         self.unparsed: str = None
 
 
-class ASLSolFileSolutionLoader(SolutionLoaderBase):
+class ASLSolFileSolutionLoader(SolutionLoader):
     """
     Loader for solvers that create ASL .sol files (e.g., ipopt)
     """
