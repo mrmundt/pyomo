@@ -249,9 +249,7 @@ class _MindtPyAlgorithm:
             self.build_ordered_component_lists(model)
             self.add_cuts_components(model)
 
-    def _get_main_objective(
-        self, model, create_dummy_objective=False, logger=None
-    ):
+    def _get_main_objective(self, model, create_dummy_objective=False, logger=None):
         """Return the single active objective, adding a dummy one if needed.
 
         Parameters
@@ -274,14 +272,18 @@ class _MindtPyAlgorithm:
             component name or ``None``.
         """
         active_objectives = list(
-            model.component_data_objects(ctype=Objective, active=True, descend_into=True)
+            model.component_data_objects(
+                ctype=Objective, active=True, descend_into=True
+            )
         )
         objective_count = len(active_objectives)
         if objective_count == 0:
             if not create_dummy_objective:
                 return None, objective_count, None
             if logger is not None:
-                logger.warning('Model has no active objectives. Adding dummy objective.')
+                logger.warning(
+                    'Model has no active objectives. Adding dummy objective.'
+                )
             dummy_name = unique_component_name(model, 'MindtPy_dummy_objective')
             setattr(model, dummy_name, Objective(expr=1))
             return getattr(model, dummy_name), objective_count, dummy_name
@@ -290,7 +292,10 @@ class _MindtPyAlgorithm:
         return active_objectives[0], objective_count, None
 
     def _cleanup_temporary_original_objective(self):
-        if self._temporary_original_objective_name is None or self.original_model is None:
+        if (
+            self._temporary_original_objective_name is None
+            or self.original_model is None
+        ):
             return
         if (
             self.original_model.component(self._temporary_original_objective_name)
