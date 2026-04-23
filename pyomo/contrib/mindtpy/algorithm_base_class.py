@@ -18,6 +18,7 @@ from pyomo.contrib.fbbt.fbbt import fbbt
 from pyomo.opt import TerminationCondition as tc
 from pyomo.contrib.mindtpy import __version__
 from pyomo.common.dependencies import attempt_import
+from pyomo.common.modeling import unique_component_name
 from pyomo.util.vars_from_expressions import get_vars_from_components
 from pyomo.solvers.plugins.solvers.persistent_solver import PersistentSolver
 from pyomo.common.collections import ComponentMap, Bunch, ComponentSet
@@ -91,8 +92,11 @@ class _MindtPyAlgorithm:
 
         """
         self.working_model = None
+        self.original_model = None
         self.mip = None
         self.fixed_nlp = None
+        self._temporary_original_objective_name = None
+        self._original_model_num_active_objectives = None
 
         # We store bounds, timing info, iteration count, incumbent, and the
         # Expression of the original (possibly nonlinear) objective function.
@@ -245,6 +249,56 @@ class _MindtPyAlgorithm:
             self.build_ordered_component_lists(model)
             self.add_cuts_components(model)
 
+    def _get_main_objective(
+        self, model, create_dummy_objective=False, logger=None
+    ):
+        """Return the single active objective, adding a dummy one if needed.
+
+        Parameters
+        ----------
+        model : BlockData
+            Model to inspect.
+        create_dummy_objective : bool, optional
+            Whether to create a temporary constant objective when the model has
+            no active objective, by default False.
+        logger : logging.Logger, optional
+            Logger used to emit the missing-objective warning when a dummy
+            objective is created.
+
+        Returns
+        -------
+        tuple
+            ``(main_obj, objective_count, dummy_name)`` where
+            ``objective_count`` is the number of active objectives before any
+            dummy objective is added, and ``dummy_name`` is the generated
+            component name or ``None``.
+        """
+        active_objectives = list(
+            model.component_data_objects(ctype=Objective, active=True, descend_into=True)
+        )
+        objective_count = len(active_objectives)
+        if objective_count == 0:
+            if not create_dummy_objective:
+                return None, objective_count, None
+            if logger is not None:
+                logger.warning('Model has no active objectives. Adding dummy objective.')
+            dummy_name = unique_component_name(model, 'MindtPy_dummy_objective')
+            setattr(model, dummy_name, Objective(expr=1))
+            return getattr(model, dummy_name), objective_count, dummy_name
+        if objective_count > 1:
+            raise ValueError('Model has multiple active objectives.')
+        return active_objectives[0], objective_count, None
+
+    def _cleanup_temporary_original_objective(self):
+        if self._temporary_original_objective_name is None or self.original_model is None:
+            return
+        if (
+            self.original_model.component(self._temporary_original_objective_name)
+            is not None
+        ):
+            self.original_model.del_component(self._temporary_original_objective_name)
+        self._temporary_original_objective_name = None
+
     def model_is_valid(self):
         """
         Check if the model requires the MindtPy MINLP decomposition algorithm.
@@ -309,11 +363,6 @@ class _MindtPyAlgorithm:
             }
             problem_type_articles = {'LP': 'an', 'QP': 'a', 'QCP': 'a', 'NLP': 'an'}
             obj_degree = MindtPy.objective_polynomial_degree
-            if obj_degree is None:
-                working_obj = next(
-                    m.component_data_objects(ctype=Objective, active=True)
-                )
-                obj_degree = working_obj.expr.polynomial_degree()
             problem_type, solver_to_use, unsupported_structure = (
                 self._classify_short_circuit_problem(MindtPy, obj_degree)
             )
@@ -829,21 +878,12 @@ class _MindtPyAlgorithm:
         config = self.config
         m = self.working_model
         util_block = getattr(m, self.util_block_name)
-        # Handle missing or multiple objectives
-        active_objectives = list(
-            m.component_data_objects(ctype=Objective, active=True, descend_into=True)
+        main_obj, _, _ = self._get_main_objective(
+            m, create_dummy_objective=True, logger=config.logger
         )
-        self.results.problem.number_of_objectives = len(active_objectives)
-        if len(active_objectives) == 0:
-            config.logger.warning(
-                'Model has no active objectives. Adding dummy objective.'
-            )
-            util_block.dummy_objective = Objective(expr=1)
-            main_obj = util_block.dummy_objective
-        elif len(active_objectives) > 1:
-            raise ValueError('Model has multiple active objectives.')
-        else:
-            main_obj = active_objectives[0]
+        self.results.problem.number_of_objectives = (
+            self._original_model_num_active_objectives
+        )
         self.results.problem.sense = main_obj.sense
         self.objective_sense = main_obj.sense
 
@@ -953,8 +993,14 @@ class _MindtPyAlgorithm:
             The original model to be solved in MindtPy.
         """
         config = self.config
+        self.original_model = model
+        self._temporary_original_objective_name = None
+        obj, objective_count, dummy_name = self._get_main_objective(
+            model, create_dummy_objective=True, logger=config.logger
+        )
+        self._temporary_original_objective_name = dummy_name
+        self._original_model_num_active_objectives = objective_count
         # if the objective function is a constant, dual bound constraint is not added.
-        obj = next(model.component_data_objects(ctype=Objective, active=True))
         if obj.expr.polynomial_degree() == 0:
             config.logger.info(
                 'The model has a constant objecitive function. use_dual_bound is set to False.'
@@ -966,7 +1012,6 @@ class _MindtPyAlgorithm:
             # TODO: logging_level is not logging.INFO here
             config.logger.info('Use the fbbt to tighten the bounds of variables')
 
-        self.original_model = model
         self.working_model = model.clone()
 
         # set up bounds
@@ -3002,72 +3047,78 @@ class _MindtPyAlgorithm:
         with lower_logger_level_to(config.logger, new_logging_level):
             self.check_config()
 
-        self.set_up_solve_data(model)
+        try:
+            self.set_up_solve_data(model)
 
-        if config.integer_to_binary:
-            TransformationFactory('contrib.integer_to_binary').apply_to(
-                self.working_model
-            )
-
-        self.create_utility_block(self.working_model, 'MindtPy_utils')
-        with (
-            time_code(self.timing, 'total', is_main_timer=True),
-            lower_logger_level_to(config.logger, new_logging_level),
-        ):
-            self._log_solver_intro_message()
-            self.initialize_subsolvers()
-
-            # Initialize MindtPy results early so that direct LP/NLP short-circuit
-            # paths can still return a valid SolverResults object.
-            setup_results_object(self.results, self.original_model, config)
-
-            # Validate the model to ensure that MindtPy is able to solve it.
-            if not self.model_is_valid():
-                return self.results
-
-            MindtPy = self.working_model.MindtPy_utils
-
-            # Reformulate the objective function.
-            self.objective_reformulation()
-
-            # Save model initial values.
-            self.initial_var_values = list(v.value for v in MindtPy.variable_list)
-
-            # TODO: if the MindtPy solver is defined once and called several times to solve models. The following two lines are necessary. It seems that the solver class will not be init every time call.
-            # For example, if we remove the following two lines. test_RLPNLP_L1 will fail.
-            self.best_solution_found = None
-            self.best_solution_found_time = None
-            self.initialize_mip_problem()
-
-            # Initialization
-            with time_code(self.timing, 'initialization'):
-                self.MindtPy_initialization()
-
-            # Algorithm main loop
-            with time_code(self.timing, 'main loop'):
-                self.MindtPy_iteration_loop()
-
-            # Load solution
-            if self.best_solution_found is not None:
-                self.load_solution()
-
-            # Get integral info
-            self.get_integral_info()
-
-            config.logger.info(
-                ' {:<25}:   {:>7.4f} '.format(
-                    'Primal-dual gap integral', self.primal_dual_gap_integral
+            if config.integer_to_binary:
+                TransformationFactory('contrib.integer_to_binary').apply_to(
+                    self.working_model
                 )
-            )
 
-        # Update result
-        self.update_result()
-        if config.single_tree:
-            self.results.solver.num_nodes = self.nlp_iter - (
-                1 if config.init_strategy == 'rNLP' else 0
-            )
+            self.create_utility_block(self.working_model, 'MindtPy_utils')
+            with (
+                time_code(self.timing, 'total', is_main_timer=True),
+                lower_logger_level_to(config.logger, new_logging_level),
+            ):
+                self._log_solver_intro_message()
+                self.initialize_subsolvers()
 
-        return self.results
+                # Initialize MindtPy results early so that direct LP/NLP short-circuit
+                # paths can still return a valid SolverResults object.
+                setup_results_object(self.results, self.original_model, config)
+                self.results.problem.number_of_objectives = (
+                    self._original_model_num_active_objectives
+                )
+
+                # Validate the model to ensure that MindtPy is able to solve it.
+                if not self.model_is_valid():
+                    return self.results
+
+                MindtPy = self.working_model.MindtPy_utils
+
+                # Reformulate the objective function.
+                self.objective_reformulation()
+
+                # Save model initial values.
+                self.initial_var_values = list(v.value for v in MindtPy.variable_list)
+
+                # TODO: if the MindtPy solver is defined once and called several times to solve models. The following two lines are necessary. It seems that the solver class will not be init every time call.
+                # For example, if we remove the following two lines. test_RLPNLP_L1 will fail.
+                self.best_solution_found = None
+                self.best_solution_found_time = None
+                self.initialize_mip_problem()
+
+                # Initialization
+                with time_code(self.timing, 'initialization'):
+                    self.MindtPy_initialization()
+
+                # Algorithm main loop
+                with time_code(self.timing, 'main loop'):
+                    self.MindtPy_iteration_loop()
+
+                # Load solution
+                if self.best_solution_found is not None:
+                    self.load_solution()
+
+                # Get integral info
+                self.get_integral_info()
+
+                config.logger.info(
+                    ' {:<25}:   {:>7.4f} '.format(
+                        'Primal-dual gap integral', self.primal_dual_gap_integral
+                    )
+                )
+
+            # Update result
+            self.update_result()
+            if config.single_tree:
+                self.results.solver.num_nodes = self.nlp_iter - (
+                    1 if config.init_strategy == 'rNLP' else 0
+                )
+
+            return self.results
+        finally:
+            self._cleanup_temporary_original_objective()
 
     def objective_reformulation(self):
         # In the process_objective function, as long as the objective function is nonlinear, it will be reformulated and the variable/constraint/objective lists will be updated.

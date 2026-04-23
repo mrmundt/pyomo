@@ -47,6 +47,32 @@ short_circuit_subsolvers_available = all(
     'Required subsolvers %s are not available' % (short_circuit_required_solvers,),
 )
 class TestMindtPyShortCircuitNoDiscrete(unittest.TestCase):
+    def test_short_circuit_model_with_no_objective_uses_temporary_dummy_objective(self):
+        """No-objective models should short-circuit and leave the user model unchanged."""
+        m = ConcreteModel()
+        m.x = Var(domain=NonNegativeReals)
+        m.y = Var(domain=Binary)
+        m.y.fix(0)
+
+        m.c1 = Constraint(expr=m.x >= 1)
+        m.c2 = Constraint(expr=m.x <= 1)
+
+        with SolverFactory('mindtpy') as opt:
+            results = opt.solve(
+                m,
+                strategy='OA',
+                mip_solver=short_circuit_required_solvers[1],
+                nlp_solver=short_circuit_required_solvers[0],
+            )
+
+        self.assertIsNotNone(results)
+        self.assertEqual(results.solver.termination_condition, tc.optimal)
+        self.assertEqual(results.problem.number_of_objectives, 0)
+        self.assertAlmostEqual(m.x.value, 1.0, places=4)
+        self.assertEqual(
+            len(list(m.component_data_objects(ctype=Objective, active=True))), 0
+        )
+
     def test_no_discrete_decisions_short_circuit_loads_values(self):
         """Regression test for MindtPy short-circuit with no discrete decisions.
 
@@ -206,6 +232,28 @@ class TestMindtPyShortCircuitNoDiscrete(unittest.TestCase):
         self.assertIsNotNone(results)
         self.assertEqual(results.solver.termination_condition, tc.optimal)
         self.assertAlmostEqual(m.x.value, 5.0, places=4)
+
+    def test_short_circuit_multiobjective_model_raises(self):
+        """Multiple active objectives should be rejected before short-circuit solve."""
+        m = ConcreteModel()
+        m.x = Var(domain=NonNegativeReals)
+        m.y = Var(domain=Binary)
+        m.y.fix(0)
+
+        m.c = Constraint(expr=m.x >= 1)
+        m.obj1 = Objective(expr=m.x, sense=minimize)
+        m.obj2 = Objective(expr=2 * m.x, sense=minimize)
+
+        with SolverFactory('mindtpy') as opt:
+            with self.assertRaisesRegex(
+                ValueError, 'Model has multiple active objectives.'
+            ):
+                opt.solve(
+                    m,
+                    strategy='OA',
+                    mip_solver=short_circuit_required_solvers[1],
+                    nlp_solver=short_circuit_required_solvers[0],
+                )
 
 
 class _SimpleNamespace:
