@@ -65,9 +65,14 @@ class ASLSolFileSolutionLoader(SolutionLoader):
         self._pyomo_model = pyomo_model
 
     def get_number_of_solutions(self) -> int:
-        if self._nl_info is None:
-            return 0
-        return 1
+        # We have a solution if either we were able to read variable
+        # values from the SOL file or all the variables were presolved
+        # out of the model in the writer
+        if self._sol_data.primals or (
+            self._nl_info.eliminated_vars and not self._nl_info.variables
+        ):
+            return 1
+        return 0
 
     def load_import_suffixes(self):
         suffixes_to_load = self._collect_and_clear_import_suffixes()
