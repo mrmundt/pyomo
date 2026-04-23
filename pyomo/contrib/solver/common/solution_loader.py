@@ -119,9 +119,7 @@ class SolutionLoader:
         return NotImplemented
 
     def load_solution(self) -> None:
-        """Load the solution (everything that can be) back into the model
-
-        """
+        """Load the solution (everything that can be) back into the model"""
         # this should load everything it can
         self.load_vars()
         self.load_import_suffixes()

@@ -9,7 +9,8 @@
 
 import inspect
 
-def copy_docstrings(reference_class: type, methods: list[str]|None=None):
+
+def copy_docstrings(reference_class: type, methods: list[str] | None = None):
     """Copy docstrings from a reference class to this class.
 
     Note that only docstrings for methods, generators, and functions are
@@ -48,5 +49,5 @@ def copy_docstrings(reference_class: type, methods: list[str]|None=None):
                 continue
             new_method.__doc__ = old_doc
         return cls
-    
+
     return wrapper

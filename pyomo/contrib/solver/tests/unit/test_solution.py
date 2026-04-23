@@ -28,9 +28,7 @@ class TestSolutionLoader(unittest.TestCase):
             'solution',
         ]
         method_list = [
-            method
-            for method in dir(SolutionLoader)
-            if method.startswith('_') is False
+            method for method in dir(SolutionLoader) if method.startswith('_') is False
         ]
         self.assertEqual(sorted(expected_list), sorted(method_list))
 
