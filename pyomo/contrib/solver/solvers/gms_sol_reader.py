@@ -24,28 +24,16 @@ from pyomo.contrib.solver.common.util import (
 )
 
 
-class GDXFileData:
-    """
-    Defines the data types found within a .gdx file
-    """
-
-    def __init__(self) -> None:
-        self.primals: list[float] = []
-        self.duals: list[float] = []
-        self.var_suffixes: dict[str, dict[int, Any]] = {}
-        self.con_suffixes: dict[str, dict[Any]] = {}
-        self.obj_suffixes: dict[str, dict[int, Any]] = {}
-        self.problem_suffixes: dict[str, list[Any]] = {}
-        self.other: list[str] = []
-
-
 class GMSSolutionLoader(SolutionLoader):
     """
     Loader for solvers that create .gms files (e.g., gams)
     """
 
     def __init__(
-        self, pyomo_model, gdx_data: GDXFileData, gms_info: GAMSWriterInfo
+        self,
+        pyomo_model,
+        gdx_data: dict[str, tuple[float, float]],
+        gms_info: GAMSWriterInfo,
     ) -> None:
         self._gdx_data = gdx_data
         self._gms_info = gms_info
