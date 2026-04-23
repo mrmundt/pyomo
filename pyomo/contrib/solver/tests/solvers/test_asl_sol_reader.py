@@ -448,6 +448,7 @@ class TestSolFileSolutionLoader(unittest.TestCase):
             'get_solution_ids',
             'load_import_suffixes',
             'load_solution',
+            'solution',
         ]
         method_list = [
             method

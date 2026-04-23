@@ -70,26 +70,24 @@ class GurobiPersistentSolutionLoader(GurobiDirectSolutionLoaderBase):
         if not self._valid:
             raise RuntimeError('The results in the solver are no longer valid.')
 
-    def load_vars(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
-    ) -> None:
+    def load_vars(self, vars_to_load: Sequence[VarData] | None = None) -> None:
         self._assert_solution_still_valid()
-        return super().load_vars(vars_to_load, solution_id)
+        return super().load_vars(vars_to_load)
 
     def get_vars(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
         self._assert_solution_still_valid()
-        return super().get_vars(vars_to_load, solution_id)
+        return super().get_vars(vars_to_load)
 
     def get_duals(
-        self, cons_to_load: Sequence[ConstraintData] | None = None, solution_id=None
+        self, cons_to_load: Sequence[ConstraintData] | None = None
     ) -> dict[ConstraintData, float]:
         self._assert_solution_still_valid()
         return super().get_duals(cons_to_load)
 
     def get_reduced_costs(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
         self._assert_solution_still_valid()
         return super().get_reduced_costs(vars_to_load)
@@ -102,9 +100,9 @@ class GurobiPersistentSolutionLoader(GurobiDirectSolutionLoaderBase):
         self._assert_solution_still_valid()
         return super().get_solution_ids()
 
-    def load_import_suffixes(self, solution_id=None):
+    def load_import_suffixes(self):
         self._assert_solution_still_valid()
-        super().load_import_suffixes(solution_id)
+        super().load_import_suffixes()
 
 
 class _MutableLowerBound:

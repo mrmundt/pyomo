@@ -25,6 +25,7 @@ class TestSolutionLoaderBase(unittest.TestCase):
             'get_number_of_solutions',
             'get_solution_ids',
             'load_solution',
+            'solution',
         ]
         method_list = [
             method
@@ -53,6 +54,7 @@ class TestPersistentSolutionLoader(unittest.TestCase):
             'get_number_of_solutions',
             'get_solution_ids',
             'load_solution',
+            'solution',
         ]
         method_list = [
             method

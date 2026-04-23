@@ -51,19 +51,12 @@ class GMSSolutionLoader(SolutionLoaderBase):
         self._gms_info = gms_info
         self._pyomo_model = pyomo_model
 
-    def get_solution_ids(self) -> list[Any]:
-        return [None]
-
     def get_number_of_solutions(self) -> int:
         if self._gms_info is None:
             return 0
         return 1
 
-    def load_vars(
-        self, vars_to_load: Optional[Sequence[VarData]] = None, solution_id=None
-    ) -> None:
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
+    def load_vars(self, vars_to_load: Optional[Sequence[VarData]] = None) -> None:
         if self._gms_info is None:
             raise NoSolutionError()
         if self._gdx_data is None:
@@ -76,10 +69,8 @@ class GMSSolutionLoader(SolutionLoaderBase):
         StaleFlagManager.mark_all_as_stale(delayed=True)
 
     def get_vars(
-        self, vars_to_load: Optional[Sequence[VarData]] = None, solution_id=None
+        self, vars_to_load: Optional[Sequence[VarData]] = None
     ) -> Mapping[VarData, float]:
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
         if self._gms_info is None:
             raise NoSolutionError()
         val_map = {}
@@ -99,10 +90,8 @@ class GMSSolutionLoader(SolutionLoaderBase):
         return res
 
     def get_duals(
-        self, cons_to_load: Optional[Sequence[ConstraintData]] = None, solution_id=None
+        self, cons_to_load: Optional[Sequence[ConstraintData]] = None
     ) -> dict[ConstraintData, float]:
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
         if self._gms_info is None:
             raise NoDualsError()
         if self._gdx_data is None:
@@ -125,9 +114,7 @@ class GMSSolutionLoader(SolutionLoaderBase):
 
         return res
 
-    def get_reduced_costs(self, vars_to_load=None, solution_id=None):
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
+    def get_reduced_costs(self, vars_to_load=None):
         if self._gms_info is None:
             raise NoReducedCostsError()
         if self._gdx_data is None:
@@ -145,8 +132,3 @@ class GMSSolutionLoader(SolutionLoaderBase):
             res[obj] = var_map[id(obj)]
 
         return res
-
-    def load_import_suffixes(self, solution_id=None):
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
-        super().load_import_suffixes(solution_id)

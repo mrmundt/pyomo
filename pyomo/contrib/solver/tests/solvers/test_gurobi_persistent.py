@@ -470,11 +470,11 @@ class TestGurobiPersistent(unittest.TestCase):
         res = opt.solve(m)
         num_solutions = opt.get_model_attr('SolCount')
         self.assertEqual(num_solutions, 3)
-        res.solution_loader.load_vars(solution_id=0)
+        res.solution_loader.solution(0).load_vars()
         self.assertAlmostEqual(pyo.value(m.obj.expr), 6.431184939357673)
-        res.solution_loader.load_vars(solution_id=1)
+        res.solution_loader.solution(1).load_vars()
         self.assertAlmostEqual(pyo.value(m.obj.expr), 6.584793218502477)
-        res.solution_loader.load_vars(solution_id=2)
+        res.solution_loader.solution(2).load_vars()
         self.assertAlmostEqual(pyo.value(m.obj.expr), 6.592304628123309)
 
     def test_zero_time_limit(self):

@@ -119,11 +119,8 @@ class IpoptConfig(SolverConfig):
 
 class IpoptSolutionLoader(ASLSolFileSolutionLoader):
     def get_reduced_costs(
-        self, vars_to_load: Optional[Sequence[VarData]] = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
-        if solution_id is not None:
-            raise ValueError(f'{self.__class__.__name__} does not support solution_id')
-
         # Ipopt returns the reduced costs through as lower and upper
         # bound multipliers.  Combine them into a single "rc" suffix and
         # then use the base ASL reduced costs processing.
@@ -140,7 +137,7 @@ class IpoptSolutionLoader(ASLSolFileSolutionLoader):
                     _rc = zu
             rc[ndx] = _rc
 
-        return super().get_reduced_costs(vars_to_load, solution_id)
+        return super().get_reduced_costs(vars_to_load)
 
 
 #: The set of all ipopt options that can be passed to Ipopt on the command line

@@ -82,6 +82,14 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         self._pyomo_model = pyomo_model  # needed for suffixes
         GurobiDirectBase._register_env_client()
 
+    def _get_active_solution_id(self) -> int:
+        return self._solver_model.getParamInfo('SolutionNumber')[2]
+
+    def _set_solution_id(self, solution_id: int) -> int:
+        previous_id = self._get_active_solution_id()
+        self._solver_model.setParam('SolutionNumber', solution_id)
+        return previous_id
+
     def get_number_of_solutions(self) -> int:
         return self._solver_model.SolCount
 
@@ -107,7 +115,7 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         GurobiDirectBase._release_env_client()
 
     def _get_primals(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=0
+        self, vars_to_load: Sequence[VarData] | None = None
     ) -> tuple[list[VarData], list[float]]:
         if self._solver_model.SolCount == 0:
             raise NoSolutionError()
@@ -116,44 +124,31 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         else:
             pvars = vars_to_load
             gvars = list(map(self._get_var_map().__getitem__, vars_to_load))
-        if solution_id:
-            if (
-                self._solver_model.getAttr('NumIntVars') == 0
-                and self._solver_model.getAttr('NumBinVars') == 0
-            ):
-                raise ValueError(
-                    'Cannot obtain suboptimal solutions for a continuous model'
-                )
-            original_solution_number = self._solver_model.getParamInfo(
-                'SolutionNumber'
-            )[2]
-            self._solver_model.setParam('SolutionNumber', solution_id)
-            grbFcn = "Xn"
+        if (
+            self._get_active_solution_id()
+            and not self._solver_model.getAttr('NumIntVars')
+            and not self._solver_model.getAttr('NumBinVars')
+        ):
+            raise ValueError(
+                'Cannot obtain suboptimal solutions for a continuous model'
+            )
+        if self._get_active_solution_id():
+            grbFcn = 'Xn' if gurobipy.GRB.VERSION_MAJOR < 13 else 'PoolNX'
         else:
-            grbFcn = "X"
-        try:
-            vals = self._solver_model.getAttr(grbFcn, gvars)
-        finally:
-            if solution_id:
-                self._solver_model.setParam('SolutionNumber', original_solution_number)
+            grbFcn = 'X'
+        vals = self._solver_model.getAttr(grbFcn, gvars)
         return pvars, vals
 
-    def load_vars(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
-    ) -> None:
-        pvars, vals = self._get_primals(
-            vars_to_load=vars_to_load, solution_id=solution_id
-        )
+    def load_vars(self, vars_to_load: Sequence[VarData] | None = None) -> None:
+        pvars, vals = self._get_primals(vars_to_load=vars_to_load)
         for pv, val in zip(pvars, vals):
             pv.set_value(val, skip_validation=True)
         StaleFlagManager.mark_all_as_stale(delayed=True)
 
     def get_vars(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
-        pvars, vals = self._get_primals(
-            vars_to_load=vars_to_load, solution_id=solution_id
-        )
+        pvars, vals = self._get_primals(vars_to_load=vars_to_load)
         res = ComponentMap(zip(pvars, vals))
         return res
 
@@ -169,9 +164,9 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         return ComponentMap(zip(vars_to_load, vals))
 
     def get_reduced_costs(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
-        if solution_id is not None and solution_id != 0:
+        if self._get_active_solution_id():
             raise NoReducedCostsError('Can only get reduced costs for solution_id = 0')
         if self._solver_model.Status != gurobipy.GRB.OPTIMAL:
             raise NoReducedCostsError()
@@ -185,9 +180,9 @@ class GurobiDirectSolutionLoaderBase(SolutionLoaderBase):
         return res
 
     def get_duals(
-        self, cons_to_load: Sequence[ConstraintData] | None = None, solution_id=None
+        self, cons_to_load: Sequence[ConstraintData] | None = None
     ) -> dict[ConstraintData, float]:
-        if solution_id is not None and solution_id != 0:
+        if self._get_active_solution_id():
             raise NoDualsError('Can only get duals for solution_id = 0')
         if self._solver_model.Status != gurobipy.GRB.OPTIMAL:
             raise NoDualsError()

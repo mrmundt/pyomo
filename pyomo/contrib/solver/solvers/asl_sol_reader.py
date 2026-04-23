@@ -69,15 +69,7 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
             return 0
         return 1
 
-    def get_solution_ids(self) -> list[Any]:
-        if self._nl_info is None:
-            return []
-        return [None]
-
-    def load_import_suffixes(self, solution_id=None):
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
-
+    def load_import_suffixes(self):
         suffixes_to_load = self._collect_and_clear_import_suffixes()
         # We want to handle duals and reduced costs specially so that we
         # can unscale the results
@@ -130,11 +122,7 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
             suffix = suffixes_to_load[suffix_name]
             suffix[None] = val
 
-    def load_vars(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
-    ) -> None:
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
+    def load_vars(self, vars_to_load: Sequence[VarData] | None = None) -> None:
         if vars_to_load is not None:
             # If we are given a list of variables to load, it is easiest
             # to use the filtering in get_vars and then just set
@@ -168,10 +156,8 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
         StaleFlagManager.mark_all_as_stale(delayed=True)
 
     def get_vars(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
         result = ComponentMap()
         if not self._sol_data.primals:
             # SOL file contained no primal values
@@ -216,10 +202,8 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
         return result
 
     def get_duals(
-        self, cons_to_load: Sequence[ConstraintData] | None = None, solution_id=None
+        self, cons_to_load: Sequence[ConstraintData] | None = None
     ) -> dict[ConstraintData, float]:
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
         if len(self._nl_info.eliminated_vars) > 0:
             logger.warning(
                 'Duals may not be correct when variables have '
@@ -252,10 +236,8 @@ class ASLSolFileSolutionLoader(SolutionLoaderBase):
             return {con: val for con, val in _iter}
 
     def get_reduced_costs(
-        self, vars_to_load: Sequence[VarData] | None = None, solution_id=None
+        self, vars_to_load: Sequence[VarData] | None = None
     ) -> ComponentMap[VarData, float]:
-        if solution_id is not None:
-            raise ValueError(f"{self.__class__.__name__} does not support solution_id")
         if len(self._nl_info.eliminated_vars) > 0:
             logger.warning(
                 'Reduced costs may not be correct when variables have '
