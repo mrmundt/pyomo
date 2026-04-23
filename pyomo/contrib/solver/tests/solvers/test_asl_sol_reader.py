@@ -587,13 +587,35 @@ class TestSolFileSolutionLoader(unittest.TestCase):
         m.test_obj_suffix = pyo.Suffix(direction=pyo.Suffix.IMPORT)
         m.test_problem_suffix = pyo.Suffix(direction=pyo.Suffix.IMPORT)
 
+        m.test_var_suffix_off = pyo.Suffix(direction=pyo.Suffix.IMPORT)
+        m.test_con_suffix_off = pyo.Suffix(direction=pyo.Suffix.IMPORT)
+        m.test_obj_suffix_off = pyo.Suffix(direction=pyo.Suffix.IMPORT)
+        m.test_problem_suffix_off = pyo.Suffix(direction=pyo.Suffix.IMPORT)
+
+        m.test_var_suffix_off.deactivate()
+        m.test_con_suffix_off.deactivate()
+        m.test_obj_suffix_off.deactivate()
+        m.test_problem_suffix_off.deactivate()
+
         nl_info = NLWriterInfo(var=[m.x], con=[m.c], obj=[m.obj])
 
         sol_data = ASLSolFileData()
-        sol_data.var_suffixes = {'test_var_suffix': {0: 1.1}}
-        sol_data.con_suffixes = {'test_con_suffix': {0: 2.2}}
-        sol_data.obj_suffixes = {'test_obj_suffix': {0: 3.3}}
-        sol_data.problem_suffixes = {'test_problem_suffix': 4.4}
+        sol_data.var_suffixes = {
+            'test_var_suffix': {0: 1.1},
+            'test_var_suffix_off': {0: 1.0},
+        }
+        sol_data.con_suffixes = {
+            'test_con_suffix': {0: 2.2},
+            'test_con_suffix_off': {0: 2.0},
+        }
+        sol_data.obj_suffixes = {
+            'test_obj_suffix': {0: 3.3},
+            'test_obj_suffix_off': {0: 3.0},
+        }
+        sol_data.problem_suffixes = {
+            'test_problem_suffix': 4.4,
+            'test_problem_suffix_off': 4.0,
+        }
 
         loader = ASLSolFileSolutionLoader(sol_data, nl_info, m)
         loader.load_import_suffixes()
@@ -609,6 +631,15 @@ class TestSolFileSolutionLoader(unittest.TestCase):
         )
         self.assertEqual(
             ComponentMap(m.test_problem_suffix.items()), ComponentMap([(None, 4.4)])
+        )
+        self.assertEqual(
+            ComponentMap(m.test_problem_suffix_off.items()), ComponentMap()
+        )
+        self.assertEqual(ComponentMap(m.test_var_suffix_off.items()), ComponentMap())
+        self.assertEqual(ComponentMap(m.test_con_suffix_off.items()), ComponentMap())
+        self.assertEqual(ComponentMap(m.test_obj_suffix_off.items()), ComponentMap())
+        self.assertEqual(
+            ComponentMap(m.test_problem_suffix_off.items()), ComponentMap()
         )
 
     def test_suffixes_scaling_error(self):

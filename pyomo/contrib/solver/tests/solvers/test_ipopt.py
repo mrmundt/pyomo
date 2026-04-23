@@ -2058,6 +2058,7 @@ class TestIpopt(unittest.TestCase):
         m.x.lb = 0.6
         m.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT)
         m.rc = pyo.Suffix(direction=pyo.Suffix.IMPORT)
+        m.ipopt_zL_out = pyo.Suffix(direction=pyo.Suffix.IMPORT)
         m.c = pyo.Constraint(expr=m.x == 2 * m.y)
 
         solver = ipopt.Ipopt()
@@ -2071,6 +2072,9 @@ class TestIpopt(unittest.TestCase):
         self.assertEqual(len(m.rc), 2)
         self.assertAlmostEqual(m.rc[m.x], 7.6, delta=1e-5)
         self.assertEqual(m.rc[m.y], 0)
+        # Note that ipopt_zL_out is the raw (unscaled) result from ipopt
+        self.assertEqual(len(m.ipopt_zL_out), 1)
+        self.assertAlmostEqual(m.ipopt_zL_out[m.x], 7.6, delta=1e-5)
 
         m.scaling_factor = pyo.Suffix(direction=pyo.Suffix.EXPORT)
         m.scaling_factor[m.obj] = 10
@@ -2089,6 +2093,9 @@ class TestIpopt(unittest.TestCase):
         self.assertEqual(len(m.rc), 2)
         self.assertAlmostEqual(m.rc[m.x], 7.6, delta=1e-5)
         self.assertEqual(m.rc[m.y], 0)
+        # Note that ipopt_zL_out is the raw (unscaled) result from ipopt
+        self.assertEqual(len(m.ipopt_zL_out), 1)
+        self.assertAlmostEqual(m.ipopt_zL_out[m.x], 7.6 * 10 / 7, delta=1e-5)
 
         m.x.lb = None
         m.y.ub = 0.25
