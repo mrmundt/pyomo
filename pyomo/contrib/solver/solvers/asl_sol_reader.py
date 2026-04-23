@@ -211,8 +211,6 @@ class ASLSolFileSolutionLoader(SolutionLoader):
                 '(solver.config.writer_config.linear_presolve=False) to '
                 'be safe.'
             )
-        if not self._nl_info.constraints:
-            return {}
 
         if not self._nl_info.constraints:
             return {}
