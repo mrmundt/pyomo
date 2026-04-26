@@ -50,11 +50,6 @@ class KnitroSolutionLoader(SolutionLoader):
         self.has_reduced_costs = has_reduced_costs
         self.has_duals = has_duals
 
-    def get_solution_ids(self) -> list[Any]:
-        if self.get_number_of_solutions() == 0:
-            return []
-        return [None]
-
     def get_number_of_solutions(self) -> int:
         return self._provider.get_num_solutions()
 
