@@ -345,9 +345,7 @@ class NoSolutionSolutionLoader(SolutionLoader):
     def load_solution(self):
         raise NoSolutionError()
 
-    def load_vars(
-        self, vars_to_load: Sequence[VarData] | None = None
-    ) -> None:
+    def load_vars(self, vars_to_load: Sequence[VarData] | None = None) -> None:
         raise NoSolutionError()
 
     def get_vars(
