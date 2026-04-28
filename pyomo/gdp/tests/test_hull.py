@@ -2965,8 +2965,8 @@ class TestExactHullQuadratic(unittest.TestCase):
         y_ind = m.d1.binary_indicator_var
 
         # An auxiliary t variable should have been created.
-        t_var = relaxBlock.component('_conic_aux_t_c')
-        self.assertIsNotNone(t_var, "Expected auxiliary variable '_conic_aux_t_c'")
+        t_var = self.hull.get_exact_quadratic_aux_var(m.d1.c)
+        self.assertIsNotNone(t_var, "Expected exact-hull auxiliary variable")
         self.assertIs(t_var.domain, NonNegativeReals)
 
         # Two transformed constraints: conic SOC + linear bound.
@@ -3024,8 +3024,8 @@ class TestExactHullQuadratic(unittest.TestCase):
         y_ind = m.d1.binary_indicator_var
 
         # Auxiliary t variable must exist.
-        t_var = relaxBlock.component('_conic_aux_t_c')
-        self.assertIsNotNone(t_var, "Expected auxiliary variable '_conic_aux_t_c'")
+        t_var = self.hull.get_exact_quadratic_aux_var(m.d1.c)
+        self.assertIsNotNone(t_var, "Expected exact-hull auxiliary variable")
         self.assertIs(t_var.domain, NonNegativeReals)
 
         trans_cons = self.hull.get_transformed_constraints(m.d1.c)
@@ -3074,7 +3074,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         y_ind = m.d1.binary_indicator_var
 
         # No auxiliary t variable should exist.
-        self.assertIsNone(relaxBlock.component('_conic_aux_t_c'))
+        self.assertIsNone(self.hull.get_exact_quadratic_aux_var(m.d1.c))
 
         trans_cons = self.hull.get_transformed_constraints(m.d1.c)
         self.assertEqual(len(trans_cons), 1)
@@ -3118,7 +3118,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         y_ind = m.d1.binary_indicator_var
 
         # No auxiliary t variable should exist (no conic path for equality).
-        self.assertIsNone(relaxBlock.component('_conic_aux_t_c'))
+        self.assertIsNone(self.hull.get_exact_quadratic_aux_var(m.d1.c))
 
         trans_cons = self.hull.get_transformed_constraints(m.d1.c)
         self.assertEqual(len(trans_cons), 1)
@@ -3161,7 +3161,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         y_ind = m.d1.binary_indicator_var
 
         # Auxiliary t should exist (conic upper bound).
-        t_var = relaxBlock.component('_conic_aux_t_c')
+        t_var = self.hull.get_exact_quadratic_aux_var(m.d1.c)
         self.assertIsNotNone(t_var)
 
         trans_cons = self.hull.get_transformed_constraints(m.d1.c)
@@ -3245,7 +3245,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         relaxBlock = m_perm._pyomo_gdp_hull_reformulation.relaxedDisjuncts[0]
         # Conic path should have been taken -> t variable present.
         self.assertIsNotNone(
-            relaxBlock.component('_conic_aux_t_c'),
+            self.hull.get_exact_quadratic_aux_var(m_perm.d1.c),
             "Expected conic aux variable with permissive eigenvalue_tolerance",
         )
 
@@ -3268,7 +3268,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         relaxBlock = m_strict._pyomo_gdp_hull_reformulation.relaxedDisjuncts[0]
         # General path should have been taken -> no t variable.
         self.assertIsNone(
-            relaxBlock.component('_conic_aux_t_c'),
+            self.hull.get_exact_quadratic_aux_var(m_strict.d1.c),
             "Expected no conic aux variable with strict eigenvalue_tolerance",
         )
 
@@ -3313,7 +3313,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         relaxBlock = m._pyomo_gdp_hull_reformulation.relaxedDisjuncts[0]
         v_x = relaxBlock.disaggregatedVars.x
         y_ind = m.d1.binary_indicator_var
-        t_var = relaxBlock.component('_conic_aux_t_c')
+        t_var = self.hull.get_exact_quadratic_aux_var(m.d1.c)
         self.assertIsNotNone(t_var)
 
         trans_cons = self.hull.get_transformed_constraints(m.d1.c)
@@ -3355,7 +3355,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         y_ind = m.d1.binary_indicator_var
 
         # No conic aux variable (indefinite Q -> general path).
-        self.assertIsNone(relaxBlock.component('_conic_aux_t_c'))
+        self.assertIsNone(self.hull.get_exact_quadratic_aux_var(m.d1.c))
 
         trans_cons = self.hull.get_transformed_constraints(m.d1.c)
         self.assertEqual(len(trans_cons), 1)
@@ -3422,7 +3422,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         # General path should have been taken: no conic auxiliary variable.
         relaxBlock = m._pyomo_gdp_hull_reformulation.relaxedDisjuncts[0]
         self.assertIsNone(
-            relaxBlock.component('_conic_aux_t_c'),
+            self.hull.get_exact_quadratic_aux_var(m.d1.c),
             "Expected no conic aux variable when all eigenvalues are near zero",
         )
 
@@ -3461,7 +3461,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         y_ind = m.d1.binary_indicator_var
 
         # No conic auxiliary variable.
-        self.assertIsNone(relaxBlock.component('_conic_aux_t_c'))
+        self.assertIsNone(self.hull.get_exact_quadratic_aux_var(m.d1.c))
 
         # Both bounds should produce general hull constraints.
         trans_cons = self.hull.get_transformed_constraints(m.d1.c)
@@ -3520,10 +3520,8 @@ class TestExactHullQuadratic(unittest.TestCase):
         v_y = relaxBlock.disaggregatedVars.y
         y_ind = m.d1.binary_indicator_var
 
-        t_var = relaxBlock.component('_conic_aux_t_c')
-        self.assertIsNotNone(
-            t_var, "Expected conic auxiliary variable '_conic_aux_t_c'"
-        )
+        t_var = self.hull.get_exact_quadratic_aux_var(m.d1.c)
+        self.assertIsNotNone(t_var, "Expected exact-hull auxiliary variable")
         self.assertIs(t_var.domain, NonNegativeReals)
 
         trans_cons = self.hull.get_transformed_constraints(m.d1.c)
@@ -3579,7 +3577,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         v_y = relaxBlock.disaggregatedVars.y
         y_ind = m.d1.binary_indicator_var
 
-        self.assertIsNone(relaxBlock.component('_conic_aux_t_c'))
+        self.assertIsNone(self.hull.get_exact_quadratic_aux_var(m.d1.c))
 
         trans_cons = self.hull.get_transformed_constraints(m.d1.c)
         self.assertEqual(len(trans_cons), 1)
@@ -3692,7 +3690,7 @@ class TestExactHullQuadratic(unittest.TestCase):
         )
 
         relaxBlock = m._pyomo_gdp_hull_reformulation.relaxedDisjuncts[0]
-        t_var = relaxBlock.component('_conic_aux_t_c')
+        t_var = self.hull.get_exact_quadratic_aux_var(m.d1.c)
         self.assertIsNotNone(
             t_var, "Expected conic auxiliary variable (p=1 makes Q=I, PSD)"
         )

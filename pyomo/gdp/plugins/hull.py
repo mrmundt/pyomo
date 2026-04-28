@@ -66,6 +66,7 @@ class _HullTransformationData(AutoSlots.Mixin):
         'original_var_map',
         'bigm_constraint_map',
         'disaggregation_constraint_map',
+        'exact_quadratic_aux_var_map',
     )
 
     def __init__(self):
@@ -73,6 +74,7 @@ class _HullTransformationData(AutoSlots.Mixin):
         self.original_var_map = ComponentMap()
         self.bigm_constraint_map = DefaultComponentMap(ComponentMap)
         self.disaggregation_constraint_map = DefaultComponentMap(ComponentMap)
+        self.exact_quadratic_aux_var_map = ComponentMap()
 
 
 Block.register_private_data_initializer(_HullTransformationData)
@@ -1350,6 +1352,7 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
             '_conic_aux_t_%s' % c.getname(fully_qualified=True, relative_to=disjunct),
         )
         relaxationBlock.add_component(t_name, t)
+        relaxationBlock.private_data().exact_quadratic_aux_var_map[c] = t
 
         linear_expr = t
 
@@ -1539,6 +1542,45 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
             "Either '%s' is not a disaggregated variable, or "
             "the disjunction that disaggregates it has not "
             "been properly transformed." % v.name
+        )
+
+    def get_exact_quadratic_aux_var(self, cons, raise_exception=True):
+        """Return the conic exact-hull auxiliary variable for ``cons``.
+
+        Parameters
+        ----------
+        cons : ConstraintData
+            Original constraint on a Disjunct that may have been reformulated
+            using the conic exact hull.
+        raise_exception : bool
+            Whether to raise a ``GDP_Error`` when ``cons`` is not on a
+            transformed Disjunct. Default is ``True``.
+
+        Returns
+        -------
+        Var or None
+            The auxiliary nonnegative ``t`` variable introduced by the conic
+            exact hull for ``cons``, or ``None`` if that reformulation was not
+            used for ``cons``.
+        """
+        disjunct = cons.parent_block()
+        if disjunct is None or disjunct.ctype is not Disjunct:
+            if raise_exception:
+                raise GDP_Error(
+                    "Constraint '%s' does not appear to belong to a Disjunct"
+                    % cons.name
+                )
+            return None
+        if disjunct._transformation_block is None:
+            if raise_exception:
+                raise GDP_Error(
+                    "Disjunct '%s' has not been transformed" % disjunct.name
+                )
+            return None
+        return (
+            disjunct._transformation_block()
+            .private_data()
+            .exact_quadratic_aux_var_map.get(cons, None)
         )
 
     def get_transformed_constraints(self, cons):
