@@ -273,7 +273,7 @@ class TestKKT(unittest.TestCase):
         m = self.get_bilevel_model()
 
         kkt = TransformationFactory('core.kkt')
-        kkt.apply_to(m, parametrize_wrt=[m.outer1, m.outer2])
+        kkt.apply_to(m, parameterize_wrt=[m.outer1, m.outer2])
         TransformationFactory("mpec.simple_nonlinear").apply_to(m)
 
         # equality constraint
@@ -408,7 +408,7 @@ class TestKKT(unittest.TestCase):
 
         m_reform = m.clone()
         TransformationFactory('core.kkt').apply_to(
-            m_reform, parametrize_wrt=[m_reform.outer1, m_reform.outer2]
+            m_reform, parameterize_wrt=[m_reform.outer1, m_reform.outer2]
         )
         TransformationFactory("mpec.simple_nonlinear").apply_to(m_reform)
 
@@ -419,7 +419,7 @@ class TestKKT(unittest.TestCase):
 
         m_reform = m.clone()
         TransformationFactory('core.kkt').apply_to(
-            m_reform, parametrize_wrt=[m_reform.outer1, m_reform.outer2]
+            m_reform, parameterize_wrt=[m_reform.outer1, m_reform.outer2]
         )
         TransformationFactory("mpec.simple_nonlinear").apply_to(m_reform)
 
@@ -430,7 +430,7 @@ class TestKKT(unittest.TestCase):
 
         m_reform = m.clone()
         TransformationFactory('core.kkt').apply_to(
-            m_reform, parametrize_wrt=[m_reform.outer1, m_reform.outer2]
+            m_reform, parameterize_wrt=[m_reform.outer1, m_reform.outer2]
         )
         TransformationFactory("mpec.simple_nonlinear").apply_to(m_reform)
 
@@ -461,7 +461,7 @@ class TestKKT(unittest.TestCase):
         ):
             kkt.apply_to(m, kkt_block_name='b1')
 
-    def test_parametrize_wrt_unknown_error(self):
+    def test_parameterize_wrt_unknown_error(self):
         m = ConcreteModel()
         m.x = Var(domain=Reals)
         m.y = Var(domain=Reals)
@@ -474,10 +474,10 @@ class TestKKT(unittest.TestCase):
 
         with self.assertRaisesRegex(
             ValueError,
-            "A variable passed in parametrize_wrt does not exist on an "
+            "A variable passed in parameterize_wrt does not exist on an "
             "active constraint or objective within the model.",
         ):
-            kkt.apply_to(m, parametrize_wrt=[m.b1.x1])
+            kkt.apply_to(m, parameterize_wrt=[m.b1.x1])
 
     def test_get_object_from_multiplier_error(self):
         m = ConcreteModel(name="model")

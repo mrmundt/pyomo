@@ -54,7 +54,7 @@ class NonLinearProgrammingKKT:
         ),
     )
     CONFIG.declare(
-        'parametrize_wrt',
+        'parameterize_wrt',
         ConfigValue(
             default=[],
             domain=ComponentDataSet(Var),
@@ -80,10 +80,10 @@ class NonLinearProgrammingKKT:
 
 # We will check below that all vars the user fixed are included in
 # parameterize_wrt
-        params = config.parametrize_wrt
+        params = config.parameterize_wrt
 
         kkt_block = Block(concrete=True)
-        kkt_block.parametrize_wrt = params
+        kkt_block.parameterize_wrt = params
         self._reformulate(model, kkt_block, params)
         model.add_component(config.kkt_block_name, kkt_block)
         return model
@@ -100,7 +100,7 @@ class NonLinearProgrammingKKT:
         )
         if len(active_objs) != 1:
             raise ValueError(
-                f"model must have only one active objective; found {len(active_objs)}"
+                f"model must have exactly active objective; found {len(active_objs)}"
             )
         # collect vars from active objective
         obj = active_objs[0]
@@ -154,14 +154,14 @@ class NonLinearProgrammingKKT:
         var_set = ComponentSet(all_vars_set)
         var_set -= fixed_vars
 
-        # do error checking on parametrize_wrt
+        # do error checking on parameterize_wrt
         missing = fixed_vars - params
         if missing:
-            raise ValueError("All fixed variables must be included in parametrize_wrt.")
+            raise ValueError("All fixed variables must be included in parameterize_wrt.")
 
         if not params <= all_vars_set:
             raise ValueError(
-                "A variable passed in parametrize_wrt does not exist on an "
+                "A variable passed in parameterize_wrt does not exist on an "
                 "active constraint or objective within the model."
             )
 
