@@ -259,6 +259,11 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
         transformed constraints; this option does not. Set mutable Params to
         their intended values before transforming, or avoid mutable Params in
         the quadratic body, if you need algebraic linkage to parameters.
+
+        Alternatively, use fixed :class:`Var` objects instead of mutable
+        Params with ``assume_fixed_vars_permanent=False`` (the default): such
+        Vars are kept as symbolic references in the transformed constraints
+        and can be updated by re-fixing them.
         """,
         ),
     )
@@ -804,8 +809,8 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
             # QuadraticRepnVisitor / LinearRepnVisitor treat fixed Vars as
             # constants.  When assume_fixed_vars_permanent is False (default),
             # fixed variables are still disaggregated, so we temporarily unfix
-            # them so that polynomial_degree, the quadratic walk, and variable
-            # substitutions all see the full variable structure.
+            # them so that the quadratic walk and variable substitutions all
+            # see the full variable structure.
             to_refix = ComponentSet()
             if not self._config.assume_fixed_vars_permanent:
                 for var in EXPR.identify_variables(c.body, include_fixed=True):
@@ -817,28 +822,26 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
             mode = self._config.perspective_function
             exact_quad = self._config.exact_hull_quadratic
 
-            # When exact_hull_quadratic is enabled, walk with
-            # QuadraticRepnVisitor (while vars are still unfixed) to get the
-            # quadratic repn and determine if the constraint is quadratic.
-            # Otherwise just use polynomial_degree for NL classification.
-            qrepn = None
-            vm = None
-            if exact_quad:
-                var_map = {}
-                var_order = {}
-                visitor = QuadraticRepnVisitor(
-                    {},
-                    var_recorder=OrderedVarRecorder(
-                        var_map, var_order, SortComponents.deterministic
-                    ),
-                )
-                qrepn = visitor.walk_expression(c.body)
-                vm = visitor.var_map
+            # Analyze the body with QuadraticRepnVisitor (while vars are
+            # still unfixed) to classify it as linear / quadratic / general
+            # nonlinear and, when exact_hull_quadratic is enabled, reuse the
+            # repn for the exact reformulation.
+            var_map = {}
+            var_order = {}
+            visitor = QuadraticRepnVisitor(
+                {},
+                var_recorder=OrderedVarRecorder(
+                    var_map, var_order, SortComponents.deterministic
+                ),
+            )
+            qrepn = visitor.walk_expression(c.body)
 
-                is_quadratic = qrepn.quadratic is not None and len(qrepn.quadratic) > 0
-                use_exact_quad = is_quadratic and qrepn.nonlinear is None
-            else:
-                use_exact_quad = False
+            is_quadratic = bool(qrepn.quadratic)
+            NL = is_quadratic or qrepn.nonlinear is not None
+            use_exact_quad = exact_quad and is_quadratic and qrepn.nonlinear is None
+
+            for var in to_refix:
+                var.fix()
 
             if use_exact_quad:
                 self._build_exact_quadratic_hull(
@@ -850,21 +853,12 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
                     var_substitute_map=var_substitute_map,
                     newConstraint=newConstraint,
                     name=name,
-                    i=i,
+                    idx=i,
                     obj=obj,
                     qrepn=qrepn,
-                    vm=vm,
+                    var_map=var_map,
                 )
-                for var in to_refix:
-                    var.fix()
                 continue
-
-            # Not using exact quad: classify via polynomial_degree and refix.
-            polynomial_degree = c.body.polynomial_degree()
-            for var in to_refix:
-                var.fix()
-
-            NL = polynomial_degree not in (0, 1)
 
             # We need to evaluate the expression at the origin *before*
             # we substitute the expression variables with the
@@ -911,6 +905,9 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
                 )
 
             if c.equality:
+                if self._generate_debug_messages:
+                    _name = c.getname(fully_qualified=True)
+                    logger.debug("GDP(Hull): Transforming constraint '%s'", _name)
                 if NL:
                     # ESJ TODO: This can't happen right? This is the only
                     # obvious case where someone has messed up, but this has to
@@ -1017,10 +1014,10 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
         var_substitute_map,
         newConstraint,
         name,
-        i,
+        idx,
         obj,
         qrepn,
-        vm,
+        var_map,
     ):
         """Build the exact hull reformulation for a single quadratic constraint.
 
@@ -1056,14 +1053,14 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
             The indexed Constraint container for transformed constraints.
         name : str
             Base name for the transformed constraint indices.
-        i : object
+        idx : object
             The index of the constraint in its parent component.
         obj : Constraint
             The parent Constraint component (needed for ``is_indexed``).
         qrepn : QuadraticRepn
             Result of ``QuadraticRepnVisitor.walk_expression`` on the constraint
             body (walked by the caller with fixed Vars temporarily unfixed).
-        vm : dict
+        var_map : dict
             The visitor's ``var_map``: maps ``id(Var)`` to ``Var`` objects.
         """
         const_term = qrepn.constant if qrepn.constant is not None else 0
@@ -1158,7 +1155,7 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
 
         if need_non_convex:
             non_conv_expr = self._build_general_exact_hull_expr(
-                qrepn, vm, var_substitute_map, y, const_term
+                qrepn, var_map, var_substitute_map, y, const_term
             )
 
         if use_conic_upper or use_conic_lower:
@@ -1169,7 +1166,7 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
                 relaxationBlock,
                 constraint_map,
                 qrepn,
-                vm,
+                var_map,
                 var_substitute_map,
                 const_term,
                 negate_for_conic,
@@ -1177,14 +1174,17 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
 
         # --- Equality constraints always use general exact hull ---
         if c.equality:
+            if self._generate_debug_messages:
+                _name = c.getname(fully_qualified=True)
+                logger.debug("GDP(Hull): Transforming constraint '%s'", _name)
             newConsExpr = non_conv_expr == c.lower * y**2
 
             if obj.is_indexed():
-                newConstraint.add((name, i, 'eq'), newConsExpr)
+                newConstraint.add((name, idx, 'eq'), newConsExpr)
                 constraint_map.transformed_constraints[c].append(
-                    newConstraint[name, i, 'eq']
+                    newConstraint[name, idx, 'eq']
                 )
-                constraint_map.src_constraint[newConstraint[name, i, 'eq']] = c
+                constraint_map.src_constraint[newConstraint[name, idx, 'eq']] = c
             else:
                 newConstraint.add((name, 'eq'), newConsExpr)
                 constraint_map.transformed_constraints[c].append(
@@ -1205,11 +1205,11 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
                 newConsExpr = non_conv_expr >= c.lower * y**2
 
             if obj.is_indexed():
-                newConstraint.add((name, i, 'lb'), newConsExpr)
+                newConstraint.add((name, idx, 'lb'), newConsExpr)
                 constraint_map.transformed_constraints[c].append(
-                    newConstraint[name, i, 'lb']
+                    newConstraint[name, idx, 'lb']
                 )
-                constraint_map.src_constraint[newConstraint[name, i, 'lb']] = c
+                constraint_map.src_constraint[newConstraint[name, idx, 'lb']] = c
             else:
                 newConstraint.add((name, 'lb'), newConsExpr)
                 constraint_map.transformed_constraints[c].append(
@@ -1229,11 +1229,11 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
                 newConsExpr = non_conv_expr <= c.upper * y**2
 
             if obj.is_indexed():
-                newConstraint.add((name, i, 'ub'), newConsExpr)
+                newConstraint.add((name, idx, 'ub'), newConsExpr)
                 constraint_map.transformed_constraints[c].append(
-                    newConstraint[name, i, 'ub']
+                    newConstraint[name, idx, 'ub']
                 )
-                constraint_map.src_constraint[newConstraint[name, i, 'ub']] = c
+                constraint_map.src_constraint[newConstraint[name, idx, 'ub']] = c
             else:
                 newConstraint.add((name, 'ub'), newConsExpr)
                 constraint_map.transformed_constraints[c].append(
