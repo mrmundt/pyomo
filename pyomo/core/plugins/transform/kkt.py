@@ -78,8 +78,8 @@ class NonLinearProgrammingKKT:
                 f"specified kkt_block_name: '{config.kkt_block_name}'"
             )
 
-# We will check below that all vars the user fixed are included in
-# parameterize_wrt
+        # We will check below that all vars the user fixed are included in
+        # parameterize_wrt
         params = config.parameterize_wrt
 
         kkt_block = Block(concrete=True)
@@ -157,12 +157,17 @@ class NonLinearProgrammingKKT:
         # do error checking on parameterize_wrt
         missing = fixed_vars - params
         if missing:
-            raise ValueError("All fixed variables must be included in parameterize_wrt.")
+            raise ValueError(
+                "All fixed variables must be included in parameterize_wrt. "
+                "Missing variables:\n\t" + "\n\t".join(v.name for v in missing)
+            )
 
-        if not params <= all_vars_set:
+        extra = params - all_vars_set
+        if extra:
             raise ValueError(
                 "A variable passed in parameterize_wrt does not exist in an "
-                "active constraint or objective within the model."
+                "active constraint or objective within the model. "
+                "Invalid variables:\n\t" + "\n\t".join(v.name for v in extra)
             )
 
         var_set = var_set - params

@@ -442,7 +442,7 @@ class TestKKT(unittest.TestCase):
         kkt = TransformationFactory('core.kkt')
 
         with self.assertRaisesRegex(
-            ValueError, "model must have only one active objective; found 0"
+            ValueError, "model must have exactly one active objective; found 0"
         ):
             kkt.apply_to(m)
 
@@ -474,8 +474,9 @@ class TestKKT(unittest.TestCase):
 
         with self.assertRaisesRegex(
             ValueError,
-            "A variable passed in parameterize_wrt does not exist on an "
-            "active constraint or objective within the model.",
+            "A variable passed in parameterize_wrt does not exist in an "
+            "active constraint or objective within the model. "
+            "Invalid variables:\n\t" + "b1.x1",
         ):
             kkt.apply_to(m, parameterize_wrt=[m.b1.x1])
 
