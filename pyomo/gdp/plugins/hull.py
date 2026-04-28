@@ -1544,7 +1544,7 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
             "been properly transformed." % v.name
         )
 
-    def get_exact_quadratic_aux_var(self, cons, raise_exception=True):
+    def get_exact_quadratic_aux_var(self, cons):
         """Return the conic exact-hull auxiliary variable for ``cons``.
 
         Parameters
@@ -1552,9 +1552,6 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
         cons : ConstraintData
             Original constraint on a Disjunct that may have been reformulated
             using the conic exact hull.
-        raise_exception : bool
-            Whether to raise a ``GDP_Error`` when ``cons`` is not on a
-            transformed Disjunct. Default is ``True``.
 
         Returns
         -------
@@ -1565,22 +1562,14 @@ class Hull_Reformulation(GDP_to_MIP_Transformation):
         """
         disjunct = cons.parent_block()
         if disjunct is None or disjunct.ctype is not Disjunct:
-            if raise_exception:
-                raise GDP_Error(
-                    "Constraint '%s' does not appear to belong to a Disjunct"
-                    % cons.name
-                )
-            return None
-        if disjunct._transformation_block is None:
-            if raise_exception:
-                raise GDP_Error(
-                    "Disjunct '%s' has not been transformed" % disjunct.name
-                )
-            return None
-        return (
-            disjunct._transformation_block()
-            .private_data()
-            .exact_quadratic_aux_var_map.get(cons, None)
+            raise GDP_Error(
+                "Constraint '%s' does not appear to belong to a Disjunct" % cons.name
+            )
+        relaxationBlock = disjunct.transformation_block
+        if relaxationBlock is None:
+            raise GDP_Error("Disjunct '%s' has not been transformed" % disjunct.name)
+        return relaxationBlock.private_data().exact_quadratic_aux_var_map.get(
+            cons, None
         )
 
     def get_transformed_constraints(self, cons):
