@@ -78,8 +78,8 @@ class NonLinearProgrammingKKT:
                 f"specified kkt_block_name: '{config.kkt_block_name}'"
             )
 
-        # we should check that all vars the user fixed are included
-        # in parametrize_wrt
+# We will check below that all vars the user fixed are included in
+# parameterize_wrt
         params = config.parametrize_wrt
 
         kkt_block = Block(concrete=True)
