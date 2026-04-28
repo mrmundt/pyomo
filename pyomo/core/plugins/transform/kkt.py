@@ -100,7 +100,7 @@ class NonLinearProgrammingKKT:
         )
         if len(active_objs) != 1:
             raise ValueError(
-                f"model must have exactly active objective; found {len(active_objs)}"
+                f"model must have exactly one active objective; found {len(active_objs)}"
             )
         # collect vars from active objective
         obj = active_objs[0]
@@ -161,7 +161,7 @@ class NonLinearProgrammingKKT:
 
         if not params <= all_vars_set:
             raise ValueError(
-                "A variable passed in parameterize_wrt does not exist on an "
+                "A variable passed in parameterize_wrt does not exist in an "
                 "active constraint or objective within the model."
             )
 
@@ -231,7 +231,7 @@ class NonLinearProgrammingKKT:
         Parameters
         ----------
         model: ConcreteModel
-            The model on which the kkt transformation was applied to
+            The model to which the kkt transformation was applied to
         component: Constraint or Variable
 
         Returns
