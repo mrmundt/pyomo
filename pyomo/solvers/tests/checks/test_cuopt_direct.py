@@ -29,7 +29,18 @@ from pyomo.opt import check_available_solvers
 from pyomo.common.tee import capture_output
 from pyomo.common.tempfiles import TempfileManager
 import pyomo.common.unittest as unittest
-from pyomo.solvers.plugins.solvers.cuopt_direct import cuopt_available
+from pyomo.solvers.plugins.solvers.cuopt_direct import cuopt_available, CUOPTDirect
+
+
+def _cuopt_at_least(*required):
+    """True iff cuOpt is available and at least the given (major, minor[, patch]) version."""
+    if not cuopt_available:
+        return False
+    try:
+        version = tuple(int(p) for p in CUOPTDirect._version[: len(required)])
+    except (AttributeError, TypeError, ValueError):
+        return False
+    return version >= required
 
 
 @unittest.pytest.mark.solver("cuopt")
@@ -125,7 +136,10 @@ class CUOPTTests(unittest.TestCase):
         with pytest.raises(ValueError, match=r"Trivial constraint.*infeasible"):
             opt.solve(m, skip_trivial_constraints=True)
 
-    @unittest.skipIf(not cuopt_available, "The CuOpt solver is not available")
+    @unittest.skipUnless(
+        _cuopt_at_least(26, 4),
+        "cuOpt UnboundedOrInfeasible status (11) requires cuOpt 26.04 or later",
+    )
     def test_unbounded_or_infeasible_status(self):
         # An LP with no variable bounds and an unbounded objective triggers
         # cuOpt's presolver to return UnboundedOrInfeasible (status 11), which
