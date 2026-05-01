@@ -16,7 +16,6 @@ from pyomo.common.collections import ComponentSet, OrderedSet, ComponentMap
 from pyomo.common.errors import PyomoException
 from pyomo.common.shutdown import python_is_shutting_down
 from pyomo.common.timing import HierarchicalTimer
-from pyomo.common.errors import InfeasibleConstraintException
 from pyomo.core.base.objective import ObjectiveData
 from pyomo.core.kernel.objective import minimize, maximize
 from pyomo.core.base.var import VarData

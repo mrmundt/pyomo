@@ -1171,6 +1171,7 @@ class TestSolvers(unittest.TestCase):
         self.assertAlmostEqual(m.x.value, 0)
         self.assertAlmostEqual(m.y.value, 0)
 
+        # trivially feasible constraint
         m.x.fix(1)
         opt.config.tee = True
         res = opt.solve(m)

@@ -333,38 +333,26 @@ class SolutionLoaderView:
 
 
 class NoSolutionSolutionLoader(SolutionLoader):
-    def __init__(self) -> None:
-        pass
-
-    def get_solution_ids(self) -> List[Any]:
-        return []
+    def __init__(self, err_msg: str) -> None:
+        self.err_msg = err_msg
 
     def get_number_of_solutions(self) -> int:
         return 0
 
-    def load_solution(self):
-        raise NoSolutionError()
-
-    def load_vars(self, vars_to_load: Sequence[VarData] | None = None) -> None:
-        raise NoSolutionError()
-
     def get_vars(
         self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
-        raise NoSolutionError()
+        raise NoSolutionError(self.err_msg)
 
     def get_duals(
         self, cons_to_load: Sequence[ConstraintData] | None = None
-    ) -> Dict[ConstraintData, float]:
-        raise NoSolutionError()
+    ) -> dict[ConstraintData, float]:
+        raise NoSolutionError(self.err_msg)
 
     def get_reduced_costs(
         self, vars_to_load: Sequence[VarData] | None = None
     ) -> Mapping[VarData, float]:
-        raise NoSolutionError()
-
-    def load_import_suffixes(self):
-        raise NoSolutionError()
+        raise NoSolutionError(self.err_msg)
 
 
 class PersistentSolutionLoader(SolutionLoader):
