@@ -36,7 +36,7 @@ env:
   SRC_REF: ${{ github.head_ref || github.ref }}
   PYOMO_WORKFLOW: |
     ${{ contains(github.event.pull_request.title, '[WIP]') && 'wip'
-        || github.event.pull_request.draft ) && 'draft_pr'
+        || github.event.pull_request.draft && 'draft_pr'
         || github.event.pull_request.number && 'pr'
         || 'main' }}
 
