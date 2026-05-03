@@ -919,7 +919,7 @@ jobs:
     name: process-coverage-${{ matrix.TARGET }}
     needs: build
     # run even if a build job fails, but not if canceled (except for branches)
-    if: success() || failure()
+    if: env.PYOMO_WORKFLOW != 'branch' && (success() || failure())
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
