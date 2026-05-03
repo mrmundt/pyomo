@@ -43,7 +43,7 @@ env:
 jobs:
   lint:
     name: lint/style-and-typos
-    if: env.PYOMO_WORKFLOW != 'wip'
+    if: ${{ env.PYOMO_WORKFLOW != 'wip' }}
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Pyomo source
@@ -72,7 +72,7 @@ jobs:
         sudo resolvectl query github.com
         sudo resolvectl status
     - name: URL Checker
-      if: env.PYOMO_WORKFLOW == 'branch'
+      if: ${{ env.PYOMO_WORKFLOW == 'branch' }}
       uses: urlstechie/urlchecker-action@0.0.34
       with:
         # A comma-separated list of file types to cover in the URL checks
@@ -919,7 +919,7 @@ jobs:
     name: process-coverage-${{ matrix.TARGET }}
     needs: build
     # run even if a build job fails, but not if canceled (except for branches)
-    if: env.PYOMO_WORKFLOW != 'branch' && (success() || failure())
+    if: ${{ env.PYOMO_WORKFLOW != 'branch' && (success() || failure()) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
