@@ -750,7 +750,11 @@ class Highs(PersistentSolverMixin, PersistentSolverUtils, PersistentSolverBase):
             if has_feasible_solution:
                 results.incumbent_objective = info.objective_function_value
             if info.mip_node_count == -1:
-                if has_feasible_solution and results.termination_condition == TerminationCondition.convergenceCriteriaSatisfied:
+                if (
+                    has_feasible_solution
+                    and results.termination_condition
+                    == TerminationCondition.convergenceCriteriaSatisfied
+                ):
                     results.objective_bound = info.objective_function_value
                 else:
                     results.objective_bound = None

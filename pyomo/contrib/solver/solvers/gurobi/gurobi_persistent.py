@@ -505,10 +505,10 @@ class GurobiPersistent(GurobiDirectBase, PersistentSolverBase, Observer):
             new_expr = gurobipy.LinExpr(coef_list, vlist)
         else:
             # this still needs to be an expression object so that
-            # we don't generate a bool if both the body and 
+            # we don't generate a bool if both the body and
             # the bounds are floats (i.e., a trivially feasible or
             # trivially infeasible constraint). We don't want a bool
-            # because the constraint could swap between feasible and 
+            # because the constraint could swap between feasible and
             # infeasible if the bounds are mutable.
             new_expr = gurobipy.LinExpr()
 
