@@ -866,7 +866,7 @@ jobs:
     name: process-coverage-${{ matrix.TARGET }}
     needs: build
     # run even if a build job fails, but not if canceled
-    if: ${{ success() || failure()) }}
+    if: ${{ success() || failure() }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
