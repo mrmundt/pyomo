@@ -39,6 +39,7 @@ from pyomo.contrib.solver.common.results import (
     Results,
     SolutionStatus,
     TerminationCondition,
+    get_infeasible_results,
 )
 from pyomo.contrib.solver.common.solution_loader import SolutionLoader
 import time
@@ -378,7 +379,7 @@ class GurobiDirectBase(SolverBase):
             )
         except InfeasibleConstraintException as err:
             err_msg = f'Solution loader does not currently have a valid solution because the problem was proven to be infeasible ({str(err)}). Please check results.termination_condition and/or results.solution_status.'
-            res = self._get_infeasible_results(config=config, err_msg=err_msg)
+            res = get_infeasible_results(config=config, err_msg=err_msg, solver_name=self.name, solver_version=self.version())
         finally:
             os.chdir(orig_cwd)
 
@@ -410,23 +411,6 @@ class GurobiDirectBase(SolverBase):
                 grb.USER_OBJ_LIMIT: tc.objectiveLimit,
             }
         return GurobiDirectBase._tc_map
-
-    def _get_infeasible_results(self, config, err_msg):
-        res = Results()
-        res.solution_loader = NoSolutionSolutionLoader(err_msg)
-        res.solution_status = SolutionStatus.noSolution
-        res.termination_condition = TerminationCondition.provenInfeasible
-        res.incumbent_objective = None
-        res.objective_bound = None
-        res.timing_info.gurobi_time = None
-        res.solver_config = config
-        res.solver_name = self.name
-        res.solver_version = self.version()
-        if config.raise_exception_on_nonoptimal_result:
-            raise NoOptimalSolutionError()
-        if config.load_solutions:
-            raise NoFeasibleSolutionError()
-        return res
 
     def _populate_results(self, grb_model, solution_loader, has_obj, config):
         status = grb_model.Status
