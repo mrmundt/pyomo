@@ -418,7 +418,6 @@ class GurobiDirectBase(SolverBase):
         res.termination_condition = TerminationCondition.provenInfeasible
         res.incumbent_objective = None
         res.objective_bound = None
-        res.iteration_count = None
         res.timing_info.gurobi_time = None
         res.solver_config = config
         res.solver_name = self.name
