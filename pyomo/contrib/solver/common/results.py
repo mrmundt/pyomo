@@ -262,7 +262,6 @@ def get_infeasible_results(config, err_msg, solver_name, solver_version):
     return res
 
 
-
 # Everything below here preserves backwards compatibility
 
 legacy_termination_condition_map = {

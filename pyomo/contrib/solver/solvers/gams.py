@@ -311,7 +311,9 @@ class GAMS(SolverBase):
                 lst_filename = os.path.join(dname, lst)
 
                 timer.start(f'write_gms_file')
-                with open(output_filename, 'w', newline='\n', encoding='utf-8') as gms_file:
+                with open(
+                    output_filename, 'w', newline='\n', encoding='utf-8'
+                ) as gms_file:
                     gms_info = GAMSWriter().write(
                         model, gms_file, config=config.writer_config
                     )
@@ -338,7 +340,9 @@ class GAMS(SolverBase):
 
                 # handled tee and logfile based on the length of list and
                 # string respectively
-                command.append(self._log_levels[(bool(config.tee), bool(config.logfile))])
+                command.append(
+                    self._log_levels[(bool(config.tee), bool(config.logfile))]
+                )
 
                 ostreams = [StringIO()]
                 if config.tee:
@@ -357,13 +361,13 @@ class GAMS(SolverBase):
 
                 if rc:
                     # If nothing was raised, or for all other cases, raise this
-                    error_message = f"GAMS process encountered an error (returncode={rc})."
+                    error_message = (
+                        f"GAMS process encountered an error (returncode={rc})."
+                    )
                     if rc == 3:
                         # Execution Error
                         # Run check_expr_evaluation, which errors if necessary
-                        error_message += (
-                            "\nError rc=3 (GAMS execution error), to be determined later."
-                        )
+                        error_message += "\nError rc=3 (GAMS execution error), to be determined later."
                     error_message += "\nCheck listing file for details.\n"
                     logger.error(error_message)
                     logger.error(txt.strip())
@@ -400,7 +404,12 @@ class GAMS(SolverBase):
                 results.timing_info.timer = timer
             except InfeasibleConstraintException as err:
                 err_msg = f'Solution loader does not currently have a valid solution because the problem was proven to be infeasible ({str(err)}). Please check results.termination_condition and/or results.solution_status.'
-                results = get_infeasible_results(config=config, err_msg=err_msg, solver_name=self.name, solver_version=self.version())
+                results = get_infeasible_results(
+                    config=config,
+                    err_msg=err_msg,
+                    solver_name=self.name,
+                    solver_version=self.version(),
+                )
             return results
 
     def _postsolve(self, model, timer, config, model_soln, stat_vars, gms_info):

@@ -388,7 +388,9 @@ class _GMSWriter_impl(object):
                 pass
             else:
                 if (lb is not None and lb > offset) or (ub is not None and ub < offset):
-                    raise InfeasibleConstraintException(f'detected a trivially infeasible constraint: {con}')
+                    raise InfeasibleConstraintException(
+                        f'detected a trivially infeasible constraint: {con}'
+                    )
                 if (
                     skip_trivial_constraints
                     and (lb is None or lb <= offset)

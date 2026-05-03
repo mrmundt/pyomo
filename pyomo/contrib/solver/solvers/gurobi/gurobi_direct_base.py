@@ -379,7 +379,12 @@ class GurobiDirectBase(SolverBase):
             )
         except InfeasibleConstraintException as err:
             err_msg = f'Solution loader does not currently have a valid solution because the problem was proven to be infeasible ({str(err)}). Please check results.termination_condition and/or results.solution_status.'
-            res = get_infeasible_results(config=config, err_msg=err_msg, solver_name=self.name, solver_version=self.version())
+            res = get_infeasible_results(
+                config=config,
+                err_msg=err_msg,
+                solver_name=self.name,
+                solver_version=self.version(),
+            )
         finally:
             os.chdir(orig_cwd)
 
