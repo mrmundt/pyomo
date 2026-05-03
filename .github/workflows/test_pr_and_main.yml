@@ -35,16 +35,15 @@ env:
   NEOS_EMAIL: tests@pyomo.org
   SRC_REF: ${{ github.head_ref || github.ref }}
   PYOMO_WORKFLOW: |
-    ${{ ( contains(github.event.pull_request.title, '[WIP]') ||
-          github.event.pull_request.draft ) && 'draft_pr'
-        || github.event.pull_request.number && 'pr' || 'main' }}
+    ${{ contains(github.event.pull_request.title, '[WIP]') && 'wip'
+        || github.event.pull_request.draft ) && 'draft_pr'
+        || github.event.pull_request.number && 'pr'
+        || 'main' }}
 
 jobs:
   lint:
     name: lint/style-and-typos
-    if: |
-      ${{ ! ( contains(github.event.pull_request.title, '[WIP]') ||
-            github.event.pull_request.draft ) }}
+    if: env.PYOMO_WORKFLOW != 'wip'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Pyomo source

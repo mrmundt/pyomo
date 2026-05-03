@@ -31,9 +31,7 @@ env:
 jobs:
   lint:
     name: lint/style-and-typos
-    if: |
-      ${{ ! ( contains(github.event.pull_request.title, '[WIP]') ||
-            github.event.pull_request.draft ) }}
+    if: env.PYOMO_WORKFLOW != 'wip'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Pyomo source
