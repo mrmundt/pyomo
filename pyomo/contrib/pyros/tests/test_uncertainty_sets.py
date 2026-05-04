@@ -3456,7 +3456,6 @@ class TestCartesianProductSet(unittest.TestCase):
         self.assertFalse(cpset.point_in_set([-0.6] + [0.25, -0.25]))
         self.assertFalse(cpset.point_in_set([-0.6] + [0.25, 0.25]))
 
-    @unittest.skipUnless(baron_available, "BARON is not available")
     def test_add_bounds_on_uncertain_parameters(self):
         m = ConcreteModel()
         m.uncertain_param_vars = Var(range(6), initialize=0)
@@ -3468,7 +3467,6 @@ class TestCartesianProductSet(unittest.TestCase):
             ]
         )
         cpset._add_bounds_on_uncertain_parameters(
-            global_solver=SolverFactory("baron"),
             uncertain_param_vars=m.uncertain_param_vars,
         )
 
@@ -3484,7 +3482,6 @@ class TestCartesianProductSet(unittest.TestCase):
         exc_str = r"Passed 2 VarData objects representing.* but.*of dimension 6."
         with self.assertRaisesRegex(ValueError, exc_str):
             cpset._add_bounds_on_uncertain_parameters(
-                global_solver=SolverFactory("baron"),
                 uncertain_param_vars=[
                     m.uncertain_param_vars[0],
                     m.uncertain_param_vars[1],
