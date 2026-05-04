@@ -756,7 +756,7 @@ class UncertaintySet(object, metaclass=abc.ABCMeta):
 
     def _compute_exact_parameter_bounds(self, solver, index=None):
         """
-        Compute lower and upper coordinate value bounds
+        Compute specified tight lower and upper coordinate value bounds
         for every dimension of `self` by solving a bounding model.
 
         Parameters
@@ -774,10 +774,12 @@ class UncertaintySet(object, metaclass=abc.ABCMeta):
 
         Returns
         -------
-        param_bounds : list of tuple of float
-            Each entry of the list is a 2-tuple
-            containing the lower and upper bound for
-            the corresponding dimension.
+        param_bounds : list of tuple
+            Every entry of the list is a 2-tuple,
+            each member of which is the corresponding dimension's
+            lower/upper bound
+            (if the corresponding entry of `index` is True)
+            or None (if the corresponding entry of `index` is False).
 
         Raises
         ------
@@ -4035,6 +4037,46 @@ class CartesianProductSet(UncertaintySet):
             uncertainty_cons=all_cons,
             auxiliary_vars=all_aux_vars,
         )
+
+    def _compute_exact_parameter_bounds(self, solver, index=None):
+        """
+        Compute specified tight lower and upper coordinate value bounds
+        for every dimension of `self` by solving a bounding model.
+
+        Parameters
+        ----------
+        solver : Pyomo solver type
+            Optimizer to invoke on the bounding problems.
+        index : list of 2-tuple of bool, optional
+            A list of tuples for each index of the coordinates for
+            which to compute bounds. A lower or upper bound is
+            computed for any value that is True, while False
+            indicates that the bound should be skipped.
+            If None is passed, then the argument is set to
+            ``[(True, True)]*self.dim``, so that the bounds
+            for all coordinates are computed.
+
+        Returns
+        -------
+        param_bounds : list of tuple
+            Every entry of the list is a 2-tuple,
+            each member of which is the corresponding dimension's
+            lower/upper bound
+            (if the corresponding entry of `index` is True)
+            or None (if the corresponding entry of `index` is False).
+        """
+        if index is None:
+            index = [(True, True)] * self.dim
+        param_bounds = [(None, None)] * self.dim
+        starting_dim = 0
+        for uset in self._all_sets:
+            param_bounds[starting_dim : starting_dim + uset.dim] = (
+                uset._compute_exact_parameter_bounds(
+                    solver, index=index[starting_dim : starting_dim + uset.dim]
+                )
+            )
+            starting_dim += uset.dim
+        return param_bounds
 
     def validate(self, config):
         """

@@ -3358,10 +3358,43 @@ class TestCartesianProductSet(unittest.TestCase):
                 [0.75, 1.25],
             ],
         )
-
         # since all sets in the product allow for quick bounds,
         # also check for parity
         np.testing.assert_allclose(cpset.parameter_bounds, computed_bounds)
+
+        # check that response to `index` argument is as expected
+        partial_index = [
+            (True, False),
+            (False, True),
+            (False, False),
+            (True, True),
+            (False, False),
+            (True, False),
+            (False, True),
+            (True, True),
+        ]
+        partial_computed_bounds = cpset._compute_exact_parameter_bounds(
+            SolverFactory("baron"), index=partial_index
+        )
+        partial_index_arr = np.array(partial_index)
+        for idx1, idx2 in zip(*np.where(partial_index_arr)):
+            self.assertAlmostEqual(
+                partial_computed_bounds[idx1][idx2],
+                computed_bounds[idx1][idx2],
+                msg=(
+                    f"Bound for index {idx1, idx2} should be "
+                    f"{computed_bounds[idx1][idx2]}, "
+                    f"instead got {partial_computed_bounds[idx1][idx2]}"
+                ),
+            )
+        for idx1, idx2 in zip(*np.where(~partial_index_arr)):
+            self.assertIsNone(
+                partial_computed_bounds[idx1][idx2],
+                msg=(
+                    f"Bound for index {idx1, idx2} should be None, "
+                    f"instead got {partial_computed_bounds[idx1][idx2]}"
+                ),
+            )
 
     def test_parameter_bounds(self):
         """
