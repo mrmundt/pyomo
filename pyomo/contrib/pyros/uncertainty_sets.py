@@ -3925,9 +3925,7 @@ class CartesianProductSet(UncertaintySet):
         assuming that there are no discrete sets.
         See the `Geometry` class documentation.
         """
-        return Geometry(
-            max(uset.geometry.value for uset in self._all_sets)
-        )
+        return Geometry(max(uset.geometry.value for uset in self._all_sets))
 
     @property
     def _PARAMETER_BOUNDS_EXACT(self):
@@ -3972,7 +3970,7 @@ class CartesianProductSet(UncertaintySet):
     def point_in_set(self, point):
         dim_count = 0
         for uset in self._all_sets:
-            in_uset = uset.point_in_set(point[dim_count:dim_count + uset.dim])
+            in_uset = uset.point_in_set(point[dim_count : dim_count + uset.dim])
             dim_count += uset.dim
             if not in_uset:
                 return False
@@ -3994,7 +3992,7 @@ class CartesianProductSet(UncertaintySet):
         aux_vals = []
         starting_dim = 0
         for uset in self._all_sets:
-            uset_pt = point_arr[starting_dim:starting_dim + uset.dim]
+            uset_pt = point_arr[starting_dim : starting_dim + uset.dim]
             aux_vals.extend(
                 uset.compute_auxiliary_uncertain_param_vals(uset_pt, solver=solver)
             )
@@ -4023,7 +4021,7 @@ class CartesianProductSet(UncertaintySet):
             set_quantification = uset.set_as_constraint(
                 block=sub_block,
                 uncertain_params=param_var_data_list[
-                    cumulative_dim:cumulative_dim + uset.dim
+                    cumulative_dim : cumulative_dim + uset.dim
                 ],
             )
             all_cons.extend(set_quantification.uncertainty_cons)
@@ -4071,9 +4069,9 @@ class CartesianProductSet(UncertaintySet):
             # of the set's corresponding uncertain parameters, we
             # need to temporarily update the appropriate config attribute
             if full_nom_param_vals:
-                config.nominal_uncertain_param_vals = (
-                    full_nom_param_vals[start_idx:start_idx + uset.dim]
-                )
+                config.nominal_uncertain_param_vals = full_nom_param_vals[
+                    start_idx : start_idx + uset.dim
+                ]
 
             try:
                 uset.validate(config)

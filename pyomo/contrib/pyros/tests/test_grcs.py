@@ -467,6 +467,7 @@ class TestPyROSSolveCartesianProductSet(unittest.TestCase):
     """
     Test PyROS successfully solves model with cartesian product uncertainty.
     """
+
     def build_model(self):
         m = ConcreteModel()
         m.q = Param(range(4), initialize=0, mutable=True)
@@ -480,16 +481,15 @@ class TestPyROSSolveCartesianProductSet(unittest.TestCase):
         Test solve with cartesian product uncertainty.
         """
         m = self.build_model()
-        cpset = CartesianProductSet([
-            BoxSet([[0, 1]]),
-            FactorModelSet(
-                origin=[0, 0],
-                number_of_factors=1,
-                beta=1,
-                psi_mat=[[1], [3]],
-            ),
-            CardinalitySet(origin=[0], positive_deviation=[0.5], gamma=1),
-        ])
+        cpset = CartesianProductSet(
+            [
+                BoxSet([[0, 1]]),
+                FactorModelSet(
+                    origin=[0, 0], number_of_factors=1, beta=1, psi_mat=[[1], [3]]
+                ),
+                CardinalitySet(origin=[0], positive_deviation=[0.5], gamma=1),
+            ]
+        )
         results = SolverFactory("pyros").solve(
             model=m,
             first_stage_variables=[m.x],
@@ -524,10 +524,9 @@ class TestPyROSSolveCartesianProductSet(unittest.TestCase):
         Test PyROS solver cartesian product set validation failure.
         """
         m = self.build_model()
-        cpset = CartesianProductSet([
-            BoxSet([[0, 1]]),
-            DiscreteScenarioSet([(0, 1, 3), (0, 0, 0)]),
-        ])
+        cpset = CartesianProductSet(
+            [BoxSet([[0, 1]]), DiscreteScenarioSet([(0, 1, 3), (0, 0, 0)])]
+        )
         # exception raised during set validation due to involvement
         # of discrete uncertainty in the cartesian product
         disc_exc_str = r"CartesianProductSet.*entry.*with a discrete geometry"
