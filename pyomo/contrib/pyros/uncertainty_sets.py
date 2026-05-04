@@ -3871,6 +3871,22 @@ class CartesianProductSet(UncertaintySet):
     TypeError
         If any entry of ``all_sets`` is not of type `UncertaintySet`.
 
+    Notes
+    -----
+    Given uncertainty sets
+    :math:`\\mathcal{Q}_1 \\in \\mathbb{R}^{n_1}`,
+    :math:`\\mathcal{Q}_2 \\in \\mathbb{R}^{n_2}`,
+    :math:`\\dots`,
+    :math:`\\mathcal{Q}_m \\in \\mathbb{R}^{n_m}`,
+    collectively represented by the argument ``all_sets``,
+    the :math:`(n_1 + n_2 + \\dots + n_m)`-dimensional
+    Cartesian product set is defined by
+
+    .. math::
+
+        \\mathcal{Q}_1 \\times \\mathcal{Q}_2 \\times \\cdots
+            \\times \\mathcal{Q}_m.
+
     Examples
     --------
     Cartesian product of 1D box/interval and 2D
