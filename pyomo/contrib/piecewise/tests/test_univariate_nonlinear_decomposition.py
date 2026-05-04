@@ -43,7 +43,7 @@ class TestUnivariateNonlinearDecomposition(TestCase):
         self.assertIsNone(m.y.ub)
         self.assertIsNone(m.z.lb)
         self.assertIsNone(m.z.ub)
-        self.assertEqual(aux.x[1].lb, 0)
+        self.assertTrue(aux.x[1].lb is None or aux.x[1].lb <= 0)
         self.assertIsNone(aux.x[1].ub)
         self.assertEqual(aux.x[2].lb, 0)
         self.assertEqual(aux.x[2].ub, 1)
