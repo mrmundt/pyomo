@@ -3984,12 +3984,30 @@ class CartesianProductSet(UncertaintySet):
                 return []
         return parameter_bounds
 
+    def _iterate_over_all_sets(self):
+        """
+        Iterate over the sets contained in `self`.
+
+        Yields
+        ------
+        start_dim : int
+            Positional index for the first dimension of the
+            multiplicand set iterate.
+        stop_dim : int
+            One plus the positional index for the last dimension of the
+            multiplicand set iterate.
+        uset : UncertaintySet
+            The multiplicand set iterate.
+        """
+        starting_dim = 0
+        for uset in self._all_sets:
+            yield starting_dim, starting_dim + uset.dim, uset
+            starting_dim += uset.dim
+
     @copy_docstring(UncertaintySet.point_in_set)
     def point_in_set(self, point):
-        dim_count = 0
-        for uset in self._all_sets:
-            in_uset = uset.point_in_set(point[dim_count : dim_count + uset.dim])
-            dim_count += uset.dim
+        for start_dim, stop_dim, uset in self._iterate_over_all_sets():
+            in_uset = uset.point_in_set(point[start_dim:stop_dim])
             if not in_uset:
                 return False
         return True
@@ -4008,13 +4026,11 @@ class CartesianProductSet(UncertaintySet):
         point_arr = np.array(point)
 
         aux_vals = []
-        starting_dim = 0
-        for uset in self._all_sets:
-            uset_pt = point_arr[starting_dim : starting_dim + uset.dim]
+        for start_dim, stop_dim, uset in self._iterate_over_all_sets():
+            uset_pt = point_arr[start_dim:stop_dim]
             aux_vals.extend(
                 uset.compute_auxiliary_uncertain_param_vals(uset_pt, solver=solver)
             )
-            starting_dim += uset.dim
 
         return np.array(aux_vals)
 
@@ -4030,22 +4046,18 @@ class CartesianProductSet(UncertaintySet):
         )
 
         all_cons, all_aux_vars = [], []
-        cumulative_dim = 0
-        for idx, uset in enumerate(self._all_sets):
+        set_iter = self._iterate_over_all_sets()
+        for idx, (start_dim, stop_dim, uset) in enumerate(set_iter):
             sub_block = Block()
             block.add_component(
                 unique_component_name(block, f"sub_block_{idx}"), sub_block
             )
             set_quantification = uset.set_as_constraint(
                 block=sub_block,
-                uncertain_params=param_var_data_list[
-                    cumulative_dim : cumulative_dim + uset.dim
-                ],
+                uncertain_params=param_var_data_list[start_dim:stop_dim],
             )
             all_cons.extend(set_quantification.uncertainty_cons)
             all_aux_vars.extend(set_quantification.auxiliary_vars)
-
-            cumulative_dim += uset.dim
 
         return UncertaintyQuantification(
             block=block,
@@ -4084,14 +4096,12 @@ class CartesianProductSet(UncertaintySet):
         if index is None:
             index = [(True, True)] * self.dim
         param_bounds = [(None, None)] * self.dim
-        starting_dim = 0
-        for uset in self._all_sets:
-            param_bounds[starting_dim : starting_dim + uset.dim] = (
+        for (start_dim, stop_dim, uset) in self._iterate_over_all_sets():
+            param_bounds[start_dim:stop_dim] = (
                 uset._compute_exact_parameter_bounds(
-                    solver, index=index[starting_dim : starting_dim + uset.dim]
+                    solver, index=index[start_dim:stop_dim],
                 )
             )
-            starting_dim += uset.dim
         return param_bounds
 
     def validate(self, config):
@@ -4110,8 +4120,7 @@ class CartesianProductSet(UncertaintySet):
         """
 
         full_nom_param_vals = config.nominal_uncertain_param_vals
-        start_idx = 0
-        for uset in self._all_sets:
+        for start_dim, stop_dim, uset in self._iterate_over_all_sets():
             # ensure there are no discrete sets
             if uset.geometry == Geometry.DISCRETE_SCENARIOS:
                 raise ValueError(
@@ -4128,7 +4137,7 @@ class CartesianProductSet(UncertaintySet):
             # need to temporarily update the appropriate config attribute
             if full_nom_param_vals:
                 config.nominal_uncertain_param_vals = full_nom_param_vals[
-                    start_idx : start_idx + uset.dim
+                    start_dim:stop_dim
                 ]
 
             try:
@@ -4136,5 +4145,3 @@ class CartesianProductSet(UncertaintySet):
             finally:
                 # ensure the config's state ultimately remains unchanged
                 config.nominal_uncertain_param_vals = full_nom_param_vals
-
-            start_idx += uset.dim
