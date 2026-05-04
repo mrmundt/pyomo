@@ -4096,11 +4096,9 @@ class CartesianProductSet(UncertaintySet):
         if index is None:
             index = [(True, True)] * self.dim
         param_bounds = [(None, None)] * self.dim
-        for (start_dim, stop_dim, uset) in self._iterate_over_all_sets():
-            param_bounds[start_dim:stop_dim] = (
-                uset._compute_exact_parameter_bounds(
-                    solver, index=index[start_dim:stop_dim],
-                )
+        for start_dim, stop_dim, uset in self._iterate_over_all_sets():
+            param_bounds[start_dim:stop_dim] = uset._compute_exact_parameter_bounds(
+                solver, index=index[start_dim:stop_dim]
             )
         return param_bounds
 
