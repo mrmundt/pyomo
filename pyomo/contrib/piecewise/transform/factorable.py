@@ -469,10 +469,7 @@ class UnivariateNonlinearDecompositionTransformation(Transformation):
         known_ctypes = {Constraint, Objective, Block}
         ignore = {Suffix}
         valid, invalid = categorize_valid_components(
-            model=model, 
-            active=True, 
-            valid=ignore, 
-            targets=known_ctypes,
+            model=model, active=True, valid=ignore, targets=known_ctypes
         )
         if invalid:
             raise NotImplementedError(
