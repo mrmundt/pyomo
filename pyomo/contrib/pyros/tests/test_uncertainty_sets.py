@@ -3467,7 +3467,7 @@ class TestCartesianProductSet(unittest.TestCase):
             ]
         )
         cpset._add_bounds_on_uncertain_parameters(
-            uncertain_param_vars=m.uncertain_param_vars,
+            uncertain_param_vars=m.uncertain_param_vars
         )
 
         # check bounds
@@ -3485,7 +3485,7 @@ class TestCartesianProductSet(unittest.TestCase):
                 uncertain_param_vars=[
                     m.uncertain_param_vars[0],
                     m.uncertain_param_vars[1],
-                ],
+                ]
             )
 
     def test_validate(self):
