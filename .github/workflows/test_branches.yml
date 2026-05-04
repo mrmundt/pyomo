@@ -31,7 +31,7 @@ env:
 jobs:
   lint:
     name: lint/style-and-typos
-    # Note: 'env' is not available in ght jobs.<job_id>.if context.
+    # Note: 'env' is not available in GHA jobs.<job_id>.if context.
     if: ${{ ! contains(github.event.pull_request.title, '[WIP]') }}
     runs-on: ubuntu-latest
     steps:
