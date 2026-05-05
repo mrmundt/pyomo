@@ -391,12 +391,7 @@ class _GMSWriter_impl(object):
                     raise InfeasibleConstraintException(
                         f'detected a trivially infeasible constraint: {con}'
                     )
-                if (
-                    # skip_trivial_constraints
-                    # and (lb is None or lb <= offset)
-                    (lb is None or lb <= offset)
-                    and (ub is None or ub >= offset)
-                ):
+                if skip_trivial_constraints:
                     continue
 
             con_symbol = con_labeler(con)
