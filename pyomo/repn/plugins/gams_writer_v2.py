@@ -653,5 +653,10 @@ class _GMSWriter_impl(object):
                     expr_str += f'{coef!s}*{getSymbol(getVar(vid))} \n'
                 else:
                     expr_str += f'+ {coef!s} * {getSymbol(getVar(vid))} \n'
+        else:
+            # If this is a constant, we need to make sure to emit the 0
+            # (the non-zero constant has been moved to the other side of
+            # the expression)
+            expr_str = "0"
 
         return expr_str
