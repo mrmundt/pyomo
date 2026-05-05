@@ -273,7 +273,7 @@ class AddSlackVariables(NonIsomorphicTransformation):
                 ):
                     yield cons
 
-    def get_slack_variables(self, model, constraint):
+    def get_slack_variables(self, transformed_block, constraint):
         """Return the list of slack variables used to relax 'constraint.' Note
         that if 'constraint' is one-sided, there will be a single variable in
         the list, but if it is a ranged constraint (l <= expr <= u) or an
@@ -285,24 +285,24 @@ class AddSlackVariables(NonIsomorphicTransformation):
 
         Parameters
         ----------
-        model: ConcreteModel
-            A model, having had the 'core.add_slack_variables' transformation
-            applied to it
+        transformed_block: ConcreteModel or Block
+            The model or block that had the 'core.add_slack_variables'
+            transformation applied to it
         constraint: Constraint
             A constraint that was relaxed by the transformation (either
             because no targets were specified or because it was a target)
         """
-        slack_variables = model.private_data().slack_variables
+        slack_variables = transformed_block.private_data().slack_variables
         if constraint in slack_variables:
             return slack_variables[constraint]
         else:
             raise ValueError(
                 f"It does not appear that {constraint.name} is a constraint "
-                f"on model {model.name} that was relaxed by the "
+                f"on model {transformed_block.name} that was relaxed by the "
                 f"'core.add_slack_variables' transformation."
             )
 
-    def get_relaxed_constraint(self, model, slack_var):
+    def get_relaxed_constraint(self, transformed_block, slack_var):
         """Return the constraint that 'slack_var' is used to relax.
 
         Returns
@@ -311,24 +311,24 @@ class AddSlackVariables(NonIsomorphicTransformation):
 
         Parameters
         -----------
-        model: ConcreteModel
-            A model, having had the 'core.add_slack_variables' transformation
-            applied to it
+        transformed_block: ConcreteModel or Block
+            The model or block that had the 'core.add_slack_variables'
+            transformation applied to it
         slack_var: Var
             A variable created by the 'core.add_slack_variables' transformation to
             relax a constraint.
         """
-        relaxed_constraints = model.private_data().relaxed_constraint
+        relaxed_constraints = transformed_block.private_data().relaxed_constraint
         if slack_var in relaxed_constraints:
             return relaxed_constraints[slack_var]
         else:
             raise ValueError(
                 f"It does not appear that {slack_var.name} is a slack variable "
                 f"created by applying the 'core.add_slack_variables' transformation "
-                f"to model {model.name}."
+                f"to model {transformed_block.name}."
             )
 
-    def get_summed_slacks_expr(self, model):
+    def get_summed_slacks_expr(self, transformed_block):
         """Return an expression summing all the slacks added to the model during the
         transformation. This would most commonly be used to add a penalty on non-zero
         slacks to an existing objective.
@@ -339,14 +339,15 @@ class AddSlackVariables(NonIsomorphicTransformation):
 
         Parameters
         ----------
-        model: ConcreteModel
-            A model, having had the 'core.add_slack_variables' transformation
-            applied to it
+        transformed_block: ConcreteModel or Block
+            The model or block that had the 'core.add_slack_variables'
+            transformation applied to it
         """
-        expr = model.private_data().summed_slacks_expr
+        expr = transformed_block.private_data().summed_slacks_expr
         if expr is None:
             raise ValueError(
-                f"It does not appear that {model.name} is a model that was transformed "
+                f"It does not appear that {transformed_block.name} is a model that "
+                f"was transformed "
                 f"by the 'core.add_slack_variables' transformation."
             )
         return expr
