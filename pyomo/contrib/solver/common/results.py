@@ -251,7 +251,6 @@ def get_infeasible_results(config, err_msg, solver_name, solver_version):
     res.termination_condition = TerminationCondition.provenInfeasible
     res.incumbent_objective = None
     res.objective_bound = None
-    res.timing_info.gurobi_time = None
     res.solver_config = config
     res.solver_name = solver_name
     res.solver_version = solver_version
