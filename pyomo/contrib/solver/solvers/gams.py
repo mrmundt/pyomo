@@ -309,15 +309,14 @@ class GAMS(SolverBase):
             output_filename = basename + '.gms'
             lst_filename = os.path.join(dname, lst)
 
+            timer.start(f'write_gms_file')
             try:
-                timer.start(f'write_gms_file')
                 with open(
                     output_filename, 'w', newline='\n', encoding='utf-8'
                 ) as gms_file:
                     gms_info = GAMSWriter().write(
                         model, gms_file, config=config.writer_config
                     )
-                timer.stop(f'write_gms_file')
             except InfeasibleConstraintException as err:
                 timer.stop(f'write_gms_file')
                 err_msg = (
@@ -336,6 +335,7 @@ class GAMS(SolverBase):
                 results.timing_info.wall_time = tock - tick
                 results.timing_info.timer = timer
                 return results
+            timer.stop(f'write_gms_file')
 
             if config.writer_config.put_results_format == 'gdx':
                 results_filename = os.path.join(dname, "GAMS_MODEL_p.gdx")
