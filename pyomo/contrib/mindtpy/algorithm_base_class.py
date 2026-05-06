@@ -249,16 +249,13 @@ class _MindtPyAlgorithm:
             self.build_ordered_component_lists(model)
             self.add_cuts_components(model)
 
-    def _get_main_objective(self, model, create_dummy_objective=False, logger=None):
+    def _get_main_objective(self, model, logger=None):
         """Return the single active objective, adding a dummy one if needed.
 
         Parameters
         ----------
         model : BlockData
             Model to inspect.
-        create_dummy_objective : bool, optional
-            Whether to create a temporary constant objective when the model has
-            no active objective, by default False.
         logger : logging.Logger, optional
             Logger used to emit the missing-objective warning when a dummy
             objective is created.
@@ -278,29 +275,20 @@ class _MindtPyAlgorithm:
         )
         objective_count = len(active_objectives)
         if objective_count == 0:
-            if not create_dummy_objective:
-                return None, objective_count, None
             if logger is not None:
                 logger.warning(
                     'Model has no active objectives. Adding dummy objective.'
                 )
             dummy_name = unique_component_name(model, 'MindtPy_dummy_objective')
-            setattr(model, dummy_name, Objective(expr=1))
-            return getattr(model, dummy_name), objective_count, dummy_name
+            obj = Objective(expr=1)
+            model.add_component(dummy_name, obj)
+            return obj, objective_count, dummy_name
         if objective_count > 1:
             raise ValueError('Model has multiple active objectives.')
         return active_objectives[0], objective_count, None
 
     def _cleanup_temporary_original_objective(self):
-        if (
-            self._temporary_original_objective_name is None
-            or self.original_model is None
-        ):
-            return
-        if (
-            self.original_model.component(self._temporary_original_objective_name)
-            is not None
-        ):
+        if self.original_model is not None:
             self.original_model.del_component(self._temporary_original_objective_name)
         self._temporary_original_objective_name = None
 
@@ -452,10 +440,10 @@ class _MindtPyAlgorithm:
         return True
 
     def _classify_short_circuit_problem(self, MindtPy, obj_degree):
-        """Classify a no-discrete model for short-circuit direct solves.
+        """Classify a continuous model for short-circuit direct solves.
 
         This classification is intentionally independent of
-        ``quadratic_strategy``. In the no-discrete short-circuit path we are
+        ``quadratic_strategy``. In the continuous-model short-circuit path we are
         selecting a direct subsolver for the original model, not building the
         MindtPy main problem.
 
@@ -883,9 +871,7 @@ class _MindtPyAlgorithm:
         config = self.config
         m = self.working_model
         util_block = getattr(m, self.util_block_name)
-        main_obj, _, _ = self._get_main_objective(
-            m, create_dummy_objective=True, logger=config.logger
-        )
+        main_obj, _, _ = self._get_main_objective(m, logger=config.logger)
         self.results.problem.number_of_objectives = (
             self._original_model_num_active_objectives
         )
@@ -999,9 +985,8 @@ class _MindtPyAlgorithm:
         """
         config = self.config
         self.original_model = model
-        self._temporary_original_objective_name = None
         obj, objective_count, dummy_name = self._get_main_objective(
-            model, create_dummy_objective=True, logger=config.logger
+            model, logger=config.logger
         )
         self._temporary_original_objective_name = dummy_name
         self._original_model_num_active_objectives = objective_count
@@ -3087,8 +3072,10 @@ class _MindtPyAlgorithm:
                 # Save model initial values.
                 self.initial_var_values = list(v.value for v in MindtPy.variable_list)
 
-                # TODO: if the MindtPy solver is defined once and called several times to solve models. The following two lines are necessary. It seems that the solver class will not be init every time call.
-                # For example, if we remove the following two lines. test_RLPNLP_L1 will fail.
+                # TODO: these two lines are necessary when one MindtPy solver
+                # instance is reused to solve several models. Without them,
+                # test_RLPNLP_L1 fails because the solver class is not
+                # initialized on every solve call.
                 self.best_solution_found = None
                 self.best_solution_found_time = None
                 self.initialize_mip_problem()
