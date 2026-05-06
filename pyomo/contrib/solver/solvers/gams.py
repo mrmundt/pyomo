@@ -320,9 +320,8 @@ class GAMS(SolverBase):
             except InfeasibleConstraintException as err:
                 timer.stop(f'write_gms_file')
                 err_msg = (
-                    'Solution loader does not currently have a valid solution '
-                    'because the problem was proven to be infeasible during '
-                    'compilation:\n\t{str(err)}'
+                    'The problem was proven to be infeasible during compilation:\n'
+                    f'\t{str(err)}'
                 )
                 results = get_infeasible_results(
                     config=config,
