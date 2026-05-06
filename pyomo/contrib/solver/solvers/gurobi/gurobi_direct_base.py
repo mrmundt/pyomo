@@ -383,10 +383,10 @@ class GurobiDirectBase(SolverBase):
                 f'\t{str(err)}'
             )
             res = get_infeasible_results(
+                model=model,
+                solver=self,
                 config=config,
                 err_msg=err_msg,
-                solver_name=self.name,
-                solver_version=self.version(),
             )
         finally:
             os.chdir(orig_cwd)

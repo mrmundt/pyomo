@@ -324,10 +324,10 @@ class GAMS(SolverBase):
                     f'\t{str(err)}'
                 )
                 results = get_infeasible_results(
+                    model=model,
+                    solver=self,
                     config=config,
                     err_msg=err_msg,
-                    solver_name=self.name,
-                    solver_version=self.version(),
                 )
                 tock = time.perf_counter()
                 results.timing_info.start_timestamp = start_timestamp
