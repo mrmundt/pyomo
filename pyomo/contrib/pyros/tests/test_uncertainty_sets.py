@@ -3220,6 +3220,12 @@ class TestCartesianProductSet(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, exc_str):
             CartesianProductSet([BoxSet([[0, 1]]), 1])
 
+        # iterable should be a sequence, and the constructor performs
+        # the iterable type check before doing anything else
+        iter_exc_str = r"`all_sets`.*Sequence.*but is of type set"
+        with self.assertRaisesRegex(TypeError, iter_exc_str):
+            CartesianProductSet({BoxSet([[0, 1]]), 1})
+
     def test_set_as_constraint(self):
         """
         Test method for setting up Cartesian product constraints

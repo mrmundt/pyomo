@@ -22,7 +22,7 @@ import functools
 import itertools
 from numbers import Integral
 from collections import namedtuple
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Iterable, MutableSequence, Sequence
 from enum import Enum
 
 from pyomo.common.dependencies import numpy as np, scipy as sp
@@ -973,7 +973,7 @@ class UncertaintySet(object, metaclass=abc.ABCMeta):
         config : ConfigDict
             PyROS solver options. Should at least contain attribute
             `global_solver`.
-        index : sequence of int, optional
+        index : Sequence of int, optional
             Positional indices of the coordinates to check.
             If `None` is passed, then `index` is set to
             ``list(range(self.dim))``, so that all coordinates
@@ -3863,7 +3863,7 @@ class CartesianProductSet(UncertaintySet):
 
     Parameters
     ----------
-    all_sets : Iterable of UncertaintySet
+    all_sets : Sequence of UncertaintySet
         Uncertainty sets of which the product is to be taken.
 
     Raises
@@ -3905,6 +3905,11 @@ class CartesianProductSet(UncertaintySet):
 
     def __init__(self, all_sets):
         """Initialize self (see class docstring)."""
+        if not isinstance(all_sets, Sequence):
+            raise TypeError(
+                f"Argument `all_sets` should be a {Sequence.__name__}-type "
+                f"iterable, but is of type {type(all_sets).__name__}."
+            )
         all_sets = tuple(all_sets)
         for val in all_sets:
             if not isinstance(val, UncertaintySet):
