@@ -394,6 +394,7 @@ class TestSolutionLoaderView(unittest.TestCase):
         self.assertEqual(m.b.b.rc, ref)
         self.assertEqual(m.c.rc, ref)
 
+
 class TestNoSolutionSolutionLoader(unittest.TestCase):
     def test_core_API(self):
         model = pyo.ConcreteModel()
