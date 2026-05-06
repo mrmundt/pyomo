@@ -647,11 +647,11 @@ class _GMSWriter_impl(object):
                 )
             )
         else:
-            # If this is a constant, we need to make sure to emit the +0
-            # (the non-zero constant has been moved to the other side of
-            # the expression).
+            # If this is a constant, we need to make sure we still emit
+            # the +0 (the non-zero constant has been moved to the other
+            # side of the expression).
             #
-            # Note the "+" is neededs for objectives, where the constand
+            # Note the "+" is needed for objectives, where the constant
             # is added to the magic GAMS_OBJECTIVE variable
             expr_str = "+0"
 
