@@ -1,10 +1,10 @@
 ---
-name: "Task"
-about: Track a new task to be completed.
+name: "Developer Task"
+about: Track a new developer task to be completed.
 labels: "Task"
 ---
 
-<!-- DO NOT DELETE OR IGNORE THIS TEMPLATE.  Failing to adhere to this template and provide the necessary information may lead to your Issue being closed without consideration. -->
+<!-- ONLY FOR USE BY CORE DEVELOPERS. This template is only intended for use by core developers. If you are reporting a bug or requesting a new feature, please use the appropriate template. -->
 
 ## Summary
 <!-- Brief description of this task -->
