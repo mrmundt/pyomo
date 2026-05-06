@@ -245,6 +245,11 @@ class Results(ConfigDict):
 
 
 def get_infeasible_results(config, err_msg, solver_name, solver_version):
+    if config.raise_exception_on_nonoptimal_result:
+        raise NoOptimalSolutionError(err_msg)
+    if config.load_solutions:
+        raise NoSolutionError(err_msg)
+
     res = Results()
     res.solution_loader = NoSolutionSolutionLoader(err_msg)
     res.solution_status = SolutionStatus.noSolution
@@ -254,10 +259,6 @@ def get_infeasible_results(config, err_msg, solver_name, solver_version):
     res.solver_config = config
     res.solver_name = solver_name
     res.solver_version = solver_version
-    if config.raise_exception_on_nonoptimal_result:
-        raise NoOptimalSolutionError(err_msg)
-    if config.load_solutions:
-        raise NoSolutionError(err_msg)
     return res
 
 
