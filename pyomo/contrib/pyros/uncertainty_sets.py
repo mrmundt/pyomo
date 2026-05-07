@@ -973,7 +973,7 @@ class UncertaintySet(object, metaclass=abc.ABCMeta):
         config : ConfigDict
             PyROS solver options. Should at least contain attribute
             `global_solver`.
-        index : Sequence of int, optional
+        index : Sequence[int] | None
             Positional indices of the coordinates to check.
             If `None` is passed, then `index` is set to
             ``list(range(self.dim))``, so that all coordinates
@@ -3863,7 +3863,7 @@ class CartesianProductSet(UncertaintySet):
 
     Parameters
     ----------
-    all_sets : Sequence of UncertaintySet
+    all_sets : Sequence[UncertaintySet]
         Uncertainty sets of which the product is to be taken.
 
     Raises
