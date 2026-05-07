@@ -4028,11 +4028,10 @@ class CartesianProductSet(UncertaintySet):
             required_shape=[self.dim],
             required_shape_qual="to match the set dimension",
         )
-        point_arr = np.array(point)
 
         aux_vals = []
         for start_dim, stop_dim, uset in self._iterate_over_all_sets():
-            uset_pt = point_arr[start_dim:stop_dim]
+            uset_pt = point[start_dim:stop_dim]
             aux_vals.extend(
                 uset.compute_auxiliary_uncertain_param_vals(uset_pt, solver=solver)
             )
