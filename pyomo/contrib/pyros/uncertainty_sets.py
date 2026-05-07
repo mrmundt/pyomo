@@ -4050,8 +4050,9 @@ class CartesianProductSet(UncertaintySet):
         )
 
         all_cons, all_aux_vars = [], []
-        set_iter = self._iterate_over_all_sets()
-        for idx, (start_dim, stop_dim, uset) in enumerate(set_iter):
+        for idx, (start_dim, stop_dim, uset) in enumerate(
+            self._iterate_over_all_sets()
+        ):
             sub_block = Block()
             block.add_component(
                 unique_component_name(block, f"sub_block_{idx}"), sub_block
