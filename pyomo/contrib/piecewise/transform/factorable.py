@@ -502,7 +502,7 @@ class UnivariateNonlinearDecompositionTransformation(Transformation):
         for con in constraints:
             lower, body, upper = con.to_bounded_expression(evaluate_bounds=True)
             new_body = visitor.walk_expression(body)
-            if lower == upper:
+            if lower is not None and lower == upper:
                 con.set_value(new_body == lower)
             else:
                 con.set_value((lower, new_body, upper))
