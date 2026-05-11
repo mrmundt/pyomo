@@ -114,8 +114,8 @@ def _handle_product(node, data, visitor):
         arg2_nvars = 1
         arg2_degree = 1
     res = arg1 * arg2
-    # at this point arg1 should have at most 1 variable
-    # and arg2 should have at most 1 variable
+    # at this point arg1 should have exactly 1 variable
+    # and arg2 should have exactly 1 variable
     if arg1_nvars == 0:
         visitor.node_to_var_map[res] = arg2_vars
     elif arg2_nvars == 0:
@@ -127,12 +127,7 @@ def _handle_product(node, data, visitor):
             visitor.node_to_var_map[res] = (x,)
         else:
             visitor.node_to_var_map[res] = (x, y)
-    if arg1_degree == 0:
-        visitor.degree_map[res] = arg2_degree
-    elif arg2_degree == 0:
-        visitor.degree_map[res] = arg1_degree
-    else:
-        visitor.degree_map[res] = -1
+    visitor.degree_map[res] = -1
     visitor.substitution_map[node] = res
     return res
 
