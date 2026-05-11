@@ -80,6 +80,22 @@ def _handle_float(node, data, visitor):
     return node
 
 
+def _update_node_to_var_map(res, arg1_vars, arg2_vars, visitor):
+    arg1_nvars = len(arg1_vars)
+    arg2_nvars = len(arg2_vars)
+    if arg1_nvars == 0:
+        visitor.node_to_var_map[res] = arg2_vars
+    elif arg2_nvars == 0:
+        visitor.node_to_var_map[res] = arg1_vars
+    else:
+        x = arg1_vars[0]
+        y = arg2_vars[0]
+        if x is y:
+            visitor.node_to_var_map[res] = (x,)
+        else:
+            visitor.node_to_var_map[res] = (x, y)
+
+
 def _handle_product(node, data, visitor):
     arg1, arg2 = data
     arg1_vars = visitor.node_to_var_map[arg1]
@@ -116,12 +132,7 @@ def _handle_product(node, data, visitor):
     res = arg1 * arg2
     # at this point arg1 should have exactly 1 variable
     # and arg2 should have exactly 1 variable
-    x = arg1_vars[0]
-    y = arg2_vars[0]
-    if x is y:
-        visitor.node_to_var_map[res] = (x,)
-    else:
-        visitor.node_to_var_map[res] = (x, y)
+    _update_node_to_var_map(res, arg1_vars, arg2_vars, visitor)
     visitor.degree_map[res] = -1
     visitor.substitution_map[node] = res
     return res
@@ -215,15 +226,7 @@ def _handle_division(node, data, visitor):
     res = arg1 * arg2
     # at this point arg1 should have at most 1 variable
     # and arg2 should have exactly 1 variable
-    if arg1_nvars == 0:
-        visitor.node_to_var_map[res] = arg2_vars
-    else:
-        x = arg1_vars[0]
-        y = arg2_vars[0]
-        if x is y:
-            visitor.node_to_var_map[res] = (x,)
-        else:
-            visitor.node_to_var_map[res] = (x, y)
+    _update_node_to_var_map(res, arg1_vars, arg2_vars, visitor)
     if arg1_degree == 0:
         visitor.degree_map[res] = arg2_degree
     else:
@@ -258,17 +261,7 @@ def _handle_pow(node, data, visitor):
     res = arg1**arg2
     # at this point arg1 should have at most 1 variable
     # and arg2 should have at most 1 variable
-    if arg1_nvars == 0:
-        visitor.node_to_var_map[res] = arg2_vars
-    elif arg2_nvars == 0:
-        visitor.node_to_var_map[res] = arg1_vars
-    else:
-        x = arg1_vars[0]
-        y = arg2_vars[0]
-        if x is y:
-            visitor.node_to_var_map[res] = (x,)
-        else:
-            visitor.node_to_var_map[res] = (x, y)
+    _update_node_to_var_map(res, arg1_vars, arg2_vars, visitor)
     if arg1_degree == 0 and arg2_degree == 0:
         visitor.degree_map[res] = 0
     else:
