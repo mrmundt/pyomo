@@ -15,6 +15,15 @@ jobs:
     steps:
     - name: Checkout Pyomo source
       uses: actions/checkout@v6
+    - name: Set DNS server
+      run: |
+        # This will hopefully resolve intermittent DNS resolution errors
+        echo "Reset DNS servers to use cloudfare"
+        LINK=`resolvectl query github.com | grep link: | sed -r 's/.*link://'`
+        sudo resolvectl dns $LINK 1.1.1.1 1.0.0.1
+        sudo resolvectl flush-caches
+        sudo resolvectl query github.com
+        sudo resolvectl status
     - name: URL Checker
       uses: urlstechie/urlchecker-action@0.0.34
       with:
@@ -31,7 +40,8 @@ jobs:
         # Exclude:
         #  - Jenkins because it's behind a firewall
         #  - RTD because a magically-generated string triggers failures
-        exclude_urls: https://pyomo-jenkins.sandia.gov/,https://pyomo.readthedocs.io/en/%s/errors.html
+        #  - scipopt.org as they perform "validation" on the webclient (which fails)
+        exclude_urls: https://pyomo-jenkins.sandia.gov/,https://pyomo.readthedocs.io/en/%s/errors.html,https://www.scipopt.org
         # Exclude:
         #  - All gnu.org links because they consistently fail the checker
         #  - All lpsolve.sourceforge.net links because SF appears to reject from GHA
