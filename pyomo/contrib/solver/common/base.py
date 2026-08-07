@@ -7,12 +7,12 @@
 # software.  This software is distributed under the 3-clause BSD License.
 # ____________________________________________________________________________________
 
-from typing import Sequence, Mapping
+from typing import Optional, Sequence, Mapping
+from contextlib import contextmanager
 import os
 
 from pyomo.core.base.constraint import ConstraintData
 from pyomo.core.base.var import VarData
-from pyomo.core.base.param import ParamData
 from pyomo.core.base.block import BlockData
 from pyomo.core.base.objective import Objective, ObjectiveData
 from pyomo.common.config import ConfigValue, ConfigDict
@@ -75,6 +75,125 @@ class Availability(IntEnum):
         return self.name
 
 
+class _LicenseManagerBase:
+    """
+    Internal helper for managing solver license acquisition and release.
+
+    This class manages license access for solver instances that
+    require a license, either through file or server. It is not
+    intended to be used directly by end users. Instead, solvers expose
+    a ``license`` attribute that wraps a ``_LicenseManager`` instance.
+
+    When a solver requires a license, its ``license`` manager ensures that
+    licenses are properly acquired. Solvers that do not require a license
+    simply use the default implementation of this class.
+
+    Solvers will generally manage the license acquisition as part of the
+    underlying ``solve`` method:
+
+        >>> solver = pyo.SolverFactory("ipopt")
+        >>> solver.solve(model) # license acquired and released automatically
+
+    A user can optionally manually acquire a license either using
+    a context manager:
+
+        >>> with solver.license():
+        ...     # The context manager will acquire and release the license
+        ...     solver.solve(model)
+
+    or equivalently:
+
+        >>> solver.license.acquire()
+        >>> solver.solve(model)
+        >>> solver.license.release()
+    """
+
+    def __init__(self) -> None:
+        #: Whether this manager currently holds a license.
+        self._acquired = False
+
+    @property
+    def acquired(self) -> bool:
+        """``True`` if a license is currently held."""
+        return self._acquired
+
+    def acquire(
+        self,
+        timeout: Optional[float] = float("inf"),
+        retry_timeout: Optional[float] = None,
+    ) -> None:
+        """
+        Acquire and lock a license. Default behavior is to simply return
+        because we assume, unless otherwise noted, that a solver does NOT
+        require a license.
+
+        Parameters
+        ----------
+        timeout : float, optional
+            Maximum time (in seconds) to wait for a single license acquisition
+            attempt (e.g., waiting for the license server to respond).
+            We will use the solver's default value, if it exists.
+
+        retry_timeout : float, optional
+            Total time (in seconds) to keep retrying license acquisition if
+            the license is temporarily unavailable. This allows temporary
+            statuses (e.g., all licenses in use) to resolve before giving up.
+            By default, acquire is a fully blocking operation and will keep
+            trying until a license is acquired.
+        """
+        if self._acquired:
+            return
+        self._acquire(timeout=timeout, retry_timeout=retry_timeout)
+        self._acquired = True
+
+    def release(self) -> None:
+        """Release the lock on a license."""
+        if not self._acquired:
+            return
+        self._release()
+        self._acquired = False
+
+    def _acquire(
+        self,
+        timeout: Optional[float] = float("inf"),
+        retry_timeout: Optional[float] = None,
+    ) -> None:
+        """Perform the actual license acquisition.
+
+        The default implementation is a no-op (solver has no license).
+        Subclasses that require a license should override this method.
+        """
+
+    def _release(self) -> None:
+        """Perform the actual license release.
+
+        The default implementation is a no-op (solver has no license).
+        Subclasses that require a license should override this method.
+        """
+
+    def __enter__(self):
+        self.acquire()
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.release()
+        return False
+
+    def __call__(self, timeout: Optional[float] = float("inf"), retry_timeout=None):
+        """This logic is necessary in order to support this type of
+        context manager: ``with solver.license(timeout=5):``"""
+
+        @contextmanager
+        def _cm():
+            self.acquire(timeout=timeout, retry_timeout=retry_timeout)
+            try:
+                yield self
+            finally:
+                self.release()
+
+        return _cm()
+
+
 class SolverBase:
     """The base class for "new-style" Pyomo solver interfaces.
 
@@ -85,6 +204,15 @@ class SolverBase:
       - :py:meth:`is_persistent`
       - :py:meth:`solve`
       - :py:meth:`version`
+
+    **License Management**
+
+    Every solver exposes a ``license`` attribute: a license manager
+    (see :class:`_LicenseManagerBase`) that provides a standard interface
+    for acquiring and releasing a license. For solvers that do not
+    require a license, the default no-op manager is used. Solvers that
+    require a license should replace this attribute with an instance of a
+    :class:`_LicenseManagerBase` subclass.
 
     **Class Configuration**
 
@@ -111,6 +239,7 @@ class SolverBase:
 
         #: Instance configuration; see CONFIG documentation on derived class
         self.config = self.CONFIG(value=kwds)
+        self.license = _LicenseManagerBase()
 
     def __enter__(self):
         return self
