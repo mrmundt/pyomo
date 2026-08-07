@@ -254,7 +254,7 @@ class GurobiDirectBase(SolverBase):
             else:
                 self.__class__._available = self._check_license()
                 if self.version() < self._minimum_version:
-                    self.__class__._available = Availability.BadVersion
+                    self.__class__._available = Availability.UnsupportedVersion
         return self._available
 
     @staticmethod
@@ -293,7 +293,7 @@ class GurobiDirectBase(SolverBase):
         try:
             model = gurobipy.Model(env=self.env())
         except gurobipy.GurobiError:
-            return Availability.BadLicense
+            return Availability.LicenseError
 
         model.setParam('OutputFlag', 0)
         try:

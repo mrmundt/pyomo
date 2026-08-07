@@ -91,7 +91,7 @@ class ScipDirect(SolverBase):
         if not scip_available:
             ScipDirect._available = Availability.NotFound
         elif self.version() < self._minimum_version:
-            ScipDirect._available = Availability.BadVersion
+            ScipDirect._available = Availability.UnsupportedVersion
         else:
             ScipDirect._available = Availability.FullLicense
 

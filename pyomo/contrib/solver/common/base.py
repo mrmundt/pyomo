@@ -43,12 +43,27 @@ class Availability(IntEnum):
     order to record its availability for use.
     """
 
+    NoLicenseRequired = 3
+    """The solver was found and no license is required to run."""
+
     FullLicense = 2
+    """The solver was found and a full license is accessible to use."""
+
     LimitedLicense = 1
+    """The solver was found and a limited license (e.g., demo license) is
+    accessible to use."""
+
     NotFound = 0
-    BadVersion = -1
-    BadLicense = -2
-    NeedsCompiledExtension = -3
+    """The solver was not found, either because the executable was not
+    on the path or the solver package is not importable."""
+
+    UnsupportedVersion = -1
+    """The solver was found but is an unsupported version in Pyomo."""
+
+    LicenseError = -2
+    """The solver was found but no usable license is available. This could
+    indicate either that no license was found, an expired or malformed
+    license was found, or the license is incorrect for the problem type."""
 
     def __bool__(self):
         return self._value_ > 0

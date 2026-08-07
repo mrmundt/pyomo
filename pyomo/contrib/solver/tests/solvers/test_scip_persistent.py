@@ -61,7 +61,11 @@ class TestScipPersistentInterface(unittest.TestCase):
         self.assertEqual(opt.CONFIG, opt.config)
         self.assertIn(
             opt.available(),
-            {Availability.NotFound, Availability.BadVersion, Availability.FullLicense},
+            {
+                Availability.NotFound,
+                Availability.UnsupportedVersion,
+                Availability.FullLicense,
+            },
         )
 
     def test_context_manager(self):
