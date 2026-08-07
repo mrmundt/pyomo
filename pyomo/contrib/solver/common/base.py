@@ -280,7 +280,12 @@ class SolverBase:
             f"Derived class {self.__class__.__name__} failed to implement required method 'solve'."
         )
 
-    def available(self) -> Availability:
+    def available(
+        self,
+        recheck: bool = False,
+        timeout: Optional[float] = float("inf"),
+        retry_timeout: Optional[float] = None,
+    ) -> Availability:
         """Test if the solver is available on this system.
 
         Nominally, this will return `True` if the solver interface is
@@ -295,6 +300,28 @@ class SolverBase:
         False indicating the reason why the interface is not available
         (not found, bad license, unsupported version, etc).
 
+        Parameters
+        ----------
+        recheck : bool, optional
+            If ``True``, ignore any cached result and re-check the
+            solver's availability. Defaults to ``False`` (use the cached
+            result when one is available).
+
+        timeout : float, optional
+            Maximum time (in seconds) to wait for a single availability
+            check that must contact a license server, to guard against a
+            flaky network or an unresponsive server. Defaults to
+            ``float("inf")`` (wait indefinitely). Ignored by solvers that
+            do not contact a license server.
+
+        retry_timeout : float, optional
+            Total time (in seconds) to keep retrying the check while a
+            license is temporarily unavailable (e.g., all licenses in
+            use), allowing transient conditions to resolve before giving
+            up. Defaults to ``None``, which uses the solver's default
+            retry behavior. Ignored by solvers that do not require a
+            license.
+
         Returns
         -------
         available: Availability
@@ -307,8 +334,15 @@ class SolverBase:
             f"Derived class {self.__class__.__name__} failed to implement required method 'available'."
         )
 
-    def version(self) -> tuple:
+    def version(self, recheck: bool = False) -> tuple:
         """Return the solver version found on the system.
+
+        Parameters
+        ----------
+        recheck : bool, optional
+            If ``True``, ignore any cached result and re-query the
+            solver's version. Defaults to ``False`` (use the cached
+            result when one is available).
 
         Returns
         -------
