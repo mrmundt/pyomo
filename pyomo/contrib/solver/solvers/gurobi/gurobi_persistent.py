@@ -13,29 +13,23 @@ from typing import Sequence, Mapping
 from collections.abc import Iterable
 
 from pyomo.common.collections import ComponentSet, OrderedSet, ComponentMap
-from pyomo.common.errors import PyomoException
-from pyomo.common.shutdown import python_is_shutting_down
 from pyomo.common.timing import HierarchicalTimer
 from pyomo.core.base.objective import ObjectiveData
 from pyomo.core.kernel.objective import minimize, maximize
 from pyomo.core.base.var import VarData
-from pyomo.core.base.constraint import ConstraintData, Constraint
-from pyomo.core.base.sos import SOSConstraintData, SOSConstraint
+from pyomo.core.base.constraint import ConstraintData
+from pyomo.core.base.sos import SOSConstraintData
 from pyomo.core.base.param import ParamData
-from pyomo.core.expr.numvalue import value, is_constant, is_fixed, native_numeric_types
+from pyomo.core.expr.numvalue import value, is_constant, is_fixed
 from pyomo.repn import generate_standard_repn
 from pyomo.contrib.solver.common.results import Results
-from pyomo.contrib.solver.common.util import IncompatibleModelError
 from pyomo.contrib.solver.common.base import PersistentSolverBase
-from pyomo.core.staleflag import StaleFlagManager
 from .gurobi_direct_base import (
     GurobiDirectBase,
     gurobipy,
     GurobiConfig,
     GurobiDirectSolutionLoaderBase,
 )
-from .gurobi_direct import GurobiDirectSolutionLoader
-from pyomo.contrib.solver.common.util import get_objective
 from pyomo.contrib.observer.model_observer import (
     Observer,
     ModelChangeDetector,
@@ -335,9 +329,10 @@ class GurobiPersistent(GurobiDirectBase, PersistentSolverBase, Observer):
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        # we actually want to only grab the license when
-        # set_instance is called
-        self._release_env_client()
+        # Note: we intentionally do NOT acquire a license here. The
+        # persistent interface only checks out a license when it actually
+        # builds a solver model (in ``set_instance``/``solve``), and holds
+        # it until ``release_license`` is called.
         self._solver_model = None
         self._pyomo_var_to_solver_var_map = ComponentMap()
         self._pyomo_con_to_solver_con_map = {}
@@ -359,12 +354,9 @@ class GurobiPersistent(GurobiDirectBase, PersistentSolverBase, Observer):
         self._disallow_linear_constraint_attr = {'sense', 'rhs', 'constrname'}
 
     def _clear(self):
-        release = False
-        if self._solver_model is not None:
-            release = True
+        # The license is held for the lifetime of the persistent solver and is
+        # only released explicitly via ``release_license``.
         self._solver_model = None
-        if release:
-            self._release_env_client()
         self._pyomo_var_to_solver_var_map = ComponentMap()
         self._pyomo_con_to_solver_con_map = {}
         self._pyomo_sos_to_solver_sos_map = {}
@@ -401,9 +393,13 @@ class GurobiPersistent(GurobiDirectBase, PersistentSolverBase, Observer):
 
     def release_license(self):
         self._clear()
+        self.license.release()
         super().release_license()
 
     def solve(self, model, **kwds) -> Results:
+        # Acquire the license *before* calling the base solve. The base solve
+        # releases the license at the end only if it was not already held
+        self.license.acquire()
         res = super().solve(model, **kwds)
         self._needs_updated = False
         return res
@@ -470,7 +466,7 @@ class GurobiPersistent(GurobiDirectBase, PersistentSolverBase, Observer):
         else:
             timer = config.timer
         self._clear()
-        self._register_env_client()
+        self.license.acquire()
         self._pyomo_model = pyomo_model
         self._solver_model = gurobipy.Model(env=self.env())
         timer.start('set_instance')

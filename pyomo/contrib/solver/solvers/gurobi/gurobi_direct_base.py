@@ -12,20 +12,24 @@ import io
 import math
 import os
 import logging
-from typing import Mapping, Sequence
+import time
+from typing import Mapping, Optional, Sequence
 
 from pyomo.common.collections import ComponentMap
 from pyomo.common.config import ConfigValue
 from pyomo.common.dependencies import attempt_import
 from pyomo.common.enums import ObjectiveSense
 from pyomo.common.errors import ApplicationError, InfeasibleConstraintException
-from pyomo.common.shutdown import python_is_shutting_down
 from pyomo.common.tee import capture_output, TeeStream
 from pyomo.common.timing import HierarchicalTimer
 from pyomo.core.staleflag import StaleFlagManager
 from pyomo.core.base import VarData, ConstraintData
 
-from pyomo.contrib.solver.common.base import SolverBase, Availability
+from pyomo.contrib.solver.common.base import (
+    SolverBase,
+    Availability,
+    _LicenseManagerBase,
+)
 from pyomo.contrib.solver.common.config import BranchAndBoundConfig
 from pyomo.contrib.solver.common.util import (
     NoFeasibleSolutionError,
@@ -34,7 +38,6 @@ from pyomo.contrib.solver.common.util import (
     NoReducedCostsError,
     NoSolutionError,
 )
-from pyomo.contrib.solver.common.solution_loader import NoSolutionSolutionLoader
 from pyomo.contrib.solver.common.results import (
     Results,
     SolutionStatus,
@@ -42,7 +45,6 @@ from pyomo.contrib.solver.common.results import (
     get_infeasible_results,
 )
 from pyomo.contrib.solver.common.solution_loader import SolutionLoader
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +220,81 @@ class GurobiDirectSolutionLoaderBase(SolutionLoader):
         return duals
 
 
+class _GurobiLicenseManager(_LicenseManagerBase):
+    """License manager for the Gurobi solver interfaces.
+
+    In Gurobi, the "license" is controlled by a :class:`gurobipy.Env`, and every
+    :class:`gurobipy.Model` is owned by the ``Env`` that created it (closing the
+    ``Env`` disposes all of its models). All of the Gurobi interfaces share a
+    single, class-level ``Env`` on :class:`GurobiDirectBase`, whose lifetime is
+    handled by a reference count of "environment clients". Acquiring a license
+    registers one client (creating the shared ``Env``), and releasing it
+    unregisters that client (closing the shared ``Env`` once the last client
+    goes away).
+    """
+
+    #: Number of seconds to wait between retry attempts
+    _retry_buffer = 0.1
+
+    def __init__(self, solver) -> None:
+        super().__init__()
+        self._solver = solver
+
+    def _acquire(
+        self,
+        timeout: Optional[float] = float("inf"),
+        retry_timeout: Optional[float] = None,
+    ) -> None:
+        # ``timeout`` limits how long we wait for the license server to respond
+        # on a single checkout attempt; ``retry_timeout`` limits how long we
+        # keep retrying while the checkout keeps failing (e.g., all licenses in
+        # use)
+        if retry_timeout is not None and retry_timeout != float("inf"):
+            deadline = time.monotonic() + retry_timeout
+        while True:
+            try:
+                self._create_env(timeout=timeout)
+                GurobiDirectBase._register_env_client()
+                return
+            except gurobipy.GurobiError as e:
+                if retry_timeout is None:
+                    raise ApplicationError(
+                        "Could not acquire a Gurobi license: %s" % (e,)
+                    ) from e
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise ApplicationError(
+                        "Timed out after %s seconds trying to acquire a Gurobi "
+                        "license: %s" % (retry_timeout, e)
+                    ) from e
+                time.sleep(self._retry_buffer)
+
+    def _create_env(self, timeout: Optional[float] = float("inf")) -> None:
+        """Create the shared Gurobi ``Env``"""
+        if GurobiDirectBase._gurobipy_env is not None:
+            return
+        if timeout is not None and timeout != float("inf"):
+            try:
+                with capture_output(capture_fd=True):
+                    env = gurobipy.Env(empty=True)
+                    # ServerTimeout is probably the best equivalent to what
+                    # we are looking for with our timeout arg. It's Gurobi's
+                    # built-in param that controls how long a client waits to
+                    # connect to a token server.
+                    env.setParam('ServerTimeout', int(timeout))
+                    env.start()
+                GurobiDirectBase._gurobipy_env = env
+                return
+            except (gurobipy.GurobiError, AttributeError, TypeError):
+                # ServerTimeout not applicable/supported; fall back to the
+                # default env creation below (which may still raise, and that
+                # will be handled by the retry loop in ``_acquire``).
+                pass
+        GurobiDirectBase.env()
+
+    def _release(self) -> None:
+        GurobiDirectBase._release_env_client()
+
+
 class GurobiDirectBase(SolverBase):
 
     _num_gurobipy_env_clients = 0
@@ -225,36 +302,51 @@ class GurobiDirectBase(SolverBase):
     _available = None
     _gurobipy_available = gurobipy_available
     _tc_map = None
+    _version = None
     _minimum_version = (0, 0, 0)
 
     CONFIG = GurobiConfig()
 
     def __init__(self, **kwds):
         super().__init__(**kwds)
-        self._register_env_client()
+        self.license = _GurobiLicenseManager(self)
         self._callback = None
 
-    def __del__(self):
-        if not python_is_shutting_down():
-            self._release_env_client()
+    def available(
+        self,
+        recheck: bool = False,
+        timeout: Optional[float] = float("inf"),
+        retry_timeout: Optional[float] = None,
+    ) -> Availability:
+        if self._available is not None and not recheck:
+            return self._available
 
-    def available(self):
-        if self._available is None:
-            # this triggers the deferred import, and for the persistent
-            # interface, may update the _available flag
-            #
-            # Note that we set the _available flag on the *most derived
-            # class* and not on the instance, or on the base class.  That
-            # allows different derived interfaces to have different
-            # availability (e.g., persistent has a minimum version
-            # requirement that the direct interface doesn't - is that true?)
-            if not self._gurobipy_available:
-                if self._available is None:
-                    self.__class__._available = Availability.NotFound
-            else:
-                self.__class__._available = self._check_license()
-                if self.version() < self._minimum_version:
-                    self.__class__._available = Availability.UnsupportedVersion
+        # Note that we set the _available flag on the *most derived
+        # class* and not on the instance, or on the base class.  That
+        # allows different derived interfaces to have different
+        # availability (e.g., persistent has a minimum version
+        # requirement that the direct interface doesn't).
+        if not self._gurobipy_available:
+            self.__class__._available = Availability.NotFound
+            return self._available
+
+        # Acquire a license (unless one is already held) to actually probe
+        # the license status, then release it if we were the ones who
+        # acquired it. If the caller already held a license, we leave it in
+        # place. A failed checkout is a reportable status (LicenseError).
+        release_on_exit = not self.license.acquired
+        try:
+            self.license.acquire(timeout=timeout, retry_timeout=retry_timeout)
+        except ApplicationError:
+            self.__class__._available = Availability.LicenseError
+            return self._available
+        try:
+            self.__class__._available = self._check_license()
+            if self.version() < self._minimum_version:
+                self.__class__._available = Availability.UnsupportedVersion
+        finally:
+            if release_on_exit:
+                self.license.release()
         return self._available
 
     @staticmethod
@@ -305,15 +397,16 @@ class GurobiDirectBase(SolverBase):
         finally:
             model.dispose()
 
-    def version(self):
-        if not gurobipy_available:
-            return None
-        version = (
-            gurobipy.GRB.VERSION_MAJOR,
-            gurobipy.GRB.VERSION_MINOR,
-            gurobipy.GRB.VERSION_TECHNICAL,
-        )
-        return version
+    def version(self, recheck: bool = False):
+        if self._version is None and recheck:
+            if not gurobipy_available:
+                return None
+            self._version = (
+                gurobipy.GRB.VERSION_MAJOR,
+                gurobipy.GRB.VERSION_MINOR,
+                gurobipy.GRB.VERSION_TECHNICAL,
+            )
+        return self._version
 
     def _create_solver_model(self, pyomo_model, config):
         # should return gurobi_model, solution_loader, has_objective
@@ -332,61 +425,75 @@ class GurobiDirectBase(SolverBase):
         start_timestamp = datetime.datetime.now(datetime.timezone.utc)
         tick = time.perf_counter()
         orig_cwd = os.getcwd()
+        # Acquire a license for the duration of the solve. If one was already
+        # acquired (e.g., the persistent interface holds a license across solves,
+        # or the user acquired one explicitly), we reuse it.
+        # Otherwise, we release it once the solve is complete. Note that the
+        # returned results object (via its solution loader) registers its own
+        # environment client, so for the direct interface the underlying
+        # Gurobi environment stays alive for as long as the results object is
+        # alive.
+        release_on_exit = not self.license.acquired
+        self.license.acquire()
         try:
-            config = self.config(value=kwds, preserve_implicit=True)
+            try:
+                config = self.config(value=kwds, preserve_implicit=True)
 
-            if config.timer is None:
-                config.timer = HierarchicalTimer()
-            timer = config.timer
+                if config.timer is None:
+                    config.timer = HierarchicalTimer()
+                timer = config.timer
 
-            StaleFlagManager.mark_all_as_stale()
-            ostreams = [io.StringIO()] + config.tee
+                StaleFlagManager.mark_all_as_stale()
+                ostreams = [io.StringIO()] + config.tee
 
-            if config.working_dir:
-                os.chdir(config.working_dir)
-            with capture_output(TeeStream(*ostreams), capture_fd=False):
-                gurobi_model, solution_loader, has_obj = self._create_solver_model(
-                    model, config
+                if config.working_dir:
+                    os.chdir(config.working_dir)
+                with capture_output(TeeStream(*ostreams), capture_fd=False):
+                    gurobi_model, solution_loader, has_obj = self._create_solver_model(
+                        model, config
+                    )
+                    options = config.solver_options
+
+                    gurobi_model.setParam('LogToConsole', 1)
+
+                    if config.threads is not None:
+                        gurobi_model.setParam('Threads', config.threads)
+                    if config.time_limit is not None:
+                        gurobi_model.setParam('TimeLimit', config.time_limit)
+                    if config.rel_gap is not None:
+                        gurobi_model.setParam('MIPGap', config.rel_gap)
+                    if config.abs_gap is not None:
+                        gurobi_model.setParam('MIPGapAbs', config.abs_gap)
+
+                    if config.warmstart_discrete_vars:
+                        self._mipstart()
+
+                    for key, option in options.items():
+                        gurobi_model.setParam(key, option)
+
+                    timer.start('optimize')
+                    gurobi_model.optimize(self._callback)
+                    timer.stop('optimize')
+
+                res = self._populate_results(
+                    grb_model=gurobi_model,
+                    solution_loader=solution_loader,
+                    has_obj=has_obj,
+                    config=config,
                 )
-                options = config.solver_options
-
-                gurobi_model.setParam('LogToConsole', 1)
-
-                if config.threads is not None:
-                    gurobi_model.setParam('Threads', config.threads)
-                if config.time_limit is not None:
-                    gurobi_model.setParam('TimeLimit', config.time_limit)
-                if config.rel_gap is not None:
-                    gurobi_model.setParam('MIPGap', config.rel_gap)
-                if config.abs_gap is not None:
-                    gurobi_model.setParam('MIPGapAbs', config.abs_gap)
-
-                if config.warmstart_discrete_vars:
-                    self._mipstart()
-
-                for key, option in options.items():
-                    gurobi_model.setParam(key, option)
-
-                timer.start('optimize')
-                gurobi_model.optimize(self._callback)
-                timer.stop('optimize')
-
-            res = self._populate_results(
-                grb_model=gurobi_model,
-                solution_loader=solution_loader,
-                has_obj=has_obj,
-                config=config,
-            )
-        except InfeasibleConstraintException as err:
-            err_msg = (
-                'The problem was proven to be infeasible during compilation:\n'
-                f'\t{str(err)}'
-            )
-            res = get_infeasible_results(
-                model=model, solver=self, config=config, err_msg=err_msg
-            )
+            except InfeasibleConstraintException as err:
+                err_msg = (
+                    'The problem was proven to be infeasible during compilation:\n'
+                    f'\t{str(err)}'
+                )
+                res = get_infeasible_results(
+                    model=model, solver=self, config=config, err_msg=err_msg
+                )
+            finally:
+                os.chdir(orig_cwd)
         finally:
-            os.chdir(orig_cwd)
+            if release_on_exit:
+                self.license.release()
 
         res.solver_log = ostreams[0].getvalue()
         tock = time.perf_counter()

@@ -288,7 +288,7 @@ class Highs(PersistentSolverMixin, PersistentSolverUtils, PersistentSolverBase):
                 # an instance of the solver class.
                 tmp = highspy.Highs()
                 version = (tmp.versionMajor(), tmp.versionMinor(), tmp.versionPatch())
-            Highs._version = version
+            self._version = version
         return self._version
 
     def _solve(self):

@@ -100,7 +100,7 @@ class ScipDirect(SolverBase):
 
     def version(self, recheck=False) -> Tuple:
         if self._version is None or recheck:
-            ScipDirect._version = tuple(int(i) for i in scip.__version__.split('.'))
+            self._version = tuple(int(i) for i in scip.__version__.split('.'))
         return self._version
 
     def solve(self, model: BlockData, **kwds) -> Results:
