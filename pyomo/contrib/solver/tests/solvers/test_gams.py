@@ -149,6 +149,7 @@ class TestGAMSInterface(unittest.TestCase):
             'available',
             'config',
             'api_version',
+            'license',
             'is_persistent',
             'name',
             'solve',
