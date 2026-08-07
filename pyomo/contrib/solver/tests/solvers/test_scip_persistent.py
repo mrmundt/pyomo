@@ -64,7 +64,7 @@ class TestScipPersistentInterface(unittest.TestCase):
             {
                 Availability.NotFound,
                 Availability.UnsupportedVersion,
-                Availability.FullLicense,
+                Availability.NoLicenseRequired,
             },
         )
 

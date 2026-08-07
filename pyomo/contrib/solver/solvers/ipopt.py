@@ -25,10 +25,7 @@ from pyomo.common.config import (
     document_class_CONFIG,
     ADVANCED_OPTION,
 )
-from pyomo.common.errors import (
-    ApplicationError,
-    InfeasibleConstraintException,
-)
+from pyomo.common.errors import ApplicationError, InfeasibleConstraintException
 from pyomo.common.fileutils import to_legal_filename
 from pyomo.common.tempfiles import TempfileManager
 from pyomo.common.timing import HierarchicalTimer, default_timer

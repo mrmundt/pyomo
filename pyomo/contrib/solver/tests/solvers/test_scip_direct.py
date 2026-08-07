@@ -67,6 +67,7 @@ class TestScipDirectInterface(unittest.TestCase):
             'config',
             'api_version',
             'is_persistent',
+            'license',
             'name',
             'solve',
             'version',
@@ -84,7 +85,7 @@ class TestScipDirectInterface(unittest.TestCase):
             {
                 Availability.NotFound,
                 Availability.UnsupportedVersion,
-                Availability.FullLicense,
+                Availability.NoLicenseRequired,
             },
         )
 
@@ -96,7 +97,7 @@ class TestScipDirectInterface(unittest.TestCase):
 
     def test_version(self):
         opt = ScipDirect()
-        if opt.available() == Availability.FullLicense:
+        if opt.available() == Availability.NoLicenseRequired:
             ver = opt.version()
             self.assertIsInstance(ver, tuple)
             self.assertGreaterEqual(len(ver), 3)
