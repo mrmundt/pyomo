@@ -398,7 +398,7 @@ class GurobiDirectBase(SolverBase):
             model.dispose()
 
     def version(self, recheck: bool = False):
-        if self._version is None and recheck:
+        if self._version is None or recheck:
             if not gurobipy_available:
                 return None
             self._version = (
