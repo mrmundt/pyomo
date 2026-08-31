@@ -77,7 +77,7 @@ class Package:
         """Check if the KNITRO solver and license are available.
 
         Returns:
-            Availability: The availability status (FullLicense, BadLicense, NotFound).
+            Availability: The availability status (FullLicense, LicenseError, NotFound).
 
         """
         if not bool(KNITRO_AVAILABLE):
@@ -90,7 +90,7 @@ class Package:
             # TODO: parse the stream to check the license type.
             return Availability.FullLicense
         except Exception:
-            return Availability.BadLicense
+            return Availability.LicenseError
 
 
 class PackageChecker:

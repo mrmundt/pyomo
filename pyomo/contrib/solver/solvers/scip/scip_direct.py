@@ -16,7 +16,6 @@ import math
 from typing import Tuple, List
 
 from pyomo.common.collections import ComponentMap
-from pyomo.common.errors import InfeasibleConstraintException
 from pyomo.common.timing import HierarchicalTimer
 from pyomo.common.tee import capture_output, TeeStream
 
@@ -27,7 +26,6 @@ from pyomo.core.kernel.objective import minimize, maximize
 from pyomo.core.staleflag import StaleFlagManager
 
 from pyomo.contrib.solver.common.base import SolverBase, Availability
-from pyomo.contrib.solver.common.solution_loader import NoSolutionSolutionLoader
 from pyomo.contrib.solver.common.results import (
     Results,
     SolutionStatus,
@@ -53,6 +51,7 @@ logger = logging.getLogger(__name__)
 class ScipDirect(SolverBase):
 
     _available = None
+    _version = None
     _tc_map = None
     _minimum_version = (5, 5, 0)  # this is probably conservative
 
@@ -84,21 +83,25 @@ class ScipDirect(SolverBase):
         self._obj_var = None
         self._obj_con = None
 
-    def available(self) -> Availability:
-        if self._available is not None:
+    def available(
+        self, recheck=False, timeout=float("inf"), retry_timeout=None
+    ) -> Availability:
+        if self._available is not None and not recheck:
             return self._available
 
         if not scip_available:
             ScipDirect._available = Availability.NotFound
-        elif self.version() < self._minimum_version:
-            ScipDirect._available = Availability.BadVersion
+        elif self.version(recheck=recheck) < self._minimum_version:
+            ScipDirect._available = Availability.UnsupportedVersion
         else:
-            ScipDirect._available = Availability.FullLicense
+            ScipDirect._available = Availability.NoLicenseRequired
 
         return self._available
 
-    def version(self) -> Tuple:
-        return tuple(int(i) for i in scip.__version__.split('.'))
+    def version(self, recheck=False) -> Tuple:
+        if self._version is None or recheck:
+            self._version = tuple(int(i) for i in scip.__version__.split('.'))
+        return self._version
 
     def solve(self, model: BlockData, **kwds) -> Results:
         start_timestamp = datetime.datetime.now(datetime.timezone.utc)
