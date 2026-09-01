@@ -4,6 +4,10 @@ max_retries = 3
 retry_wait_time = 2
 timeout = 60
 
+# Some sites (e.g. IBM, MathWorks, StackOverflow) reject lychee's
+# default agent with a 403; a browser UA makes those requests succeed.
+user_agent = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
+
 # 429 is "Too Many Requests". We will accept this to avoid false
 # failures when servers rate-limit CI runners.
 accept = ["200..=299", "429"]
