@@ -27,6 +27,6 @@ If you use Pyomo MPC in your research, please cite the following paper:
     year = {2023},
     issn = {0959-1524},
     doi = {https://doi.org/10.1016/j.jprocont.2023.103113},
-    url = {https://www.sciencedirect.com/science/article/pii/S0959152423002007},
+    url = {https://doi.org/10.1016/j.jprocont.2023.103113},
     author = {Robert B. Parker and Bethany L. Nicholson and John D. Siirola and Lorenz T. Biegler},
     }

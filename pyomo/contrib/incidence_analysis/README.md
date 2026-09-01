@@ -117,7 +117,7 @@ pages = {108383},
 year = {2023},
 issn = {0098-1354},
 doi = {https://doi.org/10.1016/j.compchemeng.2023.108383},
-url = {https://www.sciencedirect.com/science/article/pii/S0098135423002533},
+url = {https://doi.org/10.1016/j.compchemeng.2023.108383},
 author = {Robert B. Parker and Bethany L. Nicholson and John D. Siirola and Lorenz T. Biegler},
 }
 ```
