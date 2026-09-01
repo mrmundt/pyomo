@@ -15,35 +15,18 @@ jobs:
     steps:
     - name: Checkout Pyomo source
       uses: actions/checkout@v6
-    - name: Set DNS server
-      run: |
-        # This will hopefully resolve intermittent DNS resolution errors
-        echo "Reset DNS servers to use cloudfare"
-        LINK=`resolvectl query github.com | grep link: | sed -r 's/.*link://'`
-        sudo resolvectl dns $LINK 1.1.1.1 1.0.0.1
-        sudo resolvectl flush-caches
-        sudo resolvectl query github.com
-        sudo resolvectl status
     - name: URL Checker
-      uses: urlstechie/urlchecker-action@0.0.34
+      uses: lycheeverse/lychee-action@v2
       with:
-        # A comma-separated list of file types to cover in the URL checks
-        file_types: .md,.rst,.py
-        # Choose whether to include file with no URLs in the prints.
-        print_all: false
-        # More verbose summary at the end of a run
-        verbose: true
-        # How many times to retry a failed request (defaults to 1)
-        retry_count: 3
-        # The timeout seconds to provide to requests, defaults to 5 seconds
-        timeout: 60
-        # Exclude:
-        #  - Jenkins because it's behind a firewall
-        #  - RTD because a magically-generated string triggers failures
-        #  - scipopt.org as they perform "validation" on the webclient (which fails)
-        exclude_urls: https://pyomo-jenkins.sandia.gov/,https://pyomo.readthedocs.io/en/%s/errors.html,https://www.scipopt.org
-        # Exclude:
-        #  - All gnu.org links because they consistently fail the checker
-        #  - All lpsolve.sourceforge.net links because SF appears to reject from GHA
-        #  - All www.mathworks.com links because MathWorks appears to reject from GHA
-        exclude_patterns: https://www.gnu.org,https://lpsolve.sourceforge.net/,https://www.mathworks.com/
+        # Check URLs in Markdown, reStructuredText, and Python source files.
+        # Exclusions, retries, timeouts, and accepted status codes are
+        # configured in lychee.toml.
+        args: >-
+          --config ./.github/workflows/lychee.toml
+          --verbose
+          --no-progress
+          './**/*.md'
+          './**/*.rst'
+          './**/*.py'
+        # Fail the job (non-zero exit) when broken links are found.
+        fail: true

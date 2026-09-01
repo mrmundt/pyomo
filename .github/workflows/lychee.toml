@@ -1,0 +1,17 @@
+# Configuration for the lychee link checker
+# https://lychee.cli.rs/usage/config/
+max_retries = 3
+retry_wait_time = 2
+timeout = 60
+
+# 429 is "Too Many Requests". We will accept this to avoid false
+# failures when servers rate-limit CI runners.
+accept = ["200..=299", "429"]
+
+exclude = [
+  # Jenkins because it's behind a firewall
+  "https://pyomo-jenkins\\.sandia\\.gov",
+  # RTD because a magically-generated string (%s) triggers failures
+  "https://pyomo\\.readthedocs\\.io/en/.*/errors\\.html",
+]
+
