@@ -5,8 +5,9 @@ retry_wait_time = 2
 timeout = 60
 
 # Some sites (e.g. IBM, MathWorks, StackOverflow) reject lychee's default
-# agent with a 403. lychee's docs recommend a curl User-Agent
-user_agent = "curl/8.7.1"
+# agent with a 403. Present a common desktop-browser User-Agent so those
+# requests are accepted.
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 # 429 is "Too Many Requests". We will accept this to avoid false
 # failures when servers rate-limit CI runners.
