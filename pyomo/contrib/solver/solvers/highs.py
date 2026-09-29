@@ -248,6 +248,7 @@ class Highs(PersistentSolverMixin, PersistentSolverUtils, PersistentSolverBase):
     CONFIG = PersistentBranchAndBoundConfig()
 
     _available = None
+    _version = None
 
     def __init__(self, **kwds):
         treat_fixed_vars_as_params = kwds.pop('treat_fixed_vars_as_params', True)
@@ -264,26 +265,31 @@ class Highs(PersistentSolverMixin, PersistentSolverUtils, PersistentSolverBase):
         self._last_results_object: Results | None = None
         self._sol = None
 
-    def available(self):
-        if highspy_available:
-            return Availability.FullLicense
-        return Availability.NotFound
-
-    def version(self):
-        try:
-            version = (
-                highspy.HIGHS_VERSION_MAJOR,
-                highspy.HIGHS_VERSION_MINOR,
-                highspy.HIGHS_VERSION_PATCH,
+    def available(self, recheck=False, timeout=float("inf"), retry_timeout=None):
+        if self._available is None or recheck:
+            Highs._available = (
+                Availability.NoLicenseRequired
+                if highspy_available
+                else Availability.NotFound
             )
-        except AttributeError:
-            # Older versions of Highs do not have the above attributes
-            # and the solver version can only be obtained by making
-            # an instance of the solver class.
-            tmp = highspy.Highs()
-            version = (tmp.versionMajor(), tmp.versionMinor(), tmp.versionPatch())
+        return self._available
 
-        return version
+    def version(self, recheck=False):
+        if self._version is None or recheck:
+            try:
+                version = (
+                    highspy.HIGHS_VERSION_MAJOR,
+                    highspy.HIGHS_VERSION_MINOR,
+                    highspy.HIGHS_VERSION_PATCH,
+                )
+            except AttributeError:
+                # Older versions of highs do not have the above attributes
+                # and the solver version can only be obtained by making
+                # an instance of the solver class.
+                tmp = highspy.Highs()
+                version = (tmp.versionMajor(), tmp.versionMinor(), tmp.versionPatch())
+            self._version = version
+        return self._version
 
     def _solve(self):
         config = self._active_config

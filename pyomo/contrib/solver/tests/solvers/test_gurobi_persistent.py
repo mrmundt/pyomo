@@ -20,7 +20,7 @@ from pyomo.core.expr.taylor_series import taylor_series_expansion
 
 opt = GurobiPersistent()
 if not opt.available():
-    raise unittest.SkipTest
+    raise unittest.SkipTest("gurobi is not available")
 import gurobipy
 
 
@@ -787,3 +787,50 @@ class TestManualMode(unittest.TestCase):
         opt.remove_sos_constraints([m.c2])
         opt.update()
         self.assertEqual(opt._solver_model.getAttr('NumSOS'), 1)
+
+
+@unittest.pytest.mark.solver("gurobi_persistent")
+class TestGurobiPersistentLicense(unittest.TestCase):
+    @staticmethod
+    def _simple_model():
+        m = pyo.ConcreteModel()
+        m.x = pyo.Var(bounds=(0, 10))
+        m.y = pyo.Var(bounds=(0, 10))
+        m.c = pyo.Constraint(expr=m.x + m.y >= 5)
+        m.obj = pyo.Objective(expr=2 * m.x + 3 * m.y)
+        return m
+
+    def test_instantiation_license(self):
+        opt = GurobiPersistent()
+        # Constructing a persistent solver must not check out a license; the
+        # license is only acquired when a model is built.
+        self.assertFalse(opt.license.acquired)
+
+    def test_set_instance_acquires_license(self):
+        opt = GurobiPersistent()
+        try:
+            opt.set_instance(self._simple_model())
+            self.assertTrue(opt.license.acquired)
+        finally:
+            opt.release_license()
+
+    def test_license_held_across_solves(self):
+        m = self._simple_model()
+        opt = GurobiPersistent()
+        try:
+            opt.solve(m)
+            self.assertTrue(opt.license.acquired)
+            # A second solve on the same model is an update; the license must
+            # remain held (not checked out again)
+            opt.solve(m)
+            self.assertTrue(opt.license.acquired)
+        finally:
+            opt.release_license()
+
+    def test_release_license(self):
+        m = self._simple_model()
+        opt = GurobiPersistent()
+        opt.solve(m)
+        self.assertTrue(opt.license.acquired)
+        opt.release_license()
+        self.assertFalse(opt.license.acquired)
