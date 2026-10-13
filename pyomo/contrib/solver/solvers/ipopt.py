@@ -11,13 +11,10 @@ import logging
 import os
 import subprocess
 import datetime
-import time
 import io
 import re
 import sys
-import time
-import threading
-from typing import Optional, Tuple, Union, Mapping, List, Dict, Any, Sequence
+from typing import Mapping, Dict, Any, Sequence
 
 from pyomo.common import Executable
 from pyomo.common.config import (
@@ -28,11 +25,7 @@ from pyomo.common.config import (
     document_class_CONFIG,
     ADVANCED_OPTION,
 )
-from pyomo.common.errors import (
-    ApplicationError,
-    InfeasibleConstraintException,
-    MouseTrap,
-)
+from pyomo.common.errors import ApplicationError, InfeasibleConstraintException
 from pyomo.common.fileutils import to_legal_filename
 from pyomo.common.tempfiles import TempfileManager
 from pyomo.common.timing import HierarchicalTimer, default_timer
@@ -57,8 +50,6 @@ from pyomo.contrib.solver.common.util import NoOptimalSolutionError, NoSolutionE
 from pyomo.common.tee import TeeStream
 from pyomo.core.expr.visitor import replace_expressions
 from pyomo.core.expr.numvalue import value
-from pyomo.core.base.suffix import Suffix
-from pyomo.common.collections import ComponentMap
 from pyomo.solvers.amplfunc_merge import amplfunc_merge
 
 logger = logging.getLogger(__name__)
@@ -231,21 +222,27 @@ class Ipopt(SolverBase):
         #: see :ref:`pyomo.contrib.solver.solvers.ipopt.Ipopt::CONFIG`.
         self.config = self.config
 
-    def available(self) -> Availability:
+    def available(
+        self,
+        recheck: bool = False,
+        timeout: float | None = float("inf"),
+        retry_timeout: float | None = None,
+    ) -> Availability:
         return (
             Availability.NotFound
-            if self.version() is None
-            else Availability.FullLicense
+            if self.version(recheck=recheck) is None
+            else Availability.NoLicenseRequired
         )
 
-    def version(self) -> tuple[int, int, int] | None:
-        return self._get_version(self.config.executable.path())
+    def version(self, recheck: bool = False) -> tuple[int, int, int] | None:
+        return self._get_version(self.config.executable.path(), recheck=recheck)
 
-    def _get_version(self, exe):
-        try:
-            return self._exe_cache[exe]
-        except KeyError:
-            pass
+    def _get_version(self, exe, recheck: bool = False):
+        if not recheck:
+            try:
+                return self._exe_cache[exe]
+            except KeyError:
+                pass
         if exe is None:
             # No executable (either we couldn't find a matching file, or
             # the file is not executable)

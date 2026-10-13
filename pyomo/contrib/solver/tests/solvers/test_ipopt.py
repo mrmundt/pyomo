@@ -158,6 +158,7 @@ class TestIpoptInterface(unittest.TestCase):
             'available',
             'has_linear_solver',
             'is_persistent',
+            'license',
             'solve',
             'version',
             'name',
@@ -288,7 +289,9 @@ class TestIpoptInterface(unittest.TestCase):
                 os.chmod(fname, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
                 solver = ipopt.Ipopt(executable=fname)
                 self.assertEqual({}, ipopt.Ipopt._exe_cache)
-                self.assertEqual(ipopt.Availability.FullLicense, solver.available())
+                self.assertEqual(
+                    ipopt.Availability.NoLicenseRequired, solver.available()
+                )
                 self.assertEqual(solver.version(), (1, 2, 3))
                 self.assertEqual({fname: (1, 2, 3)}, ipopt.Ipopt._exe_cache)
 

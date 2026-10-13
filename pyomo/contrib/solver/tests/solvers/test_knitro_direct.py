@@ -356,6 +356,7 @@ class TestKnitroDirectSolverInterface(unittest.TestCase):
             "config",
             "api_version",
             "is_persistent",
+            "license",
             "name",
             "solve",
             "version",

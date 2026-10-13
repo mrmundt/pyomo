@@ -181,18 +181,30 @@ class GAMS(SolverBase):
         #: see :ref:`pyomo.contrib.solver.solvers.gams.GAMS::CONFIG`.
         self.config = self.config
 
-    def available(self) -> Availability:
-        ver, avail = self._get_version(self.config.executable.path())
+    def available(
+        self,
+        recheck: bool = False,
+        timeout: float | None = float("inf"),
+        retry_timeout: float | None = None,
+    ) -> Availability:
+        # GAMS runs as a subprocess similar to ipopt; license is handled
+        # on a per-call basis
+        ver, avail = self._get_version(self.config.executable.path(), recheck=recheck)
         return avail
 
-    def version(self) -> tuple[int, int, int] | None:
-        ver, avail = self._get_version(self.config.executable.path())
+    def version(self, recheck: bool = False) -> tuple[int, int, int] | None:
+        ver, avail = self._get_version(self.config.executable.path(), recheck=recheck)
         return ver
 
-    def _get_version(self, exe: str | None):
+    def _get_version(self, exe: str | None, recheck: bool = False):
         # check the cache
-        if exe in self._exe_cache:
+        if not recheck and exe in self._exe_cache:
             return self._exe_cache[exe]
+
+        if exe is None:
+            params = (None, Availability.NotFound)
+            self._exe_cache[None] = params
+            return params
 
         # Note: non-None str paths are guaranteed to exist and be executable files
         res = subprocess.run(
@@ -229,17 +241,12 @@ class GAMS(SolverBase):
         version = tuple(int(i) for i in version.split('.'))
 
         # TBD: does this also catch Community licenses?
+        # MRM Update 2026-08-07: I think the answer is no but I can't find
+        # anything conclusive
         if "GAMS Demo" in res.stdout:
             avail = Availability.LimitedLicense
         else:
             avail = Availability.FullLicense
-
-        # TBD: should we run a small problem (1-variable LP) to make
-        # sure the license is still valid?  Alternatively, we can leave
-        # Availability as NOTSET until someone explicitly *asks* for
-        # .available(), in which case we can justify running the small
-        # model (potentially requiring us to check out a license from a
-        # license server).
 
         params = (version, avail)
         self._exe_cache[exe] = params
@@ -308,7 +315,7 @@ class GAMS(SolverBase):
             output_filename = basename + '.gms'
             lst_filename = os.path.join(dname, lst)
 
-            timer.start(f'write_gms_file')
+            timer.start('write_gms_file')
             try:
                 with open(
                     output_filename, 'w', newline='\n', encoding='utf-8'
@@ -317,7 +324,7 @@ class GAMS(SolverBase):
                         model, gms_file, config=config.writer_config
                     )
             except InfeasibleConstraintException as err:
-                timer.stop(f'write_gms_file')
+                timer.stop('write_gms_file')
                 err_msg = (
                     'The problem was proven to be infeasible during compilation:\n'
                     f'\t{str(err)}'
@@ -330,7 +337,7 @@ class GAMS(SolverBase):
                 results.timing_info.wall_time = tock - tick
                 results.timing_info.timer = timer
                 return results
-            timer.stop(f'write_gms_file')
+            timer.stop('write_gms_file')
 
             if config.writer_config.put_results_format == 'gdx':
                 results_filename = os.path.join(dname, "GAMS_MODEL_p.gdx")
