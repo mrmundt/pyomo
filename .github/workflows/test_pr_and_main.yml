@@ -843,7 +843,7 @@ jobs:
       run: |
         export PATH=$PYOMO_PATH
         $PYTHON_EXE -m pytest -v \
-            -W ignore::Warning ${{matrix.category}} \
+            -W ignore::Warning --deprecation-report ${{matrix.category}} \
             pyomo `pwd`/pyomo-model-libraries \
             `pwd`/examples `pwd`/doc --junitxml="TEST-pyomo.xml"
 
@@ -870,7 +870,7 @@ jobs:
         echo "Build PDF docs..."
         make -C doc/OnlineDocs latexpdf
         # Run the doc tests (some check the html output for correctness)
-        $PYTHON_EXE -m pytest -v -W ignore::Warning \
+        $PYTHON_EXE -m pytest -v -W ignore::Warning --deprecation-report \
             doc/OnlineDocs --junitxml="TEST-pyomo-docs.xml"
 
     - name: Run documentation tests

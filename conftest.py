@@ -7,6 +7,14 @@
 # software.  This software is distributed under the 3-clause BSD License.
 # ____________________________________________________________________________________
 
+import collections
+import contextlib
+import os
+import re
+import sys
+import sysconfig
+import warnings
+
 import pytest
 
 _implicit_markers = {'default'}
@@ -110,3 +118,417 @@ def pytest_addoption(parser):
         metavar="WRITER",
         help="Run tests matching the requested WRITER.",
     )
+    group = parser.getgroup("pyomo deprecation report")
+    group.addoption(
+        "--deprecation-report",
+        action="store_true",
+        default=False,
+        help="Record every DeprecationWarning, PendingDeprecationWarning, and "
+        "FutureWarning raised during collection and testing (including ones "
+        "hidden by -W / PYTHONWARNINGS filters) and print a prioritized "
+        "summary at the end of the run.  When running under GitHub Actions, "
+        "the report is also appended to $GITHUB_STEP_SUMMARY.",
+    )
+    group.addoption(
+        "--deprecation-report-file",
+        action="store",
+        metavar="PATH",
+        default=None,
+        help="Also write the deprecation report (Markdown) to PATH.  "
+        "Implies --deprecation-report.",
+    )
+
+
+# ------------------------------------------------------------------------------------
+# Deprecation report (--deprecation-report)
+# ------------------------------------------------------------------------------------
+#
+# Our CI runs pytest with "-W ignore::Warning", which keeps the logs clean
+# but means Python never records the warnings at all.  When the report is
+# requested, we insert "always" filters for the deprecation categories just
+# inside pytest's own per-test warning context so that every occurrence
+# reaches our showwarning() hook.  The hook records the warning and then
+# re-applies the *original* filters (-W, PYTHONWARNINGS, ini
+# filterwarnings, marks) to decide whether to pass it on (to pytest's
+# recorder / stderr), drop it, or raise it.  Console behavior is therefore
+# unchanged, including "-W error::DeprecationWarning".
+
+_DEPRECATION_CATEGORIES = (FutureWarning, DeprecationWarning, PendingDeprecationWarning)
+_REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+_STDLIB = os.path.normcase(os.path.abspath(sysconfig.get_paths()['stdlib']))
+_SITE_PKG_RE = re.compile(r'[\\/](?:site|dist)-packages[\\/]([^\\/]+)')
+_THIS_FILE = os.path.normcase(os.path.abspath(__file__))
+
+# Origin tiers (lower == more likely to be ours to fix)
+_ORIGIN_LABELS = {
+    0: 'Pyomo source',
+    1: 'Pyomo tests/examples/docs',
+    2: 'third-party, called from Pyomo source',
+    3: 'third-party, called from Pyomo tests',
+    4: 'third-party / Python internal',
+}
+
+
+def _get_filters():
+    # Python 3.14 context-aware warnings keep filters on the context
+    getter = getattr(warnings, '_get_filters', None)
+    return list(getter() if getter is not None else warnings.filters)
+
+
+def _classify_file(filename):
+    """Return (kind, label) for a source file.
+
+    kind is one of 'pyomo', 'pyomo-tests', 'third-party', 'python', 'other'.
+    """
+    path = os.path.normcase(os.path.abspath(filename))
+    m = _SITE_PKG_RE.search(path)
+    if m:
+        pkg = m.group(1).split('.')[0].split('-')[0]
+        return 'third-party', pkg
+    root = os.path.normcase(_REPO_ROOT)
+    if path.startswith(root + os.sep):
+        rel = os.path.relpath(path, root).replace(os.sep, '/')
+        parts = rel.split('/')
+        if parts[0] == 'pyomo' and 'tests' not in parts:
+            return 'pyomo', rel
+        return 'pyomo-tests', rel
+    if path.startswith(_STDLIB + os.sep):
+        return 'python', 'stdlib'
+    return 'other', filename
+
+
+def _urgency(category, text):
+    """Return (sort_key, human-readable label) describing how soon this bites."""
+    cat_rank = next(
+        i for i, c in enumerate(_DEPRECATION_CATEGORIES) if issubclass(category, c)
+    )
+    lowered = text.lower()
+    py = re.search(r'python\s+3\.(\d+)', lowered)
+    if py and int(py.group(1)) > sys.version_info[1] and 'remov' in lowered:
+        away = int(py.group(1)) - sys.version_info[1]
+        return (
+            (cat_rank, 0, away),
+            f"removal in Python 3.{py.group(1)} "
+            f"({away} release{'s' if away > 1 else ''} away)",
+        )
+    m = re.search(
+        r'(?:remov|drop)\w*\s+in\s+(?:\w+\s+){0,2}?v?\d+(?:\.\d+)+'
+        r'|future (?:version|release)'
+        r'|will (?:be removed|no longer|change|raise|stop)'
+        r'|\bremov\w*',
+        lowered,
+    )
+    if m:
+        return (cat_rank, 1, 0), f"change announced: \"{m.group(0)}\""
+    return (cat_rank, 2, 0), ''
+
+
+class _DeprecationRecorder:
+    MAX_EXAMPLES = 3
+    MAX_SITES = 50
+
+    def __init__(self):
+        # key: (category, message text, filename, lineno)
+        self.records = {}
+        self.where = '<collection>'
+        self._module_index = {}
+
+    # -- recording ---------------------------------------------------------------
+
+    def _trigger_site(self):
+        """Nearest frame in the Pyomo repo (outside this file) on the stack."""
+        root = os.path.normcase(_REPO_ROOT) + os.sep
+        f = sys._getframe(2)
+        while f is not None:
+            fn = os.path.normcase(os.path.abspath(f.f_code.co_filename))
+            if fn.startswith(root) and fn != _THIS_FILE and not _SITE_PKG_RE.search(fn):
+                return os.path.relpath(fn, root).replace(os.sep, '/'), f.f_lineno
+            f = f.f_back
+        return None
+
+    def record(self, message, category, filename, lineno):
+        text = str(message)
+        key = (category, text, filename, lineno)
+        rec = self.records.get(key)
+        if rec is None:
+            rec = self.records[key] = {
+                'count': 0,
+                'tests': collections.Counter(),
+                'sites': collections.Counter(),
+            }
+        rec['count'] += 1
+        rec['tests'][self.where] += 1
+        site = self._trigger_site()
+        if site is not None and (
+            site in rec['sites'] or len(rec['sites']) < self.MAX_SITES
+        ):
+            rec['sites'][site] += 1
+
+    # -- emulation of the original filters ----------------------------------------
+
+    def _module_name(self, filename):
+        if filename not in self._module_index:
+            for name, mod in list(sys.modules.items()):
+                f = getattr(mod, '__file__', None)
+                if f:
+                    self._module_index.setdefault(f, name)
+        if filename in self._module_index:
+            return self._module_index[filename]
+        return filename[:-3] if filename.endswith('.py') else filename
+
+    def _original_action(self, filters, message, category, filename, lineno):
+        text = str(message)
+        module = None
+        for action, msg, cat, mod, ln in filters:
+            if msg is not None and not msg.match(text):
+                continue
+            if not issubclass(category, cat):
+                continue
+            if mod is not None:
+                if module is None:
+                    module = self._module_name(filename)
+                if not mod.match(module):
+                    continue
+            if ln and ln != lineno:
+                continue
+            return action
+        return warnings.defaultaction
+
+    @contextlib.contextmanager
+    def capture(self, where):
+        prev_where, self.where = self.where, where
+        with warnings.catch_warnings():
+            outer_filters = _get_filters()
+            forward = warnings.showwarning
+            seen = set()
+            for cat in _DEPRECATION_CATEGORIES:
+                warnings.filterwarnings('always', category=cat)
+
+            def showwarning(message, category, filename, lineno, file=None, line=None):
+                if not issubclass(category, _DEPRECATION_CATEGORIES):
+                    # Not ours: the real filters were already applied
+                    return forward(message, category, filename, lineno, file, line)
+                self.record(message, category, filename, lineno)
+                action = self._original_action(
+                    outer_filters, message, category, filename, lineno
+                )
+                if action == 'ignore':
+                    return
+                if action == 'error':
+                    if isinstance(message, Warning):
+                        raise message
+                    raise category(message)
+                text = str(message)
+                if action == 'once':
+                    key = (text, category)
+                elif action == 'module':
+                    key = (text, category, filename)
+                elif action == 'default':
+                    key = (text, category, filename, lineno)
+                else:  # 'always' (or anything unexpected)
+                    key = None
+                if key is not None:
+                    if key in seen:
+                        return
+                    seen.add(key)
+                return forward(message, category, filename, lineno, file, line)
+
+            warnings.showwarning = showwarning
+            try:
+                yield
+            finally:
+                self.where = prev_where
+
+    # -- reporting ----------------------------------------------------------------
+
+    def entries(self):
+        out = []
+        for (category, text, filename, lineno), rec in self.records.items():
+            kind, label = _classify_file(filename)
+            site_kinds = {_classify_file(f)[0] for f, _ in rec['sites']}
+            if kind == 'pyomo':
+                origin = 0
+            elif kind == 'pyomo-tests':
+                origin = 1
+            elif 'pyomo' in site_kinds:
+                origin = 2
+            elif rec['sites']:
+                origin = 3
+            else:
+                origin = 4
+            if kind in ('pyomo', 'pyomo-tests'):
+                where = f"{label}:{lineno}"
+            elif kind == 'third-party':
+                where = f"{label}: {os.path.basename(filename)}:{lineno}"
+            elif kind == 'python':
+                where = f"Python: {os.path.basename(filename)}:{lineno}"
+            else:
+                where = f"{filename}:{lineno}"
+            urgency_key, urgency = _urgency(category, text)
+            out.append(
+                {
+                    'sort': (urgency_key, origin, -rec['count'], text),
+                    'category': category.__name__,
+                    'message': text,
+                    'where': where,
+                    'origin': _ORIGIN_LABELS[origin],
+                    'urgency': urgency,
+                    'count': rec['count'],
+                    'tests': rec['tests'],
+                    # Only report call sites that add information beyond 'where'
+                    'sites': collections.Counter(
+                        {
+                            site: n
+                            for site, n in rec['sites'].items()
+                            if f"{site[0]}:{site[1]}" != where
+                        }
+                    ),
+                }
+            )
+        out.sort(key=lambda e: e['sort'])
+        return out
+
+    @staticmethod
+    def _sites(entry, n):
+        return [f"{f}:{l}" for (f, l), _ in entry['sites'].most_common(n)]
+
+    def write_terminal(self, tr, entries):
+        total = sum(e['count'] for e in entries)
+        tr.write_sep(
+            '=',
+            f"deprecation report: {len(entries)} distinct warning(s), "
+            f"{total} occurrence(s)",
+        )
+        if not entries:
+            tr.write_line("No deprecation warnings were recorded.")
+            return
+        tr.write_line(
+            "Ordered by urgency (FutureWarning > DeprecationWarning > "
+            "PendingDeprecationWarning; announced removals first), then by "
+            "how directly Pyomo is involved, then by frequency."
+        )
+        for i, e in enumerate(entries, 1):
+            tr.write_line('')
+            head = f"[{i}] {e['category']}  x{e['count']} in {len(e['tests'])} test(s)"
+            if e['urgency']:
+                head += f"  -- {e['urgency']}"
+            tr.write_line(head, bold=True)
+            tr.write_line(f"    at:      {e['where']}  ({e['origin']})")
+            sites = self._sites(e, self.MAX_EXAMPLES)
+            if sites:
+                more = len(e['sites']) - len(sites)
+                tr.write_line(
+                    f"    via:     {', '.join(sites)}"
+                    + (f" (+{more} more)" if more > 0 else '')
+                )
+            tests = [t for t, _ in e['tests'].most_common(self.MAX_EXAMPLES)]
+            tr.write_line(f"    e.g.:    {', '.join(tests)}")
+            msg = ' '.join(e['message'].split())
+            if len(msg) > 300:
+                msg = msg[:297] + '...'
+            tr.write_line(f"    message: {msg}")
+
+    def markdown(self, entries, title, limit=None):
+        def esc(s):
+            return ' '.join(str(s).split()).replace('|', '\\|').replace('`', "'")
+
+        total = sum(e['count'] for e in entries)
+        lines = [f"## {title}", '']
+        if not entries:
+            lines.append("No deprecation warnings were recorded. :tada:")
+            return '\n'.join(lines) + '\n'
+        lines += [
+            f"**{len(entries)}** distinct warning(s), **{total}** occurrence(s). "
+            "Ordered by urgency (FutureWarning > DeprecationWarning > "
+            "PendingDeprecationWarning; announced removals first), then by how "
+            "directly Pyomo is involved, then by frequency.",
+            '',
+            "| # | Category | Urgency | Origin | Count | Tests | Location "
+            "| Triggered from | Message |",
+            "|---|---|---|---|---|---|---|---|---|",
+        ]
+        shown = entries if limit is None else entries[:limit]
+        for i, e in enumerate(shown, 1):
+            msg = esc(e['message'])
+            if len(msg) > 500:
+                msg = msg[:497] + '...'
+            sites = '<br>'.join(f"`{s}`" for s in self._sites(e, self.MAX_EXAMPLES))
+            lines.append(
+                f"| {i} | {e['category']} | {esc(e['urgency'])} | {e['origin']} "
+                f"| {e['count']} | {len(e['tests'])} | `{esc(e['where'])}` "
+                f"| {sites} | {msg} |"
+            )
+        if len(shown) < len(entries):
+            lines += [
+                '',
+                f"_{len(entries) - len(shown)} additional warning(s) omitted "
+                "to fit the size limit; run with --deprecation-report locally "
+                "for the full list._",
+            ]
+        return '\n'.join(lines) + '\n'
+
+
+def _deprecation_recorder(config):
+    return getattr(config, '_pyomo_deprecation_recorder', None)
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_sessionstart(session):
+    config = session.config
+    if config.getoption('--deprecation-report') or config.getoption(
+        '--deprecation-report-file'
+    ):
+        config._pyomo_deprecation_recorder = _DeprecationRecorder()
+
+
+# Note: pytest's own warnings plugin wraps these hooks with tryfirst=True,
+# so these wrappers run *inside* pytest's warning-capture context.
+@pytest.hookimpl(hookwrapper=True)
+def pytest_collection(session):
+    rec = _deprecation_recorder(session.config)
+    if rec is None:
+        yield
+        return
+    with rec.capture('<collection>'):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_protocol(item, nextitem):
+    rec = _deprecation_recorder(item.config)
+    if rec is None:
+        yield
+        return
+    with rec.capture(item.nodeid):
+        yield
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    rec = _deprecation_recorder(config)
+    if rec is None:
+        return
+    entries = rec.entries()
+    rec.write_terminal(terminalreporter, entries)
+
+    title = (
+        f"Deprecation report (Python {sys.version.split()[0]}, {sys.platform}, "
+        f"pytest {' '.join(config.invocation_params.args)})"
+    )
+    if len(title) > 200:
+        title = title[:197] + '...'
+    path = config.getoption('--deprecation-report-file')
+    if path:
+        with open(path, 'w') as f:
+            f.write(rec.markdown(entries, title))
+        terminalreporter.write_line(f"Deprecation report written to {path}")
+    summary = os.environ.get('GITHUB_STEP_SUMMARY')
+    if summary:
+        # GitHub limits each step summary to 1 MiB; leave some headroom
+        limit = None
+        text = rec.markdown(entries, title)
+        while len(text.encode()) > 900_000:
+            limit = len(entries) // 2 if limit is None else limit // 2
+            text = rec.markdown(entries, title, limit)
+        with open(summary, 'a') as f:
+            f.write(text + '\n')
+        terminalreporter.write_line("Deprecation report appended to job summary")
