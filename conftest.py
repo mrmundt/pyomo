@@ -197,30 +197,53 @@ def _classify_file(filename):
     return 'other', filename
 
 
-def _urgency(category, text):
-    """Return (sort_key, human-readable label) describing how soon this bites."""
+# "<version>" optionally preceded by a project name, e.g. "3.16",
+# "Python 3.16", "NumPy 2.0", "version 1.4"
+_VERSION = (
+    r'((?:(?!version\b|a\b|the\b)[A-Za-z][\w.-]*\s+)?(?:version\s+)?v?\d+(?:\.\d+)+)'
+)
+_DEPRECATED_RE = re.compile(
+    r'deprecated\s+(?:(?:since|in|as\s+of|from)\s+)?' + _VERSION, re.I
+)
+_REMOVAL_RE = re.compile(
+    r'(?:remov(?:ed|al)|dropped|deleted)\s+(?:in|from|as\s+of|by)\s+' + _VERSION, re.I
+)
+_VAGUE_REMOVAL_RE = re.compile(
+    r'future\s+(?:version|release)|will\s+(?:be\s+removed|no\s+longer|change|'
+    r'raise|stop)|\bremov(?:ed|al)\b',
+    re.I,
+)
+_LIFECYCLE_NOTE = (
+    "Sorted by: warning type (Future > Deprecation > Pending), then removal "
+    "date, then Pyomo involvement, then count."
+)
+
+
+def _clean_version(v):
+    v = re.sub(r'\bversion\s+', '', ' '.join(v.split()), flags=re.I)
+    return v.rstrip('.')
+
+
+def _lifecycle(category, text):
+    """Extract (sort_key, deprecated_in, removed_in) from a warning message."""
     cat_rank = next(
         i for i, c in enumerate(_DEPRECATION_CATEGORIES) if issubclass(category, c)
     )
-    lowered = text.lower()
-    py = re.search(r'python\s+3\.(\d+)', lowered)
-    if py and int(py.group(1)) > sys.version_info[1] and 'remov' in lowered:
-        away = int(py.group(1)) - sys.version_info[1]
-        return (
-            (cat_rank, 0, away),
-            f"removal in Python 3.{py.group(1)} "
-            f"({away} release{'s' if away > 1 else ''} away)",
-        )
-    m = re.search(
-        r'(?:remov|drop)\w*\s+in\s+(?:\w+\s+){0,2}?v?\d+(?:\.\d+)+'
-        r'|future (?:version|release)'
-        r'|will (?:be removed|no longer|change|raise|stop)'
-        r'|\bremov\w*',
-        lowered,
-    )
+    m = _DEPRECATED_RE.search(text)
+    deprecated = _clean_version(m.group(1)) if m else ''
+    m = _REMOVAL_RE.search(text)
     if m:
-        return (cat_rank, 1, 0), f"change announced: \"{m.group(0)}\""
-    return (cat_rank, 2, 0), ''
+        removal = _clean_version(m.group(1))
+        py = re.fullmatch(r'python\s+3\.(\d+)', removal, re.I)
+        if py:
+            away = int(py.group(1)) - sys.version_info[1]
+            if away > 0:
+                removal += f" (in {away} release{'s' if away > 1 else ''})"
+            return (cat_rank, 0, away), deprecated, removal
+        return (cat_rank, 1, 0), deprecated, removal
+    if _VAGUE_REMOVAL_RE.search(text):
+        return (cat_rank, 2, 0), deprecated, 'future (unspecified)'
+    return (cat_rank, 3, 0), deprecated, ''
 
 
 class _DeprecationRecorder:
@@ -364,15 +387,16 @@ class _DeprecationRecorder:
                 where = f"Python: {os.path.basename(filename)}:{lineno}"
             else:
                 where = f"{filename}:{lineno}"
-            urgency_key, urgency = _urgency(category, text)
+            sort_key, deprecated, removal = _lifecycle(category, text)
             out.append(
                 {
-                    'sort': (urgency_key, origin, -rec['count'], text),
+                    'sort': (sort_key, origin, -rec['count'], text),
                     'category': category.__name__,
                     'message': text,
                     'where': where,
                     'origin': _ORIGIN_LABELS[origin],
-                    'urgency': urgency,
+                    'deprecated': deprecated,
+                    'removal': removal,
                     'count': rec['count'],
                     'tests': rec['tests'],
                     # Only report call sites that add information beyond 'where'
@@ -394,39 +418,35 @@ class _DeprecationRecorder:
 
     def write_terminal(self, tr, entries):
         total = sum(e['count'] for e in entries)
-        tr.write_sep(
-            '=',
-            f"deprecation report: {len(entries)} distinct warning(s), "
-            f"{total} occurrence(s)",
-        )
+        tr.write_sep('=', f"{len(entries)} deprecation warnings ({total} occurrences)")
         if not entries:
             tr.write_line("No deprecation warnings were recorded.")
             return
-        tr.write_line(
-            "Ordered by urgency (FutureWarning > DeprecationWarning > "
-            "PendingDeprecationWarning; announced removals first), then by "
-            "how directly Pyomo is involved, then by frequency."
-        )
+        tr.write_line(_LIFECYCLE_NOTE)
         for i, e in enumerate(entries, 1):
             tr.write_line('')
-            head = f"[{i}] {e['category']}  x{e['count']} in {len(e['tests'])} test(s)"
-            if e['urgency']:
-                head += f"  -- {e['urgency']}"
-            tr.write_line(head, bold=True)
-            tr.write_line(f"    at:      {e['where']}  ({e['origin']})")
+            tr.write_line(
+                f"[{i}] {e['category']}  x{e['count']} in {len(e['tests'])} test(s)",
+                bold=True,
+            )
+            if e['deprecated']:
+                tr.write_line(f"    deprecated: {e['deprecated']}")
+            if e['removal']:
+                tr.write_line(f"    removal:    {e['removal']}")
+            tr.write_line(f"    at:         {e['where']}  ({e['origin']})")
             sites = self._sites(e, self.MAX_EXAMPLES)
             if sites:
                 more = len(e['sites']) - len(sites)
                 tr.write_line(
-                    f"    via:     {', '.join(sites)}"
+                    f"    via:        {', '.join(sites)}"
                     + (f" (+{more} more)" if more > 0 else '')
                 )
             tests = [t for t, _ in e['tests'].most_common(self.MAX_EXAMPLES)]
-            tr.write_line(f"    e.g.:    {', '.join(tests)}")
+            tr.write_line(f"    e.g.:       {', '.join(tests)}")
             msg = ' '.join(e['message'].split())
             if len(msg) > 300:
                 msg = msg[:297] + '...'
-            tr.write_line(f"    message: {msg}")
+            tr.write_line(f"    message:    {msg}")
 
     def markdown(self, entries, title, limit=None):
         def esc(s):
@@ -438,14 +458,11 @@ class _DeprecationRecorder:
             lines.append("No deprecation warnings were recorded. :tada:")
             return '\n'.join(lines) + '\n'
         lines += [
-            f"**{len(entries)}** distinct warning(s), **{total}** occurrence(s). "
-            "Ordered by urgency (FutureWarning > DeprecationWarning > "
-            "PendingDeprecationWarning; announced removals first), then by how "
-            "directly Pyomo is involved, then by frequency.",
+            f"**{len(entries)}** warnings, **{total}** occurrences. " + _LIFECYCLE_NOTE,
             '',
-            "| # | Category | Urgency | Origin | Count | Tests | Location "
-            "| Triggered from | Message |",
-            "|---|---|---|---|---|---|---|---|---|",
+            "| # | Category | Deprecated | Removal | Origin | Count | Tests "
+            "| Location | Triggered from | Message |",
+            "|---|---|---|---|---|---|---|---|---|---|",
         ]
         shown = entries if limit is None else entries[:limit]
         for i, e in enumerate(shown, 1):
@@ -454,7 +471,8 @@ class _DeprecationRecorder:
                 msg = msg[:497] + '...'
             sites = '<br>'.join(f"`{s}`" for s in self._sites(e, self.MAX_EXAMPLES))
             lines.append(
-                f"| {i} | {e['category']} | {esc(e['urgency'])} | {e['origin']} "
+                f"| {i} | {e['category']} | {esc(e['deprecated'])} "
+                f"| {esc(e['removal'])} | {e['origin']} "
                 f"| {e['count']} | {len(e['tests'])} | `{esc(e['where'])}` "
                 f"| {sites} | {msg} |"
             )
@@ -511,11 +529,9 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
     rec.write_terminal(terminalreporter, entries)
 
     title = (
-        f"Deprecation report (Python {sys.version.split()[0]}, {sys.platform}, "
-        f"pytest {' '.join(config.invocation_params.args)})"
+        f"Deprecation warnings: Python {sys.version_info[0]}.{sys.version_info[1]}"
+        f" on {sys.platform}"
     )
-    if len(title) > 200:
-        title = title[:197] + '...'
     path = config.getoption('--deprecation-report-file')
     if path:
         with open(path, 'w') as f:
